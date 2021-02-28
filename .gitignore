@@ -1,0 +1,5 @@
+bddash
+*.pyc
+.DS_Store
+.env
+.idea
