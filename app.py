@@ -12,11 +12,21 @@ import os
 import psycopg2
 import psycopg2.extensions
 from time import time
+import dash_auth
 
 from configparser import ConfigParser
 
+VALID_USERNAME_PASSWORD_PAIRS = {
+    'user': 'password'
+}
+
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
+auth = dash_auth.BasicAuth(
+    app,
+    VALID_USERNAME_PASSWORD_PAIRS
+)
 server = app.server
+
 
 def config(filename='database.ini', section='postgresql'):
     # create a parser
@@ -760,8 +770,8 @@ def create_projtab_card_proj(projdata):
         if foundcomps.shape[0] > 0:
             projlist = []
             projverlist = []
-            for projids in df_projcompmap[
-                    df_projcompmap['compVerId'] == foundcomps.compVerId.values[0]].projVerId.unique():
+            for projids in df_projcompmap[df_projcompmap['compVerId'] == foundcomps.
+                                          compVerId.values[0]].projVerId.unique():
                 projs = df_proj[df_proj['projVerId'] == projids]
                 projlist.append(projs.projName.values[0])
                 projverlist.append(projs.projVerName.values[0])
@@ -1186,7 +1196,7 @@ app.layout = dbc.Container(
                         id="sel_comps",
                         options=[
                             {'label': i, 'value': i} for i in df_comp.sort_values(by=['compName'], ascending=True).
-                                compName.unique()
+                                                                      compName.unique()
                         ],
                         multi=True
                     ), width=3
