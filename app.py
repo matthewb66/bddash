@@ -16,7 +16,7 @@ from time import time
 from configparser import ConfigParser
 
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
-
+server = app.server
 
 def config(filename='database.ini', section='postgresql'):
     # create a parser
