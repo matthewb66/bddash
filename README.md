@@ -33,3 +33,6 @@ If you have JSON files `db_projs.json` and `db_vulns.json` extracted from a Repo
 # Deploying and Running the Dashboard
 
 The dashboard program can be run on a workstation using python3 for debugging or single user access. However Plotly Dash applications can be hosted on Dash Enterprise, on dedicated servers using app servers such as gunicorn or within hosting services such as Heroku - see https://dash.plotly.com/deployment.
+
+Note that the dashboard has high memory requirements given the volume of data within a Black Duck server and the need to cache locally, and the free Heroku instances may report exhausted memory.
+
