@@ -16,9 +16,12 @@ import dash_auth
 
 from configparser import ConfigParser
 
-VALID_USERNAME_PASSWORD_PAIRS = {
-    'user': 'password'
-}
+with open('users.txt') as f:
+    data = f.read()
+VALID_USERNAME_PASSWORD_PAIRS = json.loads(data)
+# VALID_USERNAME_PASSWORD_PAIRS = {
+#     'user': 'password'
+# }
 
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
 auth = dash_auth.BasicAuth(
@@ -54,15 +57,12 @@ def connect():
 
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
-        # psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-        # psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
         thisconn = psycopg2.connect(**params)
         thisconn.set_client_encoding('UNICODE')
 
         # create a cursor
         thiscur = thisconn.cursor()
-        # psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, thiscur)
 
         return thisconn, thiscur
 
@@ -147,12 +147,6 @@ def proc_projdata(thisdf):
     newdf = pd.merge(newdf, sums, on='projVerId')
     print('{} Projects and {} Versions returned'.format(newdf.projName.nunique(), newdf.projVerId.nunique()))
 
-    # print(df_counts.to_string())
-    # df_vercounts = pd.DataFrame(newdf['compVerId'].value_counts(ascending=False).
-    #                             rename_axis('compVerId').reset_index(name='compVerCount'))
-
-    # newdf = pd.merge(newdf, sums, on='projVerId')
-    # newdf = pd.merge(newdf, df_vercounts, on='compVerId')
     return newdf
 
 
@@ -163,8 +157,6 @@ def proc_comp_data(thisdf):
     # - will map projVerId to compVerId
 
     compdf = thisdf
-
-    # maxes = compdf.groupby("compVerId").max().reset_index()
 
     # sort by license risk
     compdf = compdf.sort_values(by=['licHighCount', 'licMedCount', 'licLowCount'], ascending=False)
@@ -188,8 +180,6 @@ def proc_comp_data(thisdf):
                          axis=1, inplace=False)
 
     compdf = compdf.sort_values(by=['compName'], ascending=True)
-
-    # print(compdf.head(20).to_string())
 
     # Calculate mapping of provers to compvers
     projcompmapdf = thisdf
@@ -252,9 +242,6 @@ def proc_vuln_data(thisdf):
                                         "remStatus", "solution", "workaround", "published_on", "desc"],
                                        axis=1, inplace=False)
 
-    # print(vulndf.head(20).to_string())
-    # print(projvulnmapdf.head(20).to_string())
-
     print('{} Vulnerabilities returned'.format(vulndf.vulnId.nunique()))
 
     return vulndf, projvulnmapdf, compvulnmapdf
@@ -273,7 +260,6 @@ def read_data_files():
     jsonvuln_file.close()
     thisdfvulns = pd.read_json(dbvulndata, orient='split')
 
-    # thisdfprojs = thisdf.sort_values(by=['projName', 'projVerName'])
     return thisdfprojs, thisdfvulns
 
 
@@ -290,7 +276,6 @@ def write_data_files():
 
 
 def create_projsummtab_fig_proj(thisdf, color_column):
-    # print(thisdf.info())
     temp_df = thisdf.nlargest(500, 'compCount')
     thisfig = px.treemap(temp_df, path=['All', 'projName', 'projVerName'],
                          custom_data=['projName', 'projVerName', 'compCount'],
@@ -314,8 +299,6 @@ def create_projsummtab_fig_proj(thisdf, color_column):
 def create_projsummtab_fig_compsec(thisdf):
     sec_labels = ['Critical', 'High', 'Medium', 'Low', 'OK']
     sec_names = ['Critical', 'High', 'Medium', 'Low', 'OK']
-    # print('create_projsummtab_fig_compsec')
-    # print(thisdf.count())
 
     # sec_values = [len(thisdf[thisdf['secCritCount'] > 0]), len(thisdf[thisdf['secHighCount'] > 0]),
     #                len(thisdf[thisdf['secMedCount'] > 0]), len(thisdf[thisdf['secLowCount'] > 0]),
@@ -326,7 +309,6 @@ def create_projsummtab_fig_compsec(thisdf):
     thisfig = px.pie(values=sec_values, labels=sec_labels, names=sec_names,
                      title='Component Security Risk',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
-    # projsummtab_fig_compsec.update_traces(textinfo='value')
     thisfig.update_traces(sort=False)
     return thisfig
 
@@ -341,7 +323,6 @@ def create_projsummtab_fig_complic(thisdf):
 
     thisfig = px.pie(values=lic_values, labels=lic_labels, names=lic_names, title='Component License Risk',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
-    # projsummtab_fig_complic.update_traces(textinfo='value')
     thisfig.update_traces(sort=False)
     return thisfig
 
@@ -364,7 +345,6 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'None'], "id": "licOkCount"},
     ]
     df_temp = thisdf
-    # df_temp['id'] = df_temp['projVerId']
     thistable = dash_table.DataTable(id='projtab_table_projs',
                                      columns=col_data,
                                      style_cell={
@@ -513,7 +493,6 @@ def create_projtab_fig_subsummary(thisdf):
 
 
 def create_projtab_fig_subdetails(thisdf):
-    # df1 = maximums[["licHighCount", "licMedCount", "licLowCount", "licOkCount"]].sum()
     lic_labels = ['High', 'Medium', 'Low', 'OK']
     lic_names = ['High', 'Medium', 'Low', 'None']
     complic_values = [thisdf.licHighCount.sum(), thisdf.licMedCount.sum(), thisdf.licLowCount.sum(),
@@ -540,7 +519,6 @@ def create_comptab_fig_compsec(thisdf):
 
 
 def create_comptab_fig_complic(thisdf):
-    # df1 = maximums[["licHighCount", "licMedCount", "licLowCount", "licOkCount"]].sum()
     lic_labels = ['High', 'Medium', 'Low', 'OK']
     lic_names = ['High', 'Medium', 'Low', 'None']
     complic_values = [thisdf.licHighCount.sum(), thisdf.licMedCount.sum(), thisdf.licLowCount.sum(),
@@ -553,7 +531,6 @@ def create_comptab_fig_complic(thisdf):
 
 
 def create_comptab_table_compvers(thisdf):
-    # print(thisdf.head(10).to_string())
     col_data = [
         {"name": ['', 'Component'], "id": "compName"},
         {"name": ['', 'Version'], "id": "compVerName"},
@@ -565,9 +542,7 @@ def create_comptab_table_compvers(thisdf):
         {"name": ['License', 'Name'], "id": "licName"},
     ]
     df_temp = thisdf
-    # df_temp['id'] = df_temp['compVerId']
 
-    # df_temp = df_temp.sort_values(by=["secCritCount", "secHighCount", "secMedCount", "secLowCount"], ascending=False)
     thistable = dash_table.DataTable(id='comptab_table_compvers',
                                      columns=col_data,
                                      style_cell={
@@ -697,7 +672,6 @@ def create_vulntab_table_vulns(thisdf):
     ]
     df_temp = thisdf
     df_temp = df_temp.sort_values(by=["score"], ascending=False)
-    # df_temp['id'] = df_temp['vulnId']
 
     thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                      columns=vuln_data,
@@ -781,7 +755,6 @@ def create_projtab_card_proj(projdata):
                 "projVerName": projverlist
             })
 
-            # print(projs_data.to_string())
             projusedbytitle = html.P('Used as sub-project in Projects:', className="card-text", )
 
             projusedin_cols = [
@@ -801,30 +774,18 @@ def create_projtab_card_proj(projdata):
         row2 = html.Tr([html.Td("Tier"), html.Td(projdata['projTier'])])
         row3 = html.Tr([html.Td("Phase"), html.Td(projdata['projVerPhase'])])
         row4 = html.Tr([html.Td("Total Vulns"), html.Td(projdata['secAll'])])
-    # if len(comps_matching_projs) > 0:
-    #     # Project exists in component table
-    #     print('Project exists as a component')
 
-    # table_header = [
-    #     html.Thead(html.Tr([html.Th("First Name"), html.Th("Last Name")]))
-    # ]
     table_header = []
 
     table_body = [html.Tbody([row1, row2, row3, row4])]
 
     return dbc.Card(
         [
-            # dbc.CardImg(src="/static/images/placeholder286x180.png", top=True),
             dbc.CardHeader("Project Version Details"),
             dbc.CardBody(
                 [
                     html.H4("Project: " + projname, className="card-title"),
                     html.H6("Project Version: " + projver, className="card-subtitle"),
-                    # html.P(
-                    #     "Description",
-                    #     className="card-text",
-                    # ),
-                    # dbc.Button("Go somewhere", color="primary"),
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
@@ -840,11 +801,6 @@ def create_comptab_card_comp(compdata):
 
     compname = ''
     compver = ''
-    # row1 = ''
-    # row2 = ''
-    # row3 = ''
-    # row4 = ''
-    # projusedby = ''
     projusedbytitle = ''
     projstable = ''
     if compdata is not None:
@@ -864,7 +820,6 @@ def create_comptab_card_comp(compdata):
             "projVerName": projverlist
         })
 
-        # print(projs_data.to_string())
         projusedbytitle = html.P('Used in Projects:', className="card-text", )
 
         projusedin_cols = [
@@ -876,16 +831,10 @@ def create_comptab_card_comp(compdata):
             data=projs_data.to_dict('records'),
             page_size=6, sort_action='native',
             # row_selectable="single",
-            # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
             merge_duplicate_headers=False
         )
 
-    # table_header = [
-    #     html.Thead(html.Tr([html.Th("First Name"), html.Th("Last Name")]))
-    # ]
     table_header = []
-
-    # table_body = [html.Tbody([row1, row2, row3, row4])]
     table_body = []
 
     return dbc.Card(
@@ -898,7 +847,6 @@ def create_comptab_card_comp(compdata):
                     html.H6("Component Version: " + compver, className="card-subtitle"),
                 ],
             ),
-            # dbc.CardBody(projdata['desc']),
             dbc.Table(table_header + table_body, bordered=True),
             projusedbytitle, projstable,
         ], id="comptab_card_comp",
@@ -913,23 +861,17 @@ def create_vulntab_card_vuln(vulndata):
     vulnid = ''
     vulnrelated = ''
     desc = ''
-    # row1 = ''
-    # row2 = ''
-    # row3 = ''
-    # row4 = ''
 
     usedbyprojstitle = ''
     usedbycompstitle = ''
     projstable = ''
     compstable = ''
     if vulndata is not None:
-        # print(vulndata.to_string())
         vulnid = vulndata['vulnId'].values[0]
         vulnrelated = vulndata['relatedVulnId'].values[0]
         if vulnrelated == '':
             vulnrelated = 'None'
         desc = vulndata['desc'].values[0]
-        # compverid = compdata['compVerId'].values[0]
 
         projlist = []
         projverlist = []
@@ -959,7 +901,6 @@ def create_vulntab_card_vuln(vulndata):
             data=projs_data.to_dict('records'),
             page_size=4, sort_action='native',
             # row_selectable="single",
-            # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
             merge_duplicate_headers=False
         )
 
@@ -981,16 +922,8 @@ def create_vulntab_card_vuln(vulndata):
             merge_duplicate_headers=False
         )
 
-    # row1 = html.Tr([html.Td("Arthur"), html.Td("Dent")])
-    # row2 = html.Tr([html.Td("Ford"), html.Td("Prefect")])
-    # row3 = html.Tr([html.Td("Zaphod"), html.Td("Beeblebrox")])
-    # row4 = html.Tr([html.Td("Trillian"), html.Td("Astra")])
-    #
-    # table_body = [html.Tbody([row1, row2, row3, row4])]
-
     return dbc.Card(
         [
-            # dbc.CardImg(src="/static/images/placeholder286x180.png", top=True),
             dbc.CardHeader("Vulnerability Details"),
             dbc.CardBody(
                 [
@@ -1001,8 +934,6 @@ def create_vulntab_card_vuln(vulndata):
                     html.P(desc),
                 ],
             ),
-            # dbc.CardBody(vulndata['desc']),
-            # dbc.Table(table_body, bordered=True),
             usedbyprojstitle, projstable,
             usedbycompstitle, compstable,
         ], id="vulntab_card_vuln",
@@ -1010,22 +941,6 @@ def create_vulntab_card_vuln(vulndata):
         style={"width": "28rem"},
     )
 
-
-def check_config():
-    if os.path.isfile('database.ini'):
-        print('Will read data from DB connection')
-        return 'db'
-    if os.path.isfile('db_projs.json') and os.path.isfile('db_vulns.json'):
-        print('Will read data from json files')
-        return 'files'
-    else:
-        print('No ini file found - will exit')
-        sys.exit(3)
-
-
-# dbc.Col(dcc.Graph(id='vulntab_graph_vulns', figure=vulntab_fig_vulns), width=12),
-
-# datasource = check_config()
 
 df_main = None
 df_vuln = None
@@ -1070,8 +985,6 @@ df_proj = proc_projdata(df_main)
 df_comp, df_projcompmap = proc_comp_data(df_main)
 df_vuln, df_projvulnmap, df_compvulnmap = proc_vuln_data(df_vuln)
 
-# df_compsec = df_main.drop_duplicates(subset='compVerId', keep="first")
-
 projsummtab_fig_proj = create_projsummtab_fig_proj(df_proj, 'secCritCount')
 
 projsummtab_fig_compsec = create_projsummtab_fig_compsec(df_proj)
@@ -1093,8 +1006,6 @@ comptab_table_compvers = create_comptab_table_compvers(df_comp)
 vulntab_table_vulns = create_vulntab_table_vulns(df_vuln)
 
 print("READY\n")
-# VULN GRAPH
-# vulntab_fig_vulns = px.bar(df_vulns, y='severity', orientation='h', height=900)
 
 app.layout = dbc.Container(
     [
@@ -1110,8 +1021,6 @@ app.layout = dbc.Container(
             dark=True,
             fluid=True,
         ),
-        # html.H1("Black Duck Dashboard"),
-        # html.Hr(),
         dbc.Row(
             [
                 dbc.Col(html.Div(children="Projects"), width=1, align='center'),
@@ -1361,7 +1270,6 @@ def get_active_cell_comp(data, rows):
 def get_active_cell_proj(data, rows):
     global df_proj
     if rows:
-        # print(df_proj[df_proj['projVerId'] == cell['row_id']]['projName'].to_string())
         return create_projtab_card_proj(df_proj[df_proj['projVerId'] == data[rows[0]]['projVerId']])
 
     return create_projtab_card_proj(None)
@@ -1411,9 +1319,6 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
 
     if not ctx.triggered:
         raise dash.exceptions.PreventUpdate
-    # sel_id = ctx.triggered[0]['prop_id'].split('.')[0]
-    # print("Selection = '{}'".format(sel_id))
-    # print(proj_radio)
 
     temp_df_proj = df_proj
     temp_df_comp = df_comp
@@ -1436,8 +1341,6 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
     if vers is not None and len(vers) > 0:
         # Filter versions from selection
         temp_df_proj = temp_df_proj[temp_df_proj.projVerName.isin(vers)]
-        # temp_df_comp = temp_df_proj.drop_duplicates(subset='compVerId', keep="first")
-        # temp_df_vuln = temp_df_vuln[temp_df_vuln.projVerName.isin(vers)]
         recalc = True
 
     if comps is not None and len(comps) > 0:
@@ -1459,8 +1362,6 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
     sel_dists_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerDist.unique()]
     sel_phases_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerPhase.unique()]
     sel_comps_options = [{'label': i, 'value': i} for i in temp_df_comp.compName.sort_values().unique()]
-    # sel_secrisk_options = [{'label': i, 'value': i} for i in temp_df_main.projVerPhase.unique()]
-    # sel_licrisk_options = [{'label': i, 'value': i} for i in temp_df_main.projVerPhase.unique()]
 
     if tiers is not None and len(tiers) > 0:
         # Filter projects based on tier selection
@@ -1477,22 +1378,15 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
 
     if recalc:
         # Filter components based on projcompmap
-        # print("Number entries in temp_df_proj is {}".format(temp_df_proj.count()))
-
         projverids = temp_df_proj['projVerId'].unique()
-        # print("Number projverids returned is {}".format(len(projverids)))
 
         compverids = df_projcompmap[df_projcompmap.projVerId.isin(projverids)]['compVerId'].unique()
-        # print("Number compverids returned is {}".format(len(compverids)))
 
         temp_df_comp = temp_df_comp[temp_df_comp.compVerId.isin(compverids)]
-        # print("Number entries in temp_df_comp is {}".format(temp_df_comp.count()))
 
         # Filter vulns based on projvulnmap
         vulnids = df_projvulnmap[df_projvulnmap.projVerId.isin(projverids)]['vulnId'].unique()
-        # print("Number Vulnids returned is {}".format(len(vulnids)))
         temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
-        # print("Number entries in temp_df_vuln is {}".format(temp_df_vuln.count()))
 
     if secrisk is not None and len(secrisk) > 0:
         # Filter projects based on security risk selection
@@ -1527,6 +1421,27 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
             temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
 
+    projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
+                    str(temp_df_proj.projVerId.nunique()) + ")"
+
+    comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
+
+    vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
+
+    projtab_newtable_projs = temp_df_proj.to_dict('records')
+
+    projtab_newfig_compsec = create_projtab_fig_subsummary(temp_df_proj)
+
+    projtab_newfig_complic = create_projtab_fig_subdetails(temp_df_proj)
+
+    comptab_newfig_compsec = create_comptab_fig_compsec(temp_df_comp)
+
+    comptab_newfig_complic = create_comptab_fig_complic(temp_df_comp)
+
+    comptab_newtable_compvers = temp_df_comp.to_dict('records')
+
+    vulntab_table_vulns_new = temp_df_vuln.to_dict('records')
+
     if click_proj is not None:
         # Click on projtab_treemap
         if click_proj['points'][0]['parent'] == '':
@@ -1535,48 +1450,16 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
         elif click_proj['points'][0]['parent'] == 'All':
             # Project
             temp_df_proj = temp_df_proj[temp_df_proj.projName == click_proj['points'][0]['label']]
-            # temp_df_proj["All"] = "All"
         else:
             # ProjectVersion
             temp_df_proj = temp_df_proj[(temp_df_proj.projName == click_proj['points'][0]['parent']) &
                                         (temp_df_proj.projVerName == click_proj['points'][0]['label'])]
-            # temp_df_proj["All"] = "All"
 
-    print(temp_df_proj.count())
     projsummtab_newfig_proj = create_projsummtab_fig_proj(temp_df_proj, proj_radio)
 
     projsummtab_newfig_compsec = create_projsummtab_fig_compsec(temp_df_proj)
 
     projsummtab_newfig_complic = create_projsummtab_fig_complic(temp_df_proj)
-
-    projtab_newtable_projs = temp_df_proj.to_dict('records')
-
-    projtab_newfig_compsec = create_projtab_fig_subsummary(temp_df_proj)
-
-    projtab_newfig_complic = create_projtab_fig_subdetails(temp_df_proj)
-
-    # if comp_search is not None:
-    #     temp_df_proj = temp_df_proj[temp_df_proj.compName.str.contains(comp_search.lower(), case=False)]
-    #     temp_df_comp = temp_df_comp[temp_df_comp.compName.str.contains(comp_search.lower(), case=False)]
-
-    comptab_newfig_compsec = create_comptab_fig_compsec(temp_df_comp)
-
-    comptab_newfig_complic = create_comptab_fig_complic(temp_df_comp)
-
-    # comptab_newtable_comps = temp_df_compsec.to_dict('records')
-
-    comptab_newtable_compvers = temp_df_comp.to_dict('records')
-
-    # temp_df_vuln['id'] = temp_df_vuln['vulnId']
-    vulntab_table_vulns_new = temp_df_vuln.to_dict('records')
-
-    # projtab_label = "Project Versions (" + str(temp_df_proj.projVerId.nunique()) + ")"
-    projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
-                    str(temp_df_proj.projVerId.nunique()) + ")"
-
-    comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
-
-    vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
 
     return (projsummtab_newfig_proj, projsummtab_newfig_compsec, projsummtab_newfig_complic,
             projtab_newtable_projs, projtab_newfig_compsec, projtab_newfig_complic,
