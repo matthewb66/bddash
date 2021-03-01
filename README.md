@@ -30,6 +30,8 @@ For Synopsys-hosted Black Duck servers, you will also need to contact Support to
 
 If you have JSON files `db_projs.json` and `db_vulns.json` extracted from a Reporting DB, ensure the files exist in the invocation folder and remove the `database.ini` file to force the dashboard to read data from the files only.
 
+The uses basic authentication; usernames and passwords can be configured in the script.
+
 # Deploying and Running the Dashboard
 
 The dashboard program can be run on a workstation using python3 for debugging or single user access. However Plotly Dash applications can be hosted on Dash Enterprise, on dedicated servers using app servers such as gunicorn or within hosting services such as Heroku - see https://dash.plotly.com/deployment.
