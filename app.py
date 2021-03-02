@@ -13,8 +13,13 @@ import psycopg2
 import psycopg2.extensions
 from time import time
 import dash_auth
+import re
 
 from configparser import ConfigParser
+
+if not os.path.isfile('users.txt'):
+    print('No users.txt file - exiting')
+    sys.exit(3)
 
 with open('users.txt') as f:
     data = f.read()
@@ -181,7 +186,7 @@ def proc_comp_data(thisdf):
 
     compdf = compdf.sort_values(by=['compName'], ascending=True)
 
-    # Calculate mapping of provers to compvers
+    # Calculate mapping of projvers to compvers
     projcompmapdf = thisdf
 
     projcompmapdf = projcompmapdf.drop(
@@ -196,6 +201,61 @@ def proc_comp_data(thisdf):
                                                                     compdf.compVerId.nunique()))
 
     return compdf, projcompmapdf
+
+
+def proc_licdata(thisdf):
+    licnames = thisdf.licName.values
+    compids = thisdf.compVerId.values
+    # licrisks = thisdf.licRisk.values
+
+    thislicmap_dict = {}  # Map of license names to compverids (dict of lists of compverids)
+    # licrisk_dict = {}
+    licname_list = []
+
+    tempdf = thisdf
+    sums = tempdf[~tempdf['licName'].str.startswith('(') &
+                  ~tempdf['licName'].str.endswith(')')].groupby("licName").sum().reset_index()
+    # print(sums.head(100).to_string())
+
+    compindex = 0
+
+    # def get_maxlicrisk(riskarray):
+    #     for risk in ['High', 'Medium', 'Low', 'OK']:
+    #         if risk in riskarray:
+    #             return risk
+
+    for lic in licnames:
+        if lic in licname_list:
+            compindex += 1
+            continue
+        licname_list.append(lic)
+        splits = [lic]
+
+        if lic[0] == '(' and lic[-1] == ')':
+            lic = lic[1:-1]
+            if ' AND ' in lic or ' OR ' in lic:
+                splits = re.split(' OR | AND ', lic)
+
+        for item in splits:
+            # lics = thisdf[thisdf['licName'] == item].licRisk.unique()
+            # maxrisk = get_maxlicrisk(lics)
+            if item not in thislicmap_dict.keys():
+                thislicmap_dict[item] = [compids[compindex]]
+            elif compids[compindex] not in thislicmap_dict[item]:
+                thislicmap_dict[item].append(compids[compindex])
+            # licrisk_dict[item] = maxrisk
+            # print(item, ' - ', maxrisk, ' - ', lic)
+
+        compindex += 1
+
+    # print(list(zip(licmap_dict.keys(), licrisk_dict.values())))
+    print("{} Licenses returned".format(len(sums)))
+    # temp_df = pd.DataFrame.from_records(list(zip(licmap_dict.keys(),
+    #                                     licrisk_dict.values())), columns=['licName', 'licRisk'])
+    # sorter = ['OK', 'Low', 'Medium', 'High']
+    # temp_df.licRisk = temp_df.licRisk.astype("category")
+    # temp_df.licRisk.cat.set_categories(sorter, inplace=True)
+    return sums, thislicmap_dict
 
 
 def get_vulndata(thiscur):
@@ -276,13 +336,13 @@ def write_data_files():
 
 
 def create_projsummtab_fig_proj(thisdf, color_column):
-    temp_df = thisdf.nlargest(500, 'compCount')
+    temp_df = thisdf.nlargest(200, 'compCount')
     thisfig = px.treemap(temp_df, path=['All', 'projName', 'projVerName'],
                          custom_data=['projName', 'projVerName', 'compCount'],
                          values='compCount',
                          color=color_column,
                          color_continuous_scale='Reds',
-                         title='Project Versions (largest 500) - Size by Components ',
+                         title='Project Versions (largest 200) - Size by Components ',
                          height=800)
     thisfig.update_traces(
         hovertemplate="<br>".join([
@@ -290,7 +350,7 @@ def create_projsummtab_fig_proj(thisdf, color_column):
             "Version: %{customdata[1]}",
             "Components: %{customdata[2]}",
             # "Vulnerabilities: All %{customdata[3]}",
-        ])
+        ]),
     )
 
     return thisfig
@@ -723,6 +783,70 @@ def create_vulntab_table_vulns(thisdf):
     return thistable
 
 
+def create_licab_table_lics(licdict):
+    lic_cols = [
+        {"name": ['License Name'], "id": "licName"},
+        {"name": ['High Risk'], "id": "licHighCount"},
+        {"name": ['Medium Risk'], "id": "licMedCount"},
+        {"name": ['Low Risk'], "id": "licLowCount"},
+    ]
+
+    # columns = [{"name": i, "id": i} for i in df.columns],
+    # [{'column-1': 4.5, 'column-2': 'montreal', 'column-3': 'canada'},
+    #  {'column-1': 8, 'column-2': 'boston', 'column-3': 'america'}]
+
+    thistable = dash_table.DataTable(id='lictab_table_lics',
+                                     columns=lic_cols,
+                                     data=licdict.to_dict('records'),
+                                     page_size=20, sort_action='native',
+                                     row_selectable="single",
+                                     cell_selectable=False,
+                                     style_data_conditional=[
+                                         {
+                                             'if': {
+                                                 'filter_query': '{licHighCount} > 0',
+                                                 'column_id': 'licHighCount'
+                                             },
+                                             'backgroundColor': 'crimson',
+                                             'color': 'black'
+                                         },
+                                         {
+                                             'if': {
+                                                 'filter_query': '{licMedCount} > 0',
+                                                 'column_id': 'licMedCount'
+                                             },
+                                             'backgroundColor': 'coral',
+                                             'color': 'black'
+                                         },
+                                         {
+                                             'if': {
+                                                 'filter_query': '{licLowCount} > 0',
+                                                 'column_id': 'licLowCount'
+                                             },
+                                             'backgroundColor': 'gold',
+                                             'color': 'black'
+                                         },
+                                         {
+                                             'if': {'column_id': 'licHighCount'},
+                                             'width': '120px'
+                                         },
+                                         {
+                                             'if': {'column_id': 'licMedCount'},
+                                             'width': '120px'
+                                         },
+                                         {
+                                             'if': {'column_id': 'licLowCount'},
+                                             'width': '120px'
+                                         },
+                                     ],
+                                     sort_by=[{'column_id': 'licHighCount', 'direction': 'desc'},
+                                              {'column_id': 'licMedCount', 'direction': 'desc'},
+                                              {'column_id': 'licLowCount', 'direction': 'desc'}],
+                                     merge_duplicate_headers=False
+                                     )
+    return thistable
+
+
 def create_projtab_card_proj(projdata):
     global df_comp, df_projcompmap, df_proj
     # projName projVerName projVerId projVerDist projVerPhase projTier  All  compCount
@@ -745,7 +869,7 @@ def create_projtab_card_proj(projdata):
             projlist = []
             projverlist = []
             for projids in df_projcompmap[df_projcompmap['compVerId'] == foundcomps.
-                                          compVerId.values[0]].projVerId.unique():
+                            compVerId.values[0]].projVerId.unique():
                 projs = df_proj[df_proj['projVerId'] == projids]
                 projlist.append(projs.projName.values[0])
                 projverlist.append(projs.projVerName.values[0])
@@ -792,7 +916,7 @@ def create_projtab_card_proj(projdata):
             projusedbytitle, projstable,
         ], id="projtab_card_proj",
         # style={"width": "28rem", "height":  "50rem"},
-        style={"width": "23rem"},
+        # style={"width": "23rem"},
     )
 
 
@@ -802,6 +926,7 @@ def create_comptab_card_comp(compdata):
     compname = ''
     compver = ''
     projusedbytitle = ''
+    projselbutton = ''
     projstable = ''
     if compdata is not None:
         compname = compdata['compName'].values[0]
@@ -826,11 +951,16 @@ def create_comptab_card_comp(compdata):
             {"name": ['Project'], "id": "projName"},
             {"name": ['Project Version'], "id": "projVerName"},
         ]
+
+        projselbutton = html.Div(
+            dbc.Button("Select Project", color="primary", className="mr-1", id="tabcomp_detail_selproj", size='sm'),
+        )
+
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
             page_size=6, sort_action='native',
-            # row_selectable="single",
+            row_selectable="single",
             merge_duplicate_headers=False
         )
 
@@ -848,10 +978,10 @@ def create_comptab_card_comp(compdata):
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
-            projusedbytitle, projstable,
+            projusedbytitle, projstable, projselbutton,
         ], id="comptab_card_comp",
         # style={"width": "28rem", "height":  "50rem"},
-        style={"width": "23rem"},
+        # style={"width": "23rem"},
     )
 
 
@@ -938,7 +1068,92 @@ def create_vulntab_card_vuln(vulndata):
             usedbycompstitle, compstable,
         ], id="vulntab_card_vuln",
         # style={"width": "28rem", "height":  "50rem"},
-        style={"width": "28rem"},
+        # style={"width": "28rem"},
+    )
+
+
+def create_lictab_card_lic(licdata):
+    global licmap_dict, df_comp, df_proj, df_projcompmap
+
+    licname = ''
+
+    usedbyprojstitle = ''
+    usedbycompstitle = ''
+    projstable = ''
+    compstable = ''
+    if licdata is not None:
+        licname = licdata['licName'].values[0]
+
+        complist = []
+        compverlist = []
+        projlist = []
+        projverlist = []
+        for compid in licmap_dict[licdata.licName.values[0]]:
+            complist.append(df_comp[df_comp['compVerId'] == compid].compName.values[0])
+            compverlist.append(df_comp[df_comp['compVerId'] == compid].compVerName.values[0])
+            for projverid in df_projcompmap[df_projcompmap['compVerId'] == compid].projVerId.values:
+                projlist.append(df_proj[df_proj['projVerId'] == projverid].projName.values[0])
+                projverlist.append(df_proj[df_proj['projVerId'] == projverid].projVerName.values[0])
+
+        usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
+
+        # for projid in df_projvulnmap[df_projvulnmap['vulnId'] == vulnid].projVerId.unique():
+        #     projlist.append(df_proj[df_proj['projVerId'] == projid].projName.values[0])
+        #     projverlist.append(df_proj[df_proj['projVerId'] == projid].projVerName.values[0])
+        usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
+
+        projs_data = pd.DataFrame({
+            "projName": projlist,
+            "projVerName": projverlist
+        })
+
+        projusedin_cols = [
+            {"name": ['Project'], "id": "projName"},
+            {"name": ['Project Version'], "id": "projVerName"},
+        ]
+        projstable = dash_table.DataTable(
+            columns=projusedin_cols,
+            data=projs_data.to_dict('records'),
+            page_size=5, sort_action='native',
+            # row_selectable="single",
+            merge_duplicate_headers=False
+        )
+
+        comps_data = pd.DataFrame({
+            "compName": complist,
+            "compVerName": compverlist
+        })
+
+        compusedin_cols = [
+            {"name": ['Component'], "id": "compName"},
+            {"name": ['Component Version'], "id": "compVerName"},
+        ]
+        compstable = dash_table.DataTable(
+            columns=compusedin_cols,
+            data=comps_data.to_dict('records'),
+            page_size=5, sort_action='native',
+            # row_selectable="single",
+            # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
+            merge_duplicate_headers=False
+        )
+
+    return dbc.Card(
+        [
+            dbc.CardHeader("License Details"),
+            dbc.CardBody(
+                [
+                    html.H4("License Name: " + licname, className="card-title"),
+                    # html.H6("Related to: " + vulnrelated, className="card-subtitle"),
+                    # html.H6("Description: " , className="card-subtitle"),
+
+                    # html.P(desc),
+                ],
+            ),
+            usedbyprojstitle, projstable,
+            usedbycompstitle, compstable,
+        ], id="lictab_card_lic",
+        # style={"width": "28rem", "height":  "50rem"},
+        # style={"width": "28rem"},
     )
 
 
@@ -979,33 +1194,124 @@ if df_main is None or df_main.size == 0:
     sys.exit(2)
 
 if readfrom == 'db':
+    print("Writing data to JSON files ...")
     write_data_files()
 
 df_proj = proc_projdata(df_main)
 df_comp, df_projcompmap = proc_comp_data(df_main)
 df_vuln, df_projvulnmap, df_compvulnmap = proc_vuln_data(df_vuln)
-
-projsummtab_fig_proj = create_projsummtab_fig_proj(df_proj, 'secCritCount')
-
-projsummtab_fig_compsec = create_projsummtab_fig_compsec(df_proj)
-
-projsummtab_fig_complic = create_projsummtab_fig_complic(df_proj)
-
-projtab_table_projs = create_projtab_table_projs(df_proj)
-
-projtab_fig_compsec = create_projtab_fig_subsummary(df_proj)
-
-projtab_fig_complic = create_projtab_fig_subdetails(df_proj)
-
-comptab_fig_compsec = create_comptab_fig_compsec(df_comp)
-
-comptab_fig_complic = create_comptab_fig_complic(df_comp)
-
-comptab_table_compvers = create_comptab_table_compvers(df_comp)
-
-vulntab_table_vulns = create_vulntab_table_vulns(df_vuln)
+df_lic, licmap_dict = proc_licdata(df_comp)
 
 print("READY\n")
+
+def create_projsummtab(df_proj, color_col):
+    return dbc.Row([
+            dbc.Col([
+                dbc.Row(
+                    dbc.Col(
+                        dcc.Graph(id='projsummtab_graph_proj', figure=create_projsummtab_fig_proj(df_proj, color_col)),
+                    ),
+                ),
+                dbc.Row([
+                    dbc.Col(
+                        html.Div(children="Select Colour Scheme"), width=2
+                    ),
+                    dbc.Col(
+                        dbc.RadioItems(
+                            options=[
+                                {'label': 'Critical Vulns', 'value': 'secCritCount'},
+                                {'label': 'High Vulns', 'value': 'secHighCount'},
+                                {'label': 'High Licenses', 'value': 'licHighCount'},
+                            ],
+                            id='summtab_radio',
+                            value='secCritCount',
+                            inline=True,
+                            # labelStyle={'display': 'inline-block'}
+                        ), width=5
+                    )], justify='end'
+                ),
+            ], width=8),
+            dbc.Col([
+                dcc.Graph(id='projsummtab_graph_compsec', figure=create_projsummtab_fig_compsec(df_proj)),
+                dcc.Graph(id='projsummtab_graph_complic', figure=create_projsummtab_fig_complic(df_proj)),
+            ], width=4),
+        ])
+
+
+def create_projtab(df_proj):
+    return dbc.Row([
+        dbc.Col(create_projtab_table_projs(df_proj), width=9),
+        dbc.Col(
+            dbc.Tabs(
+                [
+                    dbc.Tab(
+                        [
+                            dcc.Graph(id='projtab_graph_compsec',
+                                      figure=create_projtab_fig_subsummary(df_proj)),
+                            dcc.Graph(id='projtab_graph_complic',
+                                      figure=create_projtab_fig_subdetails(df_proj)),
+                        ], label='Projects Summary',
+                        tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
+                    ),
+                    dbc.Tab(
+                        create_projtab_card_proj(None),
+                        label='Selected Project',
+                        tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
+                    )
+                ], id="tabs_proj_subtabs",
+            ), width=3
+        ),
+    ])
+
+
+def create_comptab(df_comp):
+    return dbc.Row(
+        [
+            dbc.Col([
+                create_comptab_table_compvers(df_comp),
+                # html.Div(children="Component Search"),
+                # dbc.Input(id="comptab_input_comp", placeholder="", type="text"),
+            ], width=8),
+            dbc.Col(
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            [
+                                dcc.Graph(id='comptab_graph_compsec', figure=create_comptab_fig_compsec(df_comp)),
+                                dcc.Graph(id='comptab_graph_complic', figure=create_comptab_fig_complic(df_comp)),
+                            ], label='Components Summary',
+                            tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
+                        ),
+                        dbc.Tab(
+                            create_comptab_card_comp(None),
+                            label='Selected Component',
+                            tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
+                        ),
+                    ]
+                ), width=4
+            ),
+        ]
+    )
+
+
+def create_vulntab(df_vuln):
+    return dbc.Row(
+        [
+            dbc.Col(create_vulntab_table_vulns(df_vuln), width=8),
+            dbc.Col(create_vulntab_card_vuln(None), width=4, id='col_vulntab_vuln'),
+        ]
+    )
+
+
+def create_lictab(df_lic):
+    return dbc.Row(
+        [
+            dbc.Col(create_licab_table_lics(df_lic), width=7),
+            dbc.Col(create_lictab_card_lic(None), width=5,
+                    id='col_lictab_lic'),
+        ]
+    )
+
 
 app.layout = dbc.Container(
     [
@@ -1029,7 +1335,7 @@ app.layout = dbc.Container(
                         id="sel_projects",
                         options=[
                             {'label': i, 'value': i} for i in df_main.sort_values(by=['projName'], ascending=True).
-                                                                      projName.unique()
+                                projName.unique()
                         ], multi=True, placeholder='Select Projects ...'
                     ), width=5
                 ),
@@ -1105,124 +1411,50 @@ app.layout = dbc.Container(
                         id="sel_comps",
                         options=[
                             {'label': i, 'value': i} for i in df_comp.sort_values(by=['compName'], ascending=True).
-                                                                      compName.unique()
+                                compName.unique()
                         ],
                         multi=True
                     ), width=3
                 )
-
             ]
         ),
         dbc.Row(html.Hr()),
         dbc.Row(
             dbc.Col(
-                dbc.Tabs(
+                dbc.Spinner(dbc.Tabs(
                     [
                         dbc.Tab(  # SUMMARY TAB
-                            dbc.Row([
-                                dbc.Col([
-                                    dbc.Row(
-                                        dbc.Col(
-                                            dcc.Graph(id='projsummtab_graph_proj', figure=projsummtab_fig_proj),
-                                        ),
-                                    ),
-                                    dbc.Row([
-                                        dbc.Col(
-                                            html.Div(children="Select Colour Scheme"), width=2
-                                        ),
-                                        dbc.Col(
-                                            dbc.RadioItems(
-                                                options=[
-                                                    {'label': 'Critical Vulns', 'value': 'secCritCount'},
-                                                    {'label': 'High Vulns', 'value': 'secHighCount'},
-                                                    {'label': 'High Licenses', 'value': 'licHighCount'},
-                                                ],
-                                                id='summtab_radio',
-                                                value='secCritCount',
-                                                inline=True,
-                                                # labelStyle={'display': 'inline-block'}
-                                            ), width=5
-                                        )], justify='end'
-                                    ),
-                                ], width=8),
-                                dbc.Col([
-                                    dcc.Graph(id='projsummtab_graph_compsec', figure=projsummtab_fig_compsec),
-                                    dcc.Graph(id='projsummtab_graph_complic', figure=projsummtab_fig_complic),
-                                ], width=4),
-                            ]), label="Projects Summary",
+                            create_projsummtab(df_proj, 'secCritCount'), label="Projects Summary",
                             tab_id="tab_projsummary", id="tab_projsummary",
                         ),
                         dbc.Tab(  # PROJECTS TAB
-                            dbc.Row([
-                                dbc.Col(projtab_table_projs, width=9),
-                                dbc.Col(
-                                    dbc.Tabs(
-                                        [
-                                            dbc.Tab(
-                                                [
-                                                    dcc.Graph(id='projtab_graph_compsec',
-                                                              figure=projtab_fig_compsec),
-                                                    dcc.Graph(id='projtab_graph_complic',
-                                                              figure=projtab_fig_complic),
-                                                ], label='Projects Summary',
-                                                tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
-                                            ),
-                                            dbc.Tab(
-                                                create_projtab_card_proj(None),
-                                                label='Selected Project',
-                                                tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
-                                            )
-                                        ], id="tabs_proj_subtabs",
-                                    ), width=3
-                                ),
-                            ]), label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" + str(
-                                df_proj.projVerId.nunique()) + ")",
+                            create_projtab(df_proj),
+                            label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" +
+                                  str(df_proj.projVerId.nunique()) + ")",
                             tab_id="tab_projects", id="tab_projects"
                         ),
                         dbc.Tab(  # COMPONENTS TAB
-                            dbc.Row([
-                                dbc.Col([
-                                    comptab_table_compvers,
-                                    # html.Div(children="Component Search"),
-                                    # dbc.Input(id="comptab_input_comp", placeholder="", type="text"),
-                                ], width=8),
-                                dbc.Col(
-                                    dbc.Tabs(
-                                        [
-                                            dbc.Tab(
-                                                [
-                                                    dcc.Graph(id='comptab_graph_compsec', figure=comptab_fig_compsec),
-                                                    dcc.Graph(id='comptab_graph_complic', figure=comptab_fig_complic),
-                                                ], label='Components Summary',
-                                                tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
-                                            ),
-                                            dbc.Tab(
-                                                create_comptab_card_comp(None),
-                                                label='Selected Component',
-                                                tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
-                                            ),
-                                        ]
-                                    ),
-                                    width=4),
-                            ]),
+                            create_comptab(df_comp),
                             label="Components (" + str(df_main.compName.nunique()) + ")",
                             tab_id="tab_components", id="tab_components"
                         ),
                         dbc.Tab(  # VULNS TAB
-                            dbc.Row([
-                                dbc.Col(vulntab_table_vulns, width=8),
-                                dbc.Col(create_vulntab_card_vuln(None), width=4,
-                                        id='col_vulntab_vuln'),
-                            ]), label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
+                            create_vulntab(df_vuln),
+                            label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
                             tab_id="tab_vulns", id="tab_vulns"
+                        ),
+                        dbc.Tab(  # LICENSE TAB
+                            create_lictab(df_lic),
+                            label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                            tab_id="tab_lics", id="tab_lics"
                         )
                     ],
                     id="tabs",
                     active_tab="tab_projsummary",
-                ), width=12
+                ), id='spinner_main',),
+                width=12
             )
         ),
-        html.Div(id="tab-content", className="p-4"),
     ], fluid=True
 )
 
@@ -1234,12 +1466,29 @@ app.layout = dbc.Container(
         Input('vulntab_table_vulns', 'derived_virtual_selected_rows'),
     ]
 )
-def get_active_cell_vuln(data, rows):
+def get_active_cell_vuln(vulndata, rows):
     global df_vuln
     if rows:
-        return create_vulntab_card_vuln(df_vuln[df_vuln['vulnId'] == data[rows[0]]['vulnId']])
+        return create_vulntab_card_vuln(df_vuln[df_vuln['vulnId'] == vulndata[rows[0]]['vulnId']])
 
     return create_vulntab_card_vuln(None)
+
+
+@app.callback(
+    Output('col_lictab_lic', 'children'),
+    [
+        Input('lictab_table_lics', 'derived_virtual_data'),
+        Input('lictab_table_lics', 'derived_virtual_selected_rows'),
+    ]
+)
+def get_active_cell_lic(licdata, rows):
+    global df_lic
+    if rows:
+        # print(licdata)
+        # print(rows)
+        return create_lictab_card_lic(df_lic[df_lic['licName'] == licdata[rows[0]]['licName']])
+
+    return create_lictab_card_lic(None)
 
 
 @app.callback(
@@ -1278,24 +1527,16 @@ def get_active_cell_proj(data, rows):
 # Update graphs and select options based on selection inputs
 @app.callback(
     [
-        Output("projsummtab_graph_proj", "figure"),
-        Output('projsummtab_graph_compsec', 'figure'),
-        Output('projsummtab_graph_complic', 'figure'),
-        Output('projtab_table_projs', 'data'),
-        Output('projtab_graph_compsec', 'figure'),
-        Output('projtab_graph_complic', 'figure'),
-        Output('comptab_graph_compsec', 'figure'),
-        Output('comptab_graph_complic', 'figure'),
-        Output('comptab_table_compvers', 'data'),
-        Output("vulntab_table_vulns", "data"),
+        Output('tab_projsummary', 'children'),
+        Output('tab_projects', 'children'),
+        Output('tab_components', 'children'),
+        Output("tab_vulns", "children"),
         Output("sel_versions", 'options'),
         Output("sel_tiers", 'options'),
         Output("sel_dists", 'options'),
         Output("sel_phases", 'options'),
         Output('sel_comps', 'options'),
-        Output('tab_projects', 'label'),
-        Output('tab_components', 'label'),
-        Output('tab_vulns', 'label'),
+        Output('spinner_main', 'children'),
     ], [
         Input('sel_projects', 'value'),
         Input('sel_versions', 'value'),
@@ -1305,12 +1546,12 @@ def get_active_cell_proj(data, rows):
         Input('sel_secrisk', 'value'),
         Input('sel_licrisk', 'value'),
         Input('sel_comps', 'value'),
-        Input('projsummtab_graph_proj', 'clickData'),
+        # Input('projsummtab_graph_proj', 'clickData'),
         # Input('comptab_input_comp', 'value'),
         Input('summtab_radio', 'value'),
     ]
 )
-def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click_proj, proj_radio):
+def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_radio):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
@@ -1330,10 +1571,10 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
         # Filter projects from selection
         temp_df_proj = temp_df_proj[temp_df_proj.projName.isin(projs)]
         # Filter components based on projcompmap
-        recalc = True
 
         # Set project version dropdowns
         sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
+        recalc = True
     else:
         # Version selection only possible if Project selected
         sel_vers_options = []
@@ -1354,7 +1595,6 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
 
         vulnids = df_compvulnmap[df_compvulnmap.compVerId.isin(compverids)]['vulnId'].unique()
         temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
-
         recalc = True
 
     # Modify dropdown options
@@ -1421,52 +1661,59 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, click
             temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
 
-    projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
-                    str(temp_df_proj.projVerId.nunique()) + ")"
+    # projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
+    #                 str(temp_df_proj.projVerId.nunique()) + ")"
+    #
+    # comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
+    #
+    # vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
 
-    comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
+    # lictab_table_lics
 
-    vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
+    # # Click on projtab_treemap
+    # if click_proj['points'][0]['parent'] == '':
+    #     # All
+    #     pass
+    # elif click_proj['points'][0]['parent'] == 'All':
+    #     # Project
+    #     temp_df_proj = temp_df_proj[temp_df_proj.projName == click_proj['points'][0]['label']]
+    # else:
+    #     # ProjectVersion
+    #     temp_df_proj = temp_df_proj[(temp_df_proj.projName == click_proj['points'][0]['parent']) &
+    #                                 (temp_df_proj.projVerName == click_proj['points'][0]['label'])]
+    #
 
-    projtab_newtable_projs = temp_df_proj.to_dict('records')
-
-    projtab_newfig_compsec = create_projtab_fig_subsummary(temp_df_proj)
-
-    projtab_newfig_complic = create_projtab_fig_subdetails(temp_df_proj)
-
-    comptab_newfig_compsec = create_comptab_fig_compsec(temp_df_comp)
-
-    comptab_newfig_complic = create_comptab_fig_complic(temp_df_comp)
-
-    comptab_newtable_compvers = temp_df_comp.to_dict('records')
-
-    vulntab_table_vulns_new = temp_df_vuln.to_dict('records')
-
-    if click_proj is not None:
-        # Click on projtab_treemap
-        if click_proj['points'][0]['parent'] == '':
-            # All
-            pass
-        elif click_proj['points'][0]['parent'] == 'All':
-            # Project
-            temp_df_proj = temp_df_proj[temp_df_proj.projName == click_proj['points'][0]['label']]
-        else:
-            # ProjectVersion
-            temp_df_proj = temp_df_proj[(temp_df_proj.projName == click_proj['points'][0]['parent']) &
-                                        (temp_df_proj.projVerName == click_proj['points'][0]['label'])]
-
-    projsummtab_newfig_proj = create_projsummtab_fig_proj(temp_df_proj, proj_radio)
-
-    projsummtab_newfig_compsec = create_projsummtab_fig_compsec(temp_df_proj)
-
-    projsummtab_newfig_complic = create_projsummtab_fig_complic(temp_df_proj)
-
-    return (projsummtab_newfig_proj, projsummtab_newfig_compsec, projsummtab_newfig_complic,
-            projtab_newtable_projs, projtab_newfig_compsec, projtab_newfig_complic,
-            comptab_newfig_compsec, comptab_newfig_complic, comptab_newtable_compvers,
-            vulntab_table_vulns_new,
-            sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options,
-            projtab_label, comptab_label, vulntab_label)
+    return  (dbc.Tabs(
+                [
+                    dbc.Tab(  # SUMMARY TAB
+                        create_projsummtab(df_proj, proj_radio), label="Projects Summary",
+                        tab_id="tab_projsummary", id="tab_projsummary",
+                    ),
+                    dbc.Tab(  # PROJECTS TAB
+                        create_projtab(df_proj),
+                        label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" +
+                              str(df_proj.projVerId.nunique()) + ")",
+                        tab_id="tab_projects", id="tab_projects"
+                    ),
+                    dbc.Tab(  # COMPONENTS TAB
+                        create_comptab(df_comp),
+                        label="Components (" + str(df_main.compName.nunique()) + ")",
+                        tab_id="tab_components", id="tab_components"
+                    ),
+                    dbc.Tab(  # VULNS TAB
+                        create_vulntab(df_vuln),
+                        label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
+                        tab_id="tab_vulns", id="tab_vulns"
+                    ),
+                    dbc.Tab(  # LICENSE TAB
+                        create_lictab(df_lic),
+                        label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                        tab_id="tab_lics", id="tab_lics"
+                    )
+                ],
+                id="tabs",
+                active_tab="tab_projsummary",
+            ), sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options)
 
 
 if __name__ == '__main__':
