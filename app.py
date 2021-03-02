@@ -210,7 +210,8 @@ def proc_licdata(thisdf):
     compids = thisdf.compVerId.values
     # licrisks = thisdf.licRisk.values
 
-    thislicmap_dict = {}  # Map of license names to compverids (dict of lists of compverids)
+    thislic_compverid_dict = {}  # Map of license names to compverids (dict of lists of compverids)
+    thiscompverid_lic_dict = {}
     # licrisk_dict = {}
     licname_list = []
 
@@ -241,11 +242,18 @@ def proc_licdata(thisdf):
         for item in splits:
             # lics = thisdf[thisdf['licName'] == item].licRisk.unique()
             # maxrisk = get_maxlicrisk(lics)
-            if item not in thislicmap_dict.keys():
-                thislicmap_dict[item] = [compids[compindex]]
-            elif compids[compindex] not in thislicmap_dict[item]:
-                thislicmap_dict[item].append(compids[compindex])
-            # licrisk_dict[item] = maxrisk
+            compverid = compids[compindex]
+            if item not in thislic_compverid_dict.keys():
+                thislic_compverid_dict[item] = [compverid]
+            elif compverid not in thislic_compverid_dict[item]:
+                thislic_compverid_dict[item].append(compverid)
+
+            if compverid not in thiscompverid_lic_dict.keys():
+                thiscompverid_lic_dict[compverid] = [item]
+            elif item not in thiscompverid_lic_dict[compverid]:
+                thiscompverid_lic_dict[compverid].append(item)
+
+                # licrisk_dict[item] = maxrisk
             # print(item, ' - ', maxrisk, ' - ', lic)
 
         compindex += 1
@@ -257,7 +265,7 @@ def proc_licdata(thisdf):
     # sorter = ['OK', 'Low', 'Medium', 'High']
     # temp_df.licRisk = temp_df.licRisk.astype("category")
     # temp_df.licRisk.cat.set_categories(sorter, inplace=True)
-    return sums, thislicmap_dict
+    return sums, thislic_compverid_dict, thiscompverid_lic_dict
 
 
 def get_vulndata(thiscur):
@@ -927,13 +935,15 @@ def create_comptab_card_comp(compdata):
 
     compname = ''
     compver = ''
+    complic = ''
     projusedbytitle = ''
-    projselbutton = ''
+    # projselbutton = ''
     projstable = ''
     if compdata is not None:
         compname = compdata['compName'].values[0]
         compver = compdata['compVerName'].values[0]
         compverid = compdata['compVerId'].values[0]
+        complic = compdata['licName'].values[0]
 
         projlist = []
         projverlist = []
@@ -954,15 +964,15 @@ def create_comptab_card_comp(compdata):
             {"name": ['Project Version'], "id": "projVerName"},
         ]
 
-        projselbutton = html.Div(
-            dbc.Button("Select Project", color="primary", className="mr-1", id="tabcomp_detail_selproj", size='sm'),
-        )
+        # projselbutton = html.Div(
+        #     dbc.Button("Select Project", color="primary", className="mr-1", id="tabcomp_detail_selproj", size='sm'),
+        # )
 
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
             page_size=6, sort_action='native',
-            row_selectable="single",
+            # row_selectable="single",
             merge_duplicate_headers=False
         )
 
@@ -977,10 +987,13 @@ def create_comptab_card_comp(compdata):
                 [
                     html.H4("Component: " + compname, className="card-title"),
                     html.H6("Component Version: " + compver, className="card-subtitle"),
+                    html.Br(),
+                    html.P("License: " + complic)
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
-            projusedbytitle, projstable, projselbutton,
+            projusedbytitle, projstable,
+            # projselbutton,
         ], id="comptab_card_comp",
         # style={"width": "28rem", "height":  "50rem"},
         # style={"width": "23rem"},
@@ -1075,7 +1088,7 @@ def create_vulntab_card_vuln(vulndata):
 
 
 def create_lictab_card_lic(licdata):
-    global licmap_dict, df_comp, df_proj, df_projcompmap
+    global lic_compverid_dict, df_comp, df_proj, df_projcompmap
 
     licname = ''
 
@@ -1090,7 +1103,7 @@ def create_lictab_card_lic(licdata):
         compverlist = []
         projlist = []
         projverlist = []
-        for compid in licmap_dict[licdata.licName.values[0]]:
+        for compid in lic_compverid_dict[licdata.licName.values[0]]:
             complist.append(df_comp[df_comp['compVerId'] == compid].compName.values[0])
             compverlist.append(df_comp[df_comp['compVerId'] == compid].compVerName.values[0])
             for projverid in df_projcompmap[df_projcompmap['compVerId'] == compid].projVerId.values:
@@ -1202,7 +1215,7 @@ if readfrom == 'db':
 df_proj = proc_projdata(df_main)
 df_comp, df_projcompmap = proc_comp_data(df_main)
 df_vuln, df_projvulnmap, df_compvulnmap = proc_vuln_data(df_vuln)
-df_lic, licmap_dict = proc_licdata(df_comp)
+df_lic, lic_compverid_dict, compverid_lic_dict = proc_licdata(df_comp)
 
 print("READY\n")
 
@@ -1448,8 +1461,8 @@ app.layout = dbc.Container(
                             ),
                             dbc.Tab(  # LICENSE TAB
                                 create_lictab(df_lic),
-                                # label="Licenses (" + str(df_lic.licName.nunique()) + ")",
-                                label="Licenses",
+                                label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                                # label="Licenses",
                                 tab_id="tab_lics", id="tab_lics"
                             )
                         ],
@@ -1560,10 +1573,11 @@ def get_active_cell_proj(data, rows):
         State("tabs", "active_tab"),
     ]
 )
-def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_radio, activetab):
+def maincallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_radio, activetab):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
+    global df_lic, lic_compverid_dict
 
     ctx = dash.callback_context
 
@@ -1573,6 +1587,7 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
     temp_df_proj = df_proj
     temp_df_comp = df_comp
     temp_df_vuln = df_vuln
+    temp_df_lic = df_lic
     recalc = False
 
     # Process existing select dropdowns
@@ -1604,7 +1619,7 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
 
         vulnids = df_compvulnmap[df_compvulnmap.compVerId.isin(compverids)]['vulnId'].unique()
         temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
-        recalc = True
+        # recalc = True
 
     # Modify dropdown options
     sel_tiers_options = [{'label': i, 'value': i} for i in temp_df_proj.projTier.unique()]
@@ -1637,6 +1652,12 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
         vulnids = df_projvulnmap[df_projvulnmap.projVerId.isin(projverids)]['vulnId'].unique()
         temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
 
+        licnames = []
+        for id in compverids:
+            [licnames.append(x) for x in compverid_lic_dict[id] if x not in licnames]
+        licnames.sort()
+        temp_df_lic = temp_df_lic[temp_df_lic.licName.isin(licnames)]
+
     if secrisk is not None and len(secrisk) > 0:
         # Filter projects based on security risk selection
         if 'Critical' in secrisk:
@@ -1659,14 +1680,17 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
     if licrisk is not None and len(licrisk) > 0:
         # Filter projects based on security risk selection
         if 'High' in licrisk:
+            temp_df_lic = temp_df_lic[temp_df_lic.licHighCount > 0]
             temp_df_proj = temp_df_proj[temp_df_proj.licHighCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licHighCount > 0]
 
         if 'Medium' in licrisk:
+            temp_df_lic = temp_df_lic[temp_df_lic.licMedCount > 0]
             temp_df_proj = temp_df_proj[temp_df_proj.licMedCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licMedCount > 0]
 
         if 'Low' in licrisk:
+            temp_df_lic = temp_df_lic[temp_df_lic.licLowCount > 0]
             temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
 
@@ -1676,8 +1700,6 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
     comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
 
     vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
-
-    # lictab_table_lics
 
     # # Click on projtab_treemap
     # if click_proj['points'][0]['parent'] == '':
@@ -1717,9 +1739,9 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
                         tab_id="tab_vulns", id="tab_vulns"
                     ),
                     dbc.Tab(  # LICENSE TAB
-                        create_lictab(df_lic),
-                        # label="Licenses (" + str(df_lic.licName.nunique()) + ")",
-                        label="Licenses",
+                        create_lictab(temp_df_lic),
+                        label="Licenses (" + str(temp_df_lic.licName.nunique()) + ")",
+                        # label="Licenses",
                         tab_id="tab_lics", id="tab_lics"
                     )
                 ],
