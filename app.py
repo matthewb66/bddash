@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_table
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.express as px
 import json
@@ -23,7 +23,9 @@ if not os.path.isfile('users.txt'):
 
 with open('users.txt') as f:
     data = f.read()
-VALID_USERNAME_PASSWORD_PAIRS = json.loads(data)
+    VALID_USERNAME_PASSWORD_PAIRS = json.loads(data)
+    f.close()
+
 # VALID_USERNAME_PASSWORD_PAIRS = {
 #     'user': 'password'
 # }
@@ -1258,7 +1260,7 @@ def create_projtab(df_proj):
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )
-                ], id="tabs_proj_subtabs",
+                ], id="tabs_proj_subtabs", active_tab='tab_proj_subsummary',
             ), width=3
         ),
     ])
@@ -1287,7 +1289,7 @@ def create_comptab(df_comp):
                             label='Selected Component',
                             tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
                         ),
-                    ]
+                    ], active_tab='tab_comp_subsummary',
                 ), width=4
             ),
         ]
@@ -1421,38 +1423,41 @@ app.layout = dbc.Container(
         dbc.Row(html.Hr()),
         dbc.Row(
             dbc.Col(
-                dbc.Spinner(dbc.Tabs(
-                    [
-                        dbc.Tab(  # SUMMARY TAB
-                            create_projsummtab(df_proj, 'secCritCount'), label="Projects Summary",
-                            tab_id="tab_projsummary", id="tab_projsummary",
-                        ),
-                        dbc.Tab(  # PROJECTS TAB
-                            create_projtab(df_proj),
-                            label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" +
-                                  str(df_proj.projVerId.nunique()) + ")",
-                            tab_id="tab_projects", id="tab_projects"
-                        ),
-                        dbc.Tab(  # COMPONENTS TAB
-                            create_comptab(df_comp),
-                            label="Components (" + str(df_main.compName.nunique()) + ")",
-                            tab_id="tab_components", id="tab_components"
-                        ),
-                        dbc.Tab(  # VULNS TAB
-                            create_vulntab(df_vuln),
-                            label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
-                            tab_id="tab_vulns", id="tab_vulns"
-                        ),
-                        dbc.Tab(  # LICENSE TAB
-                            create_lictab(df_lic),
-                            label="Licenses (" + str(df_lic.licName.nunique()) + ")",
-                            tab_id="tab_lics", id="tab_lics"
-                        )
-                    ],
-                    id="tabs",
-                    active_tab="tab_projsummary",
-                ), id='spinner_main',),
-                width=12
+                dbc.Spinner(
+                    dbc.Tabs(
+                        [
+                            dbc.Tab(  # SUMMARY TAB
+                                create_projsummtab(df_proj, 'secCritCount'), label="Projects Summary",
+                                tab_id="tab_projsummary", id="tab_projsummary",
+                            ),
+                            dbc.Tab(  # PROJECTS TAB
+                                create_projtab(df_proj),
+                                label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" +
+                                      str(df_proj.projVerId.nunique()) + ")",
+                                tab_id="tab_projects", id="tab_projects"
+                            ),
+                            dbc.Tab(  # COMPONENTS TAB
+                                create_comptab(df_comp),
+                                label="Components (" + str(df_comp.compName.nunique()) + ")",
+                                tab_id="tab_components", id="tab_components"
+                            ),
+                            dbc.Tab(  # VULNS TAB
+                                create_vulntab(df_vuln),
+                                label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
+                                tab_id="tab_vulns", id="tab_vulns"
+                            ),
+                            dbc.Tab(  # LICENSE TAB
+                                create_lictab(df_lic),
+                                # label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                                label="Licenses",
+                                tab_id="tab_lics", id="tab_lics"
+                            )
+                        ],
+                        id="tabs",
+                        active_tab="tab_projsummary",
+                    ),
+                    id='spinner_main',
+                ), width=12,
             )
         ),
     ], fluid=True
@@ -1527,16 +1532,19 @@ def get_active_cell_proj(data, rows):
 # Update graphs and select options based on selection inputs
 @app.callback(
     [
-        Output('tab_projsummary', 'children'),
-        Output('tab_projects', 'children'),
-        Output('tab_components', 'children'),
-        Output("tab_vulns", "children"),
+        Output('spinner_main', 'children'),
+        # Output('tab_projsummary', 'children'),
+        # Output('tab_projects', 'children'),
+        # Output('tab_components', 'children'),
+        # Output("tab_vulns", "children"),
+        # Output('tab_projects', 'label'),
+        # Output('tab_components', 'label'),
+        # Output("tab_vulns", "label"),
         Output("sel_versions", 'options'),
         Output("sel_tiers", 'options'),
         Output("sel_dists", 'options'),
         Output("sel_phases", 'options'),
         Output('sel_comps', 'options'),
-        Output('spinner_main', 'children'),
     ], [
         Input('sel_projects', 'value'),
         Input('sel_versions', 'value'),
@@ -1549,9 +1557,10 @@ def get_active_cell_proj(data, rows):
         # Input('projsummtab_graph_proj', 'clickData'),
         # Input('comptab_input_comp', 'value'),
         Input('summtab_radio', 'value'),
+        State("tabs", "active_tab"),
     ]
 )
-def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_radio):
+def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_radio, activetab):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
@@ -1661,12 +1670,12 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
             temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
             temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
 
-    # projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
-    #                 str(temp_df_proj.projVerId.nunique()) + ")"
-    #
-    # comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
-    #
-    # vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
+    projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
+                    str(temp_df_proj.projVerId.nunique()) + ")"
+
+    comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
+
+    vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
 
     # lictab_table_lics
 
@@ -1683,37 +1692,46 @@ def mycallback(projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_
     #                                 (temp_df_proj.projVerName == click_proj['points'][0]['label'])]
     #
 
-    return  (dbc.Tabs(
+    return (
+        dbc.Tabs(
                 [
                     dbc.Tab(  # SUMMARY TAB
-                        create_projsummtab(df_proj, proj_radio), label="Projects Summary",
+                        create_projsummtab(temp_df_proj, proj_radio),
+                        label="Projects Summary",
                         tab_id="tab_projsummary", id="tab_projsummary",
                     ),
                     dbc.Tab(  # PROJECTS TAB
-                        create_projtab(df_proj),
-                        label="Projects (" + str(df_proj.projName.nunique()) + ") & Versions (" +
-                              str(df_proj.projVerId.nunique()) + ")",
+                        create_projtab(temp_df_proj),
+                        label="Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" +
+                              str(temp_df_proj.projVerId.nunique()) + ")",
                         tab_id="tab_projects", id="tab_projects"
                     ),
                     dbc.Tab(  # COMPONENTS TAB
-                        create_comptab(df_comp),
-                        label="Components (" + str(df_main.compName.nunique()) + ")",
+                        create_comptab(temp_df_comp),
+                        label="Components (" + str(temp_df_comp.compName.nunique()) + ")",
                         tab_id="tab_components", id="tab_components"
                     ),
                     dbc.Tab(  # VULNS TAB
-                        create_vulntab(df_vuln),
-                        label="Vulnerabilties (" + str(df_vuln.vulnId.nunique()) + ")",
+                        create_vulntab(temp_df_vuln),
+                        label="Vulnerabilties (" + str(temp_df_vuln.vulnId.nunique()) + ")",
                         tab_id="tab_vulns", id="tab_vulns"
                     ),
                     dbc.Tab(  # LICENSE TAB
                         create_lictab(df_lic),
-                        label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                        # label="Licenses (" + str(df_lic.licName.nunique()) + ")",
+                        label="Licenses",
                         tab_id="tab_lics", id="tab_lics"
                     )
                 ],
                 id="tabs",
-                active_tab="tab_projsummary",
-            ), sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options)
+                active_tab=activetab,
+            ),
+        # create_projsummtab(temp_df_proj, proj_radio),
+        # create_projtab(temp_df_proj),
+        # create_comptab(temp_df_comp),
+        # create_vulntab(temp_df_vuln),
+        # projtab_label, comptab_label, vulntab_label,
+        sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options)
 
 
 if __name__ == '__main__':

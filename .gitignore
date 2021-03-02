@@ -3,3 +3,4 @@ bddash
 .DS_Store
 .env
 .idea
+users.txt
