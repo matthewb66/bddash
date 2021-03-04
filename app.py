@@ -22,12 +22,12 @@ if not os.path.isfile('users.txt'):
     sys.exit(3)
 
 with open('users.txt') as f:
-    data = f.read()
-    VALID_USERNAME_PASSWORD_PAIRS = json.loads(data)
+    fdata = f.read()
+    VALID_USERNAME_PASSWORD_PAIRS = json.loads(fdata)
     f.close()
 
 # VALID_USERNAME_PASSWORD_PAIRS = {
-#     'user': 'password'
+#     "user": "password"
 # }
 
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
@@ -611,115 +611,226 @@ def create_comptab_table_compvers(thisdf):
     ]
     df_temp = thisdf
 
-    thistable = dash_table.DataTable(id='comptab_table_compvers',
-                                     columns=col_data,
-                                     style_cell={
-                                         'overflow': 'hidden',
-                                         'textOverflow': 'ellipsis',
-                                         'maxWidth': 0
-                                     },
-                                     data=df_temp.to_dict('records'),
-                                     row_selectable="single",
-                                     page_size=20, sort_action='native',
-                                     cell_selectable=False,
-                                     style_data_conditional=[
-                                         {
-                                             'if': {
-                                                 'filter_query': '{secCritCount} > 0',
-                                                 'column_id': 'secCritCount'
-                                             },
-                                             'backgroundColor': 'maroon',
-                                             'color': 'white'
-                                         },
-                                         {
-                                             'if': {'column_id': 'secCritCount'},
-                                             'width': '50px'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{secHighCount} > 0',
-                                                 'column_id': 'secHighCount'
-                                             },
-                                             'backgroundColor': 'crimson',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {'column_id': 'secHighCount'},
-                                             'width': '50px'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{secMedCount} > 0',
-                                                 'column_id': 'secMedCount'
-                                             },
-                                             'backgroundColor': 'coral',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {'column_id': 'secMedCount'},
-                                             'width': '50px'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{secLowCount} > 0',
-                                                 'column_id': 'secLowCount'
-                                             },
-                                             'backgroundColor': 'gold',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {'column_id': 'secLowCount'},
-                                             'width': '50px'
-                                         },
-                                         {
-                                             'if': {'column_id': 'licName'},
-                                             'width': '300px',
+    if len(df_temp) == 0:
+        thistable = dash_table.DataTable(id='comptab_table_compvers',
+                                         columns=col_data,
+                                         style_cell={
                                              'overflow': 'hidden',
                                              'textOverflow': 'ellipsis',
+                                             'maxWidth': 0
                                          },
-                                         {
-                                             'if': {'column_id': 'compName'},
-                                             'width': '400px',
-                                         },
-                                         {
-                                             'if': {'column_id': 'compVerName'},
-                                             'width': '100px',
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licRisk} = "High"',
-                                                 'column_id': 'licRisk'
+                                         data=df_temp.to_dict('records'),
+                                         row_selectable="single",
+                                         page_size=20, sort_action='native',
+                                         cell_selectable=False,
+                                         style_data_conditional=[
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secCritCount} > 0',
+                                                     'column_id': 'secCritCount'
+                                                 },
+                                                 'backgroundColor': 'maroon',
+                                                 'color': 'white'
                                              },
-                                             'backgroundColor': 'crimson',
-                                             'color': 'black',
-                                             'width': '50px',
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licRisk} = "Medium"',
-                                                 'column_id': 'licRisk'
+                                             {
+                                                 'if': {'column_id': 'secCritCount'},
+                                                 'width': '50px'
                                              },
-                                             'backgroundColor': 'coral',
-                                             'color': 'black',
-                                             'width': '50px',
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licRisk} = "Low"',
-                                                 'column_id': 'licRisk'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secHighCount} > 0',
+                                                     'column_id': 'secHighCount'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'gold',
-                                             'color': 'black',
-                                             'width': '50px',
-                                         },
+                                             {
+                                                 'if': {'column_id': 'secHighCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secMedCount} > 0',
+                                                     'column_id': 'secMedCount'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secMedCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secLowCount} > 0',
+                                                     'column_id': 'secLowCount'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secLowCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'licName'},
+                                                 'width': '300px',
+                                                 'overflow': 'hidden',
+                                                 'textOverflow': 'ellipsis',
+                                             },
+                                             {
+                                                 'if': {'column_id': 'compName'},
+                                                 'width': '400px',
+                                             },
+                                             {
+                                                 'if': {'column_id': 'compVerName'},
+                                                 'width': '100px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "High"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "Medium"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "Low"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
 
-                                     ],
-                                     sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
-                                              {'column_id': 'secHighCount', 'direction': 'desc'},
-                                              {'column_id': 'secMedCount', 'direction': 'desc'},
-                                              {'column_id': 'secLowCount', 'direction': 'desc'}],
-                                     merge_duplicate_headers=True
-                                     )
+                                         ],
+                                         sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
+                                                  {'column_id': 'secHighCount', 'direction': 'desc'},
+                                                  {'column_id': 'secMedCount', 'direction': 'desc'},
+                                                  {'column_id': 'secLowCount', 'direction': 'desc'}],
+                                         merge_duplicate_headers=True
+                                         )
+    else:
+        thistable = dash_table.DataTable(id='comptab_table_compvers',
+                                         columns=col_data,
+                                         style_cell={
+                                             'overflow': 'hidden',
+                                             'textOverflow': 'ellipsis',
+                                             'maxWidth': 0
+                                         },
+                                         data=df_temp.to_dict('records'),
+                                         row_selectable="single",
+                                         page_size=20, sort_action='native',
+                                         cell_selectable=False,
+                                         style_data_conditional=[
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secCritCount} > 0',
+                                                     'column_id': 'secCritCount'
+                                                 },
+                                                 'backgroundColor': 'maroon',
+                                                 'color': 'white'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secCritCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secHighCount} > 0',
+                                                     'column_id': 'secHighCount'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secHighCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secMedCount} > 0',
+                                                     'column_id': 'secMedCount'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secMedCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{secLowCount} > 0',
+                                                     'column_id': 'secLowCount'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'secLowCount'},
+                                                 'width': '50px'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'licName'},
+                                                 'width': '300px',
+                                                 'overflow': 'hidden',
+                                                 'textOverflow': 'ellipsis',
+                                             },
+                                             {
+                                                 'if': {'column_id': 'compName'},
+                                                 'width': '400px',
+                                             },
+                                             {
+                                                 'if': {'column_id': 'compVerName'},
+                                                 'width': '100px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "High"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "Medium"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licRisk} = "Low"',
+                                                     'column_id': 'licRisk'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black',
+                                                 'width': '50px',
+                                             },
+
+                                         ],
+                                         sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
+                                                  {'column_id': 'secHighCount', 'direction': 'desc'},
+                                                  {'column_id': 'secMedCount', 'direction': 'desc'},
+                                                  {'column_id': 'secLowCount', 'direction': 'desc'}],
+                                         merge_duplicate_headers=True
+                                         )
     return thistable
 
 
@@ -739,59 +850,65 @@ def create_vulntab_table_vulns(thisdf):
         {"name": ['Published Date'], "id": "published_on"},
     ]
     df_temp = thisdf
-    df_temp = df_temp.sort_values(by=["score"], ascending=False)
 
-    thistable = dash_table.DataTable(id='vulntab_table_vulns',
-                                     columns=vuln_data,
-                                     data=df_temp.to_dict('records'),
-                                     page_size=20, sort_action='native',
-                                     row_selectable="single",
-                                     cell_selectable=False,
-                                     style_data_conditional=[
-                                         {
-                                             'if': {
-                                                 'filter_query': '{severity} = "CRITICAL"',
-                                                 'column_id': 'severity'
+    if len(df_temp) == 0:
+        thistable = dash_table.DataTable(id='vulntab_table_vulns',
+                                         columns=vuln_data,
+                                         )
+    else:
+        df_temp = df_temp.sort_values(by=["score"], ascending=False)
+
+        thistable = dash_table.DataTable(id='vulntab_table_vulns',
+                                         columns=vuln_data,
+                                         data=df_temp.to_dict('records'),
+                                         page_size=20, sort_action='native',
+                                         row_selectable="single",
+                                         cell_selectable=False,
+                                         style_data_conditional=[
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{severity} = "CRITICAL"',
+                                                     'column_id': 'severity'
+                                                 },
+                                                 'backgroundColor': 'maroon',
+                                                 'color': 'white'
                                              },
-                                             'backgroundColor': 'maroon',
-                                             'color': 'white'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{severity} = "HIGH"',
-                                                 'column_id': 'severity'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{severity} = "HIGH"',
+                                                     'column_id': 'severity'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'crimson',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{severity} = "MEDIUM"',
-                                                 'column_id': 'severity'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{severity} = "MEDIUM"',
+                                                     'column_id': 'severity'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'coral',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{severity} = "LOW"',
-                                                 'column_id': 'severity'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{severity} = "LOW"',
+                                                     'column_id': 'severity'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'gold',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {'column_id': 'severity'},
-                                             'width': '80px'
-                                         },
-                                     ],
-                                     sort_by=[{'column_id': 'score', 'direction': 'desc'}],
-                                     merge_duplicate_headers=False
-                                     )
+                                             {
+                                                 'if': {'column_id': 'severity'},
+                                                 'width': '80px'
+                                             },
+                                         ],
+                                         sort_by=[{'column_id': 'score', 'direction': 'desc'}],
+                                         merge_duplicate_headers=False
+                                         )
     return thistable
 
 
-def create_licab_table_lics(licdict):
+def create_lictab_table_lics(licdict):
     lic_cols = [
         {"name": ['', 'License Name'], "id": "licName"},
         {"name": ['License Risk (All Projects)', 'High Risk'], "id": "licHighCount"},
@@ -803,7 +920,12 @@ def create_licab_table_lics(licdict):
     # [{'column-1': 4.5, 'column-2': 'montreal', 'column-3': 'canada'},
     #  {'column-1': 8, 'column-2': 'boston', 'column-3': 'america'}]
 
-    thistable = dash_table.DataTable(id='lictab_table_lics',
+    if len(licdict) == 0:
+        thistable = dash_table.DataTable(id='lictab_table_lics',
+                                     columns=lic_cols,
+                                     )
+    else:
+        thistable = dash_table.DataTable(id='lictab_table_lics',
                                      columns=lic_cols,
                                      data=licdict.to_dict('records'),
                                      page_size=20, sort_action='native',
@@ -872,14 +994,16 @@ def create_projtab_card_proj(projdata):
         {"name": ['Project Version'], "id": "projVerName"},
     ]
     projstable = dash_table.DataTable(
-                # columns=[],
-                # data=None,
-                # page_size=6, sort_action='native',
-                row_selectable="single",
-                # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
-                id='projtab_detail_projtable',
-            )
-    projbutton = ''
+        # columns=[],
+        # data=None,
+        # page_size=6, sort_action='native',
+        row_selectable="single",
+        # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
+        id='projtab_detail_projtable',
+    )
+    projbutton = html.Div(
+        dbc.Button("Filter on Used in Project", id="filter_usedproj_button", className="mr-2", size='sm'),
+    )
 
     if projdata is not None:
         projname = projdata['projName'].values[0]
@@ -890,7 +1014,7 @@ def create_projtab_card_proj(projdata):
             projlist = []
             projverlist = []
             for projids in df_projcompmap[df_projcompmap['compVerId'] == foundcomps.
-                            compVerId.values[0]].projVerId.unique():
+                                          compVerId.values[0]].projVerId.unique():
                 projs = df_proj[df_proj['projVerId'] == projids]
                 projlist.append(projs.projName.values[0])
                 projverlist.append(projs.projVerName.values[0])
@@ -899,7 +1023,6 @@ def create_projtab_card_proj(projdata):
                 "projName": projlist,
                 "projVerName": projverlist
             })
-
 
             projstable = dash_table.DataTable(
                 columns=projusedin_cols,
@@ -910,8 +1033,6 @@ def create_projtab_card_proj(projdata):
                 merge_duplicate_headers=False,
                 id='projtab_detail_projtable',
             )
-
-            projbutton = dbc.Button("Filter on Project", id="filter-proj-button", className="mr-2", size='sm'),
 
         row1 = html.Tr([html.Td("Distribution"), html.Td(projdata['projVerDist'])])
         row2 = html.Tr([html.Td("Tier"), html.Td(projdata['projTier'])])
@@ -929,6 +1050,10 @@ def create_projtab_card_proj(projdata):
                 [
                     html.H4("Project: " + projname, className="card-title"),
                     html.H6("Project Version: " + projver, className="card-subtitle"),
+                    html.Div(
+                        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2",
+                                   size='sm')
+                    ),
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
@@ -955,13 +1080,13 @@ def create_comptab_card_comp(compdata):
         {"name": ['Project Version'], "id": "projVerName"},
     ]
     projstable = dash_table.DataTable(
-            columns=projusedin_cols,
-            # data=projs_data.to_dict('records'),
-            # page_size=6, sort_action='native',
-            row_selectable="single",
-            # merge_duplicate_headers=False,
-            id='comptab_card_projtable'
-        )
+        columns=projusedin_cols,
+        # data=projs_data.to_dict('records'),
+        # page_size=6, sort_action='native',
+        row_selectable="single",
+        # merge_duplicate_headers=False,
+        id='comptab_card_projtable'
+    )
 
     if compdata is not None:
         compname = compdata['compName'].values[0]
@@ -987,7 +1112,7 @@ def create_comptab_card_comp(compdata):
             page_size=6, sort_action='native',
             row_selectable="single",
             merge_duplicate_headers=False,
-            id = 'comptab_card_projtable',
+            id='comptab_card_projtable',
         )
 
     table_header = []
@@ -1051,7 +1176,8 @@ def create_vulntab_card_vuln(vulndata):
         dbc.Button("Filter on Project", color="primary", className="mr-1", id="filter_vulncard_proj_button", size='sm'),
     )
     compselbutton = html.Div(
-        dbc.Button("Filter on Component", color="primary", className="mr-1", id="filter_vulncard_comp_button", size='sm'),
+        dbc.Button("Filter on Component", color="primary", className="mr-1", id="filter_vulncard_comp_button",
+                   size='sm'),
     )
     if vulndata is not None:
         vulnid = vulndata['vulnId'].values[0]
@@ -1205,46 +1331,46 @@ def create_lictab_card_lic(licdata):
     )
 
 
-def create_projsummtab(df_proj, color_col):
+def create_projsummtab(projdf, color_col):
     return dbc.Row([
-            dbc.Col([
-                dbc.Row(
-                    dbc.Col(
-                        dcc.Graph(id='projsummtab_graph_proj', figure=create_projsummtab_fig_proj(df_proj, color_col)),
-                    ),
+        dbc.Col([
+            dbc.Row(
+                dbc.Col(
+                    dcc.Graph(id='projsummtab_graph_proj', figure=create_projsummtab_fig_proj(projdf, color_col)),
                 ),
-                dbc.Row([
-                    dbc.Col(
-                        html.Div(children="Select Colour Scheme"), width=2
-                    ),
-                    dbc.Col(
-                        dbc.RadioItems(
-                            options=[
-                                {'label': 'Critical Vulns', 'value': 'secCritCount'},
-                                {'label': 'High Vulns', 'value': 'secHighCount'},
-                                {'label': 'High Licenses', 'value': 'licHighCount'},
-                            ],
-                            id='summtab_radio',
-                            value='secCritCount',
-                            inline=True,
-                            # labelStyle={'display': 'inline-block'}
-                        ), width=5
-                    )], justify='end'
+            ),
+            dbc.Row([
+                dbc.Col(
+                    html.Div(children="Select Colour Scheme"), width=2
                 ),
-            ], width=8),
-            dbc.Col([
-                dcc.Graph(id='projsummtab_graph_compsec', figure=create_projsummtab_fig_compsec(df_proj)),
-                dcc.Graph(id='projsummtab_graph_complic', figure=create_projsummtab_fig_complic(df_proj)),
-            ], width=4),
-        ])
+                dbc.Col(
+                    dbc.RadioItems(
+                        options=[
+                            {'label': 'Critical Vulns', 'value': 'secCritCount'},
+                            {'label': 'High Vulns', 'value': 'secHighCount'},
+                            {'label': 'High Licenses', 'value': 'licHighCount'},
+                        ],
+                        id='summtab_radio',
+                        value='secCritCount',
+                        inline=True,
+                        # labelStyle={'display': 'inline-block'}
+                    ), width=5
+                )], justify='end'
+            ),
+        ], width=8),
+        dbc.Col([
+            dcc.Graph(id='projsummtab_graph_compsec', figure=create_projsummtab_fig_compsec(projdf)),
+            dcc.Graph(id='projsummtab_graph_complic', figure=create_projsummtab_fig_complic(projdf)),
+        ], width=4),
+    ])
 
 
-def create_projtab(df_proj):
+def create_projtab(projdf):
     return dbc.Row([
         dbc.Col(
             [
                 dbc.Row(
-                    dbc.Col(create_projtab_table_projs(df_proj), width=12)
+                    dbc.Col(create_projtab_table_projs(projdf), width=12)
                 ),
                 dbc.Row(
                     dbc.Col(
@@ -1260,9 +1386,9 @@ def create_projtab(df_proj):
                     dbc.Tab(
                         [
                             dcc.Graph(id='projtab_graph_compsec',
-                                      figure=create_projtab_fig_subsummary(df_proj)),
+                                      figure=create_projtab_fig_subsummary(projdf)),
                             dcc.Graph(id='projtab_graph_complic',
-                                      figure=create_projtab_fig_subdetails(df_proj)),
+                                      figure=create_projtab_fig_subdetails(projdf)),
                         ], label='Projects Summary',
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
@@ -1277,14 +1403,14 @@ def create_projtab(df_proj):
     ])
 
 
-def create_comptab(df_comp):
+def create_comptab(compdf):
     return dbc.Row(
         [
             dbc.Col(
                 [
                     dbc.Row(
                         dbc.Col(
-                            create_comptab_table_compvers(df_comp),
+                            create_comptab_table_compvers(compdf),
                             width=12,
                         ),
                     ),
@@ -1301,8 +1427,8 @@ def create_comptab(df_comp):
                     [
                         dbc.Tab(
                             [
-                                dcc.Graph(id='comptab_graph_compsec', figure=create_comptab_fig_compsec(df_comp)),
-                                dcc.Graph(id='comptab_graph_complic', figure=create_comptab_fig_complic(df_comp)),
+                                dcc.Graph(id='comptab_graph_compsec', figure=create_comptab_fig_compsec(compdf)),
+                                dcc.Graph(id='comptab_graph_complic', figure=create_comptab_fig_complic(compdf)),
                             ], label='Components Summary',
                             tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
                         ),
@@ -1318,21 +1444,21 @@ def create_comptab(df_comp):
     )
 
 
-def create_vulntab(df_vuln):
+def create_vulntab(vulndf):
     return dbc.Row(
         [
             dbc.Col(
                 [
                     dbc.Row(
                         dbc.Col(
-                            create_vulntab_table_vulns(df_vuln),
+                            create_vulntab_table_vulns(vulndf),
                             width=12,
                         )
                     ),
                     dbc.Row(
                         dbc.Col(
                             dbc.Button("Select Vulnerability", id="sel_vuln_button", className="mr-2", size='sm'),
-                            width={"size": 2, "offset": 10}, align='center',
+                            width={"size": 3, "offset": 9}, align='center',
                         ),
                     ),
                 ], width=8
@@ -1342,21 +1468,69 @@ def create_vulntab(df_vuln):
     )
 
 
-def create_lictab(df_lic):
+def create_lictab(licdf):
     return dbc.Row(
         [
-            dbc.Col(create_licab_table_lics(df_lic), width=7),
+            dbc.Col(create_lictab_table_lics(licdf), width=7),
             dbc.Col(create_lictab_card_lic(None), width=5,
                     id='col_lictab_lic'),
         ]
     )
 
 
-def create_alltabs(projdata, compdata, vulndata, licdata):
+def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, noprojs):
+    if noprojs:
+        return dbc.Tabs(
+            [
+                dbc.Tab(  # SUMMARY TAB
+                    [
+                        html.H1(children='No Projects Selected by Filters'),
+                        dbc.RadioItems(
+                            options=[
+                                # {'label': 'Critical Vulns', 'value': 'secCritCount'},
+                                # {'label': 'High Vulns', 'value': 'secHighCount'},
+                                # {'label': 'High Licenses', 'value': 'licHighCount'},
+                            ],
+                            id='summtab_radio',
+                            value='secCritCount',
+                            inline=True,
+                            # labelStyle={'display': 'inline-block'}
+                        ),
+                    ],
+                    label="Projects Summary",
+                    tab_id="tab_projsummary", id="tab_projsummary",
+                ),
+                dbc.Tab(  # PROJECTS TAB
+                    html.H1(children='No Projects Selected by Filters'),
+                    label="Projects (0) & Versions (" +
+                          str(projdata.projVerId.nunique()) + ")",
+                    tab_id="tab_projects", id="tab_projects"
+                ),
+                dbc.Tab(  # COMPONENTS TAB
+                    html.H1(children='No Projects Selected by Filters'),
+                    label="Components (0)",
+                    tab_id="tab_components", id="tab_components"
+                ),
+                dbc.Tab(  # VULNS TAB
+                    html.H1(children='No Projects Selected by Filters'),
+                    label="Vulnerabilties (0)",
+                    tab_id="tab_vulns", id="tab_vulns"
+                ),
+                dbc.Tab(  # LICENSE TAB
+                    html.Div(children='No Projects Selected by Filters'),
+                    label="Licenses (0)",
+                    # label="Licenses",
+                    tab_id="tab_lics", id="tab_lics"
+                )
+            ],
+            id="tabs",
+            active_tab="tab_projsummary",
+        )
+
     return dbc.Tabs(
         [
             dbc.Tab(  # SUMMARY TAB
-                create_projsummtab(projdata, 'secCritCount'), label="Projects Summary",
+                create_projsummtab(projdata, colorfield), label="Projects Summary",
                 tab_id="tab_projsummary", id="tab_projsummary",
             ),
             dbc.Tab(  # PROJECTS TAB
@@ -1434,7 +1608,6 @@ df_lic, lic_compverid_dict, compverid_lic_dict = proc_licdata(df_comp)
 
 print("READY\n")
 
-
 app.layout = dbc.Container(
     [
         # 		dcc.Store(id='sec_values', storage_type='local'),
@@ -1456,8 +1629,8 @@ app.layout = dbc.Container(
                     dcc.Dropdown(
                         id="sel_projects",
                         options=[
-                            {'label': i, 'value': i} for i in df_main.sort_values(by=['projName'], ascending=True).
-                                projName.unique()
+                            {'label': i, 'value': i} for i in
+                            df_proj.sort_values(by=['projName'], ascending=True).projName.unique()
                         ], multi=True, placeholder='Select Projects ...'
                     ), width=3
                 ),
@@ -1465,7 +1638,10 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_versions",
-                        options=[], multi=True, placeholder='Select Versions ...'
+                        options=[
+                            {'label': i, 'value': i} for i in
+                            df_proj.sort_values(by=['projVerName'], ascending=True).projVerName.unique()
+                        ], multi=True, placeholder='Select Versions ...'
                     ), width=3
                 ),
                 dbc.Col(html.Div(children="Components"), width=1, align='center'),
@@ -1473,8 +1649,8 @@ app.layout = dbc.Container(
                     dcc.Dropdown(
                         id="sel_comps",
                         options=[
-                            {'label': i, 'value': i} for i in df_comp.sort_values(by=['compName'], ascending=True).
-                                compName.unique()
+                            {'label': i, 'value': i} for i in
+                            df_comp.sort_values(by=['compName'], ascending=True).compName.unique()
                         ],
                         multi=True
                     ), width=3
@@ -1488,7 +1664,7 @@ app.layout = dbc.Container(
                     dcc.Dropdown(
                         id="sel_tiers",
                         options=[
-                            {'label': i, 'value': i} for i in df_main.projTier.unique()
+                            {'label': i, 'value': i} for i in df_proj.projTier.unique()
                         ],
                         multi=True
                     ), width=3
@@ -1498,7 +1674,7 @@ app.layout = dbc.Container(
                     dcc.Dropdown(
                         id="sel_dists",
                         options=[
-                            {'label': i, 'value': i} for i in df_main.projVerDist.unique()
+                            {'label': i, 'value': i} for i in df_proj.projVerDist.unique()
                         ],
                         multi=True
                     ), width=3
@@ -1508,7 +1684,7 @@ app.layout = dbc.Container(
                     dcc.Dropdown(
                         id="sel_phases",
                         options=[
-                            {'label': i, 'value': i} for i in df_main.projVerPhase.unique()
+                            {'label': i, 'value': i} for i in df_proj.projVerPhase.unique()
                         ],
                         multi=True
                     ), width=3
@@ -1548,7 +1724,7 @@ app.layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 dbc.Spinner(
-                    create_alltabs(df_proj, df_comp, df_vuln, df_lic),
+                    create_alltabs(df_proj, df_comp, df_vuln, df_lic, 'secCritCount', False),
                     id='spinner_main',
                 ), width=12,
             )
@@ -1558,7 +1734,10 @@ app.layout = dbc.Container(
 
 
 @app.callback(
-    Output('tab_proj_subdetail', 'children'),
+    [
+        Output('tab_proj_subdetail', 'children'),
+        Output('tabs_proj_subtabs', 'active_tab'),
+    ],
     [
         Input('sel_proj_button', 'n_clicks'),
         State('projtab_table_projs', 'derived_virtual_data'),
@@ -1574,9 +1753,10 @@ def callback_projtab_selproj_button(nclicks, data, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return create_projtab_card_proj(df_proj[df_proj['projVerId'] == data[rows[0]]['projVerId']])
+        return create_projtab_card_proj(
+            df_proj[df_proj['projVerId'] == data[rows[0]]['projVerId']]), 'tab_proj_subdetail'
 
-    return create_projtab_card_proj(None)
+    return create_projtab_card_proj(None), 'tab_proj_subsummary'
 
 
 @app.callback(
@@ -1599,15 +1779,14 @@ def callback_comptab_selcomp_button(nclicks, data, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return create_comptab_card_comp(df_comp[df_comp['compVerId'] == data[rows[0]]['compVerId']]), 'tab_comp_subdetail'
+        return create_comptab_card_comp(
+            df_comp[df_comp['compVerId'] == data[rows[0]]['compVerId']]), 'tab_comp_subdetail'
 
     return create_comptab_card_comp(None), 'tab_comp_subsummary'
 
 
 @app.callback(
-    [
-        Output('vulntab_card_vuln', 'children'),
-    ],
+    Output('vulntab_card_vuln', 'children'),
     [
         Input('sel_vuln_button', 'n_clicks'),
         State('vulntab_table_vulns', 'derived_virtual_data'),
@@ -1622,6 +1801,7 @@ def callback_vulntab_selvuln_button(nclicks, data, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        print(df_vuln[df_vuln['vulnId'] == data[rows[0]]['vulnId']].to_string())
         return create_vulntab_card_vuln(df_vuln[df_vuln['vulnId'] == data[rows[0]]['vulnId']])
 
     return create_vulntab_card_vuln(None)
@@ -1635,27 +1815,41 @@ def callback_vulntab_selvuln_button(nclicks, data, rows):
     [
         Input('filter_compcard_proj_button', 'n_clicks'),
         Input('filter_vulncard_proj_button', 'n_clicks'),
+        Input('filter_thisproj_button', 'n_clicks'),
+        Input('filter_usedproj_button', 'n_clicks'),
         State('comptab_card_projtable', 'derived_virtual_data'),
         State('comptab_card_projtable', 'derived_virtual_selected_rows'),
         State('vulntab_card_projtable', 'derived_virtual_data'),
         State('vulntab_card_projtable', 'derived_virtual_selected_rows'),
+        State('projtab_table_projs', 'derived_virtual_data'),
+        State('projtab_table_projs', 'derived_virtual_selected_rows'),
+        State('projtab_detail_projtable', 'derived_virtual_data'),
+        State('projtab_detail_projtable', 'derived_virtual_selected_rows'),
     ]
 
 )
-def callback_filterproj_buttons(compprojclicks, vulnprojclicks, compprojdata, compprojrows, vulnprojdata, vulnprojrows):
+def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, usedprojclicks,
+                                compprojdata, compprojrows, vulnprojdata, vulnprojrows,
+                                projdata, projrows, projuseddata, projusedrows):
     print('callback_filterproj_buttons\n')
 
-    if compprojclicks is None and vulnprojclicks is None:
+    if compprojclicks is None and vulnprojclicks is None and vulnprojclicks is None and usedprojclicks is None:
         raise dash.exceptions.PreventUpdate
 
+    val = ''
     if compprojclicks is not None and compprojrows:
-        return [compprojdata[compprojrows[0]]['projName'], ]
+        val = compprojdata[compprojrows[0]]['projName']
 
     if vulnprojclicks is not None and vulnprojrows:
-        print(vulnprojdata[vulnprojrows[0]])
-        return [vulnprojdata[vulnprojrows[0]]['projName'], ]
+        val = vulnprojdata[vulnprojrows[0]]['projName']
 
-    return None
+    if projclicks is not None and projrows:
+        val = projdata[projrows[0]]['projName']
+
+    if usedprojclicks is not None and projusedrows:
+        val = projuseddata[projusedrows[0]]['projName'].values[0]
+
+    return [val]
 
 
 @app.callback(
@@ -1673,10 +1867,11 @@ def callback_filtercomp_buttons(nclicks, data, rows):
     if nclicks is None:
         raise dash.exceptions.PreventUpdate
 
+    val = ''
     if rows:
-        return [data[rows[0]]['compName'], ]
+        val = data[rows[0]]['compName']
 
-    return None
+    return [val]
 
 
 # Update graphs and select options based on selection inputs
@@ -1690,15 +1885,15 @@ def callback_filtercomp_buttons(nclicks, data, rows):
         # Output('tab_projects', 'label'),
         # Output('tab_components', 'label'),
         # Output("tab_vulns", "label"),
-        Output("sel_versions", 'options'),
-        Output("sel_tiers", 'options'),
-        Output("sel_dists", 'options'),
-        Output("sel_phases", 'options'),
-        Output('sel_comps', 'options'),
+        # Output("sel_versions", 'options'),
+        # Output("sel_tiers", 'options'),
+        # Output("sel_dists", 'options'),
+        # Output("sel_phases", 'options'),
+        # Output('sel_comps', 'options'),
     ], [
         Input("sel-button", "n_clicks"),
         Input('summtab_radio', 'value'),
-        State("tabs", "active_tab"),
+        # State("tabs", "active_tab"),
         State('sel_projects', 'value'),
         State('sel_versions', 'value'),
         State('sel_tiers', 'value'),
@@ -1709,7 +1904,7 @@ def callback_filtercomp_buttons(nclicks, data, rows):
         State('sel_comps', 'value'),
     ]
 )
-def callback_main(nclicks, proj_radio, activetab, projs, vers, tiers, dists, phases, secrisk, licrisk, comps):
+def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secrisk, licrisk, comps):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
@@ -1725,113 +1920,124 @@ def callback_main(nclicks, proj_radio, activetab, projs, vers, tiers, dists, pha
     temp_df_comp = df_comp
     temp_df_vuln = df_vuln
     temp_df_lic = df_lic
+    noprojs = False
     recalc = False
 
-    # Process existing select dropdowns
-    if projs is not None and len(projs) > 0:
-        # Filter projects from selection
-        temp_df_proj = temp_df_proj[temp_df_proj.projName.isin(projs)]
-        # Filter components based on projcompmap
+    try:
+        # Process existing select dropdowns
+        if projs is not None and len(projs) > 0:
+            # Filter projects from selection
+            temp_df_proj = temp_df_proj[temp_df_proj.projName.isin(projs)]
+            # Filter components based on projcompmap
 
-        # Set project version dropdowns
-        sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
-        recalc = True
-    else:
-        # Version selection only possible if Project selected
-        sel_vers_options = []
+            # Set project version dropdowns
+            sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
+            recalc = True
+        else:
+            # Version selection only possible if Project selected
+            sel_vers_options = []
 
-    if vers is not None and len(vers) > 0:
-        # Filter versions from selection
-        temp_df_proj = temp_df_proj[temp_df_proj.projVerName.isin(vers)]
-        recalc = True
+        if vers is not None and len(vers) > 0:
+            # Filter versions from selection
+            temp_df_proj = temp_df_proj[temp_df_proj.projVerName.isin(vers)]
+            recalc = True
 
-    if comps is not None and len(comps) > 0:
-        # Filter projects based on phase selection
+        if comps is not None and len(comps) > 0:
+            # Filter projects based on phase selection
 
-        temp_df_comp = temp_df_comp[temp_df_comp.compName.isin(comps)]
+            temp_df_comp = temp_df_comp[temp_df_comp.compName.isin(comps)]
 
-        compverids = temp_df_comp['compVerId'].unique()
-        projverids = df_projcompmap[df_projcompmap.compVerId.isin(compverids)]['projVerId'].unique()
-        temp_df_proj = temp_df_proj[temp_df_proj.projVerId.isin(projverids)]
+            compverids = temp_df_comp['compVerId'].unique()
+            projverids = df_projcompmap[df_projcompmap.compVerId.isin(compverids)]['projVerId'].unique()
+            temp_df_proj = temp_df_proj[temp_df_proj.projVerId.isin(projverids)]
 
-        vulnids = df_compvulnmap[df_compvulnmap.compVerId.isin(compverids)]['vulnId'].unique()
-        temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
-        # recalc = True
+            vulnids = df_compvulnmap[df_compvulnmap.compVerId.isin(compverids)]['vulnId'].unique()
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
+            # recalc = True
 
-    # Modify dropdown options
-    sel_tiers_options = [{'label': i, 'value': i} for i in temp_df_proj.projTier.unique()]
-    sel_dists_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerDist.unique()]
-    sel_phases_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerPhase.unique()]
-    sel_comps_options = [{'label': i, 'value': i} for i in temp_df_comp.compName.sort_values().unique()]
+        # Modify dropdown options
+        # sel_tiers_options = [{'label': i, 'value': i} for i in temp_df_proj.projTier.unique()]
+        # sel_dists_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerDist.unique()]
+        # sel_phases_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerPhase.unique()]
+        # sel_comps_options = [{'label': i, 'value': i} for i in temp_df_comp.compName.sort_values().unique()]
 
-    if tiers is not None and len(tiers) > 0:
-        # Filter projects based on tier selection
-        temp_df_proj = temp_df_proj[temp_df_proj.projTier.isin(tiers)]
-        recalc = True
-    if dists is not None and len(dists) > 0:
-        # Filter projects based on distribution selection
-        temp_df_proj = temp_df_proj[temp_df_proj.projVerDist.isin(dists)]
-        recalc = True
-    if phases is not None and len(phases) > 0:
-        # Filter projects based on phase selection
-        temp_df_proj = temp_df_proj[temp_df_proj.projVerPhase.isin(phases)]
-        recalc = True
+        if tiers is not None and len(tiers) > 0:
+            # Filter projects based on tier selection
+            temp_df_proj = temp_df_proj[temp_df_proj.projTier.isin(tiers)]
+            recalc = True
+        if dists is not None and len(dists) > 0 and len(temp_df_proj) > 0:
+            # Filter projects based on distribution selection
+            temp_df_proj = temp_df_proj[temp_df_proj.projVerDist.isin(dists)]
+            recalc = True
+        if phases is not None and len(phases) > 0 and len(temp_df_proj) > 0:
+            # Filter projects based on phase selection
+            temp_df_proj = temp_df_proj[temp_df_proj.projVerPhase.isin(phases)]
+            recalc = True
 
-    if recalc:
-        # Filter components based on projcompmap
-        projverids = temp_df_proj['projVerId'].unique()
+        if recalc and len(temp_df_proj) > 0:
+            # Filter components based on projcompmap
+            projverids = temp_df_proj['projVerId'].unique()
 
-        compverids = df_projcompmap[df_projcompmap.projVerId.isin(projverids)]['compVerId'].unique()
+            compverids = df_projcompmap[df_projcompmap.projVerId.isin(projverids)]['compVerId'].unique()
 
-        temp_df_comp = temp_df_comp[temp_df_comp.compVerId.isin(compverids)]
+            temp_df_comp = temp_df_comp[temp_df_comp.compVerId.isin(compverids)]
 
-        # Filter vulns based on projvulnmap
-        vulnids = df_projvulnmap[df_projvulnmap.projVerId.isin(projverids)]['vulnId'].unique()
-        temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
+            # Filter vulns based on projvulnmap
+            vulnids = df_projvulnmap[df_projvulnmap.projVerId.isin(projverids)]['vulnId'].unique()
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnId.isin(vulnids)]
 
-        licnames = []
-        for id in compverids:
-            if id in compverid_lic_dict.keys():
-                [licnames.append(x) for x in compverid_lic_dict[id] if x not in licnames]
-        licnames.sort()
-        temp_df_lic = temp_df_lic[temp_df_lic.licName.isin(licnames)]
+            licnames = []
+            for cid in compverids:
+                if cid in compverid_lic_dict.keys():
+                    [licnames.append(x) for x in compverid_lic_dict[cid] if x not in licnames]
+            licnames.sort()
+            temp_df_lic = temp_df_lic[temp_df_lic.licName.isin(licnames)]
 
-    if secrisk is not None and len(secrisk) > 0:
-        # Filter projects based on security risk selection
-        if 'Critical' in secrisk:
-            temp_df_proj = temp_df_proj[temp_df_proj.secCritCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.secCritCount > 0]
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'CRITICAL']
-        if 'High' in secrisk:
-            temp_df_proj = temp_df_proj[temp_df_proj.secHighCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.secHighCount > 0]
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'HIGH']
-        if 'Medium' in secrisk:
-            temp_df_proj = temp_df_proj[temp_df_proj.secMedCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.secMedCount > 0]
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'MEDIUM']
-        if 'Low' in secrisk:
-            temp_df_proj = temp_df_proj[temp_df_proj.secLowCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.secLowCount > 0]
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'LOW']
+        if secrisk is not None and len(secrisk) > 0 and len(temp_df_proj) > 0:
+            # Filter projects based on security risk selection
+            if 'Critical' in secrisk:
+                temp_df_proj = temp_df_proj[temp_df_proj.secCritCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.secCritCount > 0]
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'CRITICAL']
+            if 'High' in secrisk:
+                temp_df_proj = temp_df_proj[temp_df_proj.secHighCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.secHighCount > 0]
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'HIGH']
+            if 'Medium' in secrisk:
+                temp_df_proj = temp_df_proj[temp_df_proj.secMedCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.secMedCount > 0]
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'MEDIUM']
+            if 'Low' in secrisk:
+                temp_df_proj = temp_df_proj[temp_df_proj.secLowCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.secLowCount > 0]
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity == 'LOW']
 
-    if licrisk is not None and len(licrisk) > 0:
-        # Filter projects based on security risk selection
-        if 'High' in licrisk:
-            temp_df_lic = temp_df_lic[temp_df_lic.licHighCount > 0]
-            temp_df_proj = temp_df_proj[temp_df_proj.licHighCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.licHighCount > 0]
+        if licrisk is not None and len(licrisk) > 0 and len(temp_df_proj) > 0:
+            # Filter projects based on security risk selection
+            if 'High' in licrisk:
+                temp_df_lic = temp_df_lic[temp_df_lic.licHighCount > 0]
+                temp_df_proj = temp_df_proj[temp_df_proj.licHighCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.licHighCount > 0]
 
-        if 'Medium' in licrisk:
-            temp_df_lic = temp_df_lic[temp_df_lic.licMedCount > 0]
-            temp_df_proj = temp_df_proj[temp_df_proj.licMedCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.licMedCount > 0]
+            if 'Medium' in licrisk:
+                temp_df_lic = temp_df_lic[temp_df_lic.licMedCount > 0]
+                temp_df_proj = temp_df_proj[temp_df_proj.licMedCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.licMedCount > 0]
 
-        if 'Low' in licrisk:
-            temp_df_lic = temp_df_lic[temp_df_lic.licLowCount > 0]
-            temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
-            temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
+            if 'Low' in licrisk:
+                temp_df_lic = temp_df_lic[temp_df_lic.licLowCount > 0]
+                temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
+                temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
+    except:
+        noprojs = True
+        # sel_tiers_options = [{'label': i, 'value': i} for i in df_proj.projTier.unique()]
+        # sel_dists_options = [{'label': i, 'value': i} for i in df_proj.projVerDist.unique()]
+        # sel_phases_options = [{'label': i, 'value': i} for i in df_proj.projVerPhase.unique()]
+        # sel_comps_options = [{'label': i, 'value': i} for i in df_comp.compName.sort_values().unique()]
 
+
+    if len(temp_df_proj) == 0 or len(temp_df_comp) == 0 or len(temp_df_vuln) == 0 or len(temp_df_lic) == 0:
+        noprojs = True
     # projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
     #                 str(temp_df_proj.projVerId.nunique()) + ")"
     #
@@ -1853,13 +2059,13 @@ def callback_main(nclicks, proj_radio, activetab, projs, vers, tiers, dists, pha
     #
 
     return (
-        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic),
+        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, proj_radio, noprojs),
         # create_projsummtab(temp_df_proj, proj_radio),
         # create_projtab(temp_df_proj),
         # create_comptab(temp_df_comp),
         # create_vulntab(temp_df_vuln),
         # projtab_label, comptab_label, vulntab_label,
-        sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options
+        # sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options
     )
 
 
