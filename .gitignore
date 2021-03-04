@@ -4,3 +4,6 @@ bddash
 .env
 .idea
 users.txt
+database.*
+prd-*
+db_*
