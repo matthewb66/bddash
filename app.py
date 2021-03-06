@@ -135,6 +135,9 @@ def proc_projdata(thisdf):
     newdf["All"] = "All"
     # Calculate total vulnerability count for all comps
     newdf = pd.DataFrame(newdf.eval('secAll = secCritCount + secHighCount + secMedCount + secLowCount'))
+    newdf = pd.DataFrame(newdf.eval('secCritHighCountplus1 = secCritCount + secHighCount + 1'))
+    newdf = pd.DataFrame(newdf.eval('secCritCountplus1 = secCritCount + 1'))
+    newdf = pd.DataFrame(newdf.eval('licHighCountplus1 = licHighCount + 1'))
 
     # Sum columns for projVers
     sums = newdf.groupby("projVerId").sum().reset_index()
@@ -147,9 +150,10 @@ def proc_projdata(thisdf):
     # Merge compCount into df
     newdf = pd.merge(newdf, df_counts, on='projVerId')
     # Remove duplicate and unwanted columns before merge
-    newdf.drop(['secAll', 'secCritCount', 'secHighCount', 'secMedCount', 'secLowCount', 'secOkCount', 'licHighCount',
-                'licMedCount', 'licLowCount', 'licOkCount', 'compId', 'compName', 'compVerId', 'compVerName',
-                'licName'], axis=1, inplace=True)
+    newdf.drop(['secAll', 'secCritHighCountplus1', 'secCritCountplus1', 'licHighCountplus1',
+                'secCritCount', 'secHighCount', 'secMedCount',
+                'secLowCount', 'secOkCount', 'licHighCount', 'licMedCount', 'licLowCount', 'licOkCount', 'compId',
+                'compName', 'compVerId', 'compVerName', 'licName'], axis=1, inplace=True)
     # Merge sums into df
     newdf = pd.merge(newdf, sums, on='projVerId')
     print('{} Projects and {} Versions returned'.format(newdf.projName.nunique(), newdf.projVerId.nunique()))
@@ -343,22 +347,49 @@ def write_data_files():
     o.close()
 
 
-def create_projsummtab_fig_proj(thisdf, color_column):
-    temp_df = thisdf.nlargest(200, 'compCount')
+def create_projsummtab_fig_proj(thisdf, color_column, size_column):
+    if size_column == 'secCritCountplus1':
+        sizetext = 'Critical Vulnerabilities'
+    elif size_column == 'secCritHighCountplus1':
+        sizetext = 'Critical & High Vulnerabilities'
+    elif size_column == 'licHighCountplus1':
+        sizetext = 'High License Risk'
+    else:
+        sizetext = 'Components'
+
+    if color_column == 'secCritCountplus1':
+        colortext = 'Critical Vulnerabilities'
+    elif color_column == 'secCritHighCountplus1':
+        colortext = 'Critical & High Vulnerabilities'
+    elif color_column == 'licHighCountplus1':
+        colortext = 'High License Risk'
+    else:
+        colortext = 'Components'
+
+    hovertext = "<br>".join([
+        "Project: %{parent}",
+        "Version: %{label}",
+        sizetext + ": %{value}",
+        colortext + ": %{customdata[0]}"
+    ])
+
+    temp_df = thisdf.nlargest(200, size_column)
     thisfig = px.treemap(temp_df, path=['All', 'projName', 'projVerName'],
-                         custom_data=['projName', 'projVerName', 'compCount'],
-                         values='compCount',
+                         custom_data=[color_column],
+                         values=size_column,
                          color=color_column,
+                         # hover_data={'projName':True, 'projVerName':True, 'secAll':':2d', 'secCritCount':True,
+                         #             'secHighCount':True, 'licHighCount':True, 'compCount':True},
+                         # hover_data={'projName': True, 'projVerName': True,},
+                         # hover_name='projName',
                          color_continuous_scale='Reds',
-                         title='Project Versions (largest 200) - Size by Components ',
+                         title='Top 200 Project Versions - Size by ' + sizetext,
                          height=700)
+    thisfig.data[0].textinfo = 'label+text+value'
+    # thisfig.update_traces(hovertemplate="<br"'Project: %{parent} <br>Project Version: %{label}')  #
+
     thisfig.update_traces(
-        hovertemplate="<br>".join([
-            "Project: %{customdata[0]}",
-            "Version: %{customdata[1]}",
-            "Components: %{customdata[2]}",
-            # "Vulnerabilities: All %{customdata[3]}",
-        ]),
+            hovertemplate=hovertext
     )
 
     return thisfig
@@ -421,7 +452,8 @@ def create_projtab_table_projs(thisdf):
                                          'maxWidth': 0
                                      },
                                      data=df_temp.to_dict('records'),
-                                     page_size=23, sort_action='native',
+                                     page_size=20, sort_action='native',
+                                     filter_action='native',
                                      row_selectable="single",
                                      cell_selectable=False,
                                      style_data_conditional=[
@@ -621,7 +653,9 @@ def create_comptab_table_compvers(thisdf):
                                          },
                                          data=df_temp.to_dict('records'),
                                          row_selectable="single",
-                                         page_size=20, sort_action='native',
+                                         page_size=20,
+                                         sort_action='native',
+                                         filter_action='native',
                                          cell_selectable=False,
                                          style_data_conditional=[
                                              {
@@ -731,7 +765,9 @@ def create_comptab_table_compvers(thisdf):
                                          },
                                          data=df_temp.to_dict('records'),
                                          row_selectable="single",
-                                         page_size=20, sort_action='native',
+                                         page_size=20,
+                                         sort_action='native',
+                                         filter_action='native',
                                          cell_selectable=False,
                                          style_data_conditional=[
                                              {
@@ -861,7 +897,9 @@ def create_vulntab_table_vulns(thisdf):
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_data,
                                          data=df_temp.to_dict('records'),
-                                         page_size=20, sort_action='native',
+                                         page_size=20,
+                                         sort_action='native',
+                                         filter_action='native',
                                          row_selectable="single",
                                          cell_selectable=False,
                                          style_data_conditional=[
@@ -1332,30 +1370,52 @@ def create_lictab_card_lic(licdata):
     )
 
 
-def create_projsummtab(projdf, color_col):
+def create_projsummtab(projdf, color_col, size_col):
     return dbc.Row([
         dbc.Col([
             dbc.Row(
                 dbc.Col(
-                    dcc.Graph(id='projsummtab_graph_proj', figure=create_projsummtab_fig_proj(projdf, color_col)),
+                    dcc.Graph(id='projsummtab_graph_proj',
+                              figure=create_projsummtab_fig_proj(projdf, color_col, size_col,)
+                    ),
                 ),
             ),
             dbc.Row([
                 dbc.Col(
-                    html.Div(children="Select Colour Scheme"), width=2
+                    html.Div(children="Box Sizing"), width=3,
                 ),
                 dbc.Col(
                     dbc.RadioItems(
                         options=[
-                            {'label': 'Critical Vulns', 'value': 'secCritCount'},
-                            {'label': 'High Vulns', 'value': 'secHighCount'},
-                            {'label': 'High Licenses', 'value': 'licHighCount'},
+                            {'label': 'Component Count', 'value': 'compCount'},
+                            {'label': 'Critical Vulns', 'value': 'secCritCountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'secCritHighCountplus1'},
+                            {'label': 'High Licenses', 'value': 'licHighCountplus1'},
                         ],
-                        id='summtab_radio',
+                        id='summtab_size_radio',
+                        value=size_col,
+                        inline=True,
+                        # labelStyle={'display': 'inline-block'}
+                    ), width=8,
+                )], justify='end'
+            ),
+            dbc.Row([
+                dbc.Col(
+                    html.Div(children="Colour Scheme"), width=3,
+                ),
+                dbc.Col(
+                    dbc.RadioItems(
+                        options=[
+                            {'label': 'Component Count', 'value': 'compCount'},
+                            {'label': 'Critical Vulns', 'value': 'secCritCountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'secCritHighCountplus1'},
+                            {'label': 'High Licenses', 'value': 'licHighCountplus1'},
+                        ],
+                        id='summtab_color_radio',
                         value=color_col,
                         inline=True,
                         # labelStyle={'display': 'inline-block'}
-                    ), width=5
+                    ), width=8,
                 )], justify='end'
             ),
         ], width=8),
@@ -1479,7 +1539,7 @@ def create_lictab(licdf):
     )
 
 
-def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, noprojs):
+def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield, noprojs):
     if noprojs:
         return dbc.Tabs(
             [
@@ -1492,7 +1552,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, noprojs):
                                 # {'label': 'High Vulns', 'value': 'secHighCount'},
                                 # {'label': 'High Licenses', 'value': 'licHighCount'},
                             ],
-                            id='summtab_radio',
+                            id='summtab_color_radio',
                             value='secCritCount',
                             inline=True,
                             # labelStyle={'display': 'inline-block'}
@@ -1531,7 +1591,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, noprojs):
     return dbc.Tabs(
         [
             dbc.Tab(  # SUMMARY TAB
-                create_projsummtab(projdata, colorfield), label="Projects Summary",
+                create_projsummtab(projdata, colorfield, sizefield), label="Projects Summary",
                 tab_id="tab_projsummary", id="tab_projsummary",
             ),
             dbc.Tab(  # PROJECTS TAB
@@ -1614,6 +1674,7 @@ app.layout = dbc.Container(
         # 		dcc.Store(id='sec_values', storage_type='local'),
         # 		dcc.Store(id='lic_values', storage_type='local'),
         dcc.Store(id='proj_color', storage_type='local'),
+        dcc.Store(id='proj_size', storage_type='local'),
         dbc.NavbarSimple(
             children=[
                 dbc.NavItem(dbc.NavLink("Documentation", href="#")),
@@ -1726,7 +1787,7 @@ app.layout = dbc.Container(
         dbc.Row(
             dbc.Col(
                 dbc.Spinner(
-                    create_alltabs(df_proj, df_comp, df_vuln, df_lic, 'secCritCount', False),
+                    create_alltabs(df_proj, df_comp, df_vuln, df_lic, 'secCritCountplus1', 'compCount', False),
                     id='spinner_main',
                 ), width=12,
             )
@@ -1886,21 +1947,11 @@ def callback_filtercomp_buttons(nclicks, data, rows):
     [
         Output('spinner_main', 'children'),
         Output('proj_color', 'data'),
-        # Output('tab_projsummary', 'children'),
-        # Output('tab_projects', 'children'),
-        # Output('tab_components', 'children'),
-        # Output("tab_vulns", "children"),
-        # Output('tab_projects', 'label'),
-        # Output('tab_components', 'label'),
-        # Output("tab_vulns", "label"),
-        # Output("sel_versions", 'options'),
-        # Output("sel_tiers", 'options'),
-        # Output("sel_dists", 'options'),
-        # Output("sel_phases", 'options'),
-        # Output('sel_comps', 'options'),
+        Output('proj_size', 'data'),
     ], [
         Input("sel-button", "n_clicks"),
-        Input('summtab_radio', 'value'),
+        Input('summtab_color_radio', 'value'),
+        Input('summtab_size_radio', 'value'),
         # State("tabs", "active_tab"),
         State('sel_projects', 'value'),
         State('sel_versions', 'value'),
@@ -1911,9 +1962,11 @@ def callback_filtercomp_buttons(nclicks, data, rows):
         State('sel_licrisk', 'value'),
         State('sel_comps', 'value'),
         State('proj_color', 'data'),
+        State('proj_size', 'data'),
     ]
 )
-def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_color_prev):
+def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, tiers, dists, phases,
+                  secrisk, licrisk, comps, proj_color_prev, proj_size_prev):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
@@ -1922,7 +1975,8 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
 
     ctx = dash.callback_context
 
-    if not ctx.triggered and nclicks is None and proj_radio == proj_color_prev:
+    if not ctx.triggered and nclicks is None and proj_treemap_color == proj_color_prev and \
+            proj_treemap_size == proj_size_prev:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
@@ -2072,8 +2126,8 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
     #
 
     return (
-        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, proj_radio, noprojs),
-        proj_radio,
+        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, proj_treemap_color, proj_treemap_size, noprojs),
+        proj_treemap_color, proj_treemap_size,
     )
 
 
