@@ -215,7 +215,7 @@ def proc_licdata(thisdf):
     # licrisks = thisdf.licRisk.values
 
     thislic_compverid_dict = {}  # Map of license names to compverids (dict of lists of compverids)
-    thiscompverid_lic_dict = {}
+    thiscompverid_lic_dict = {}  # Map of compverids to licnames (dict of lists of licnames)
     # licrisk_dict = {}
     licname_list = []
 
@@ -952,6 +952,7 @@ def create_lictab_table_lics(licdict):
         {"name": ['License Risk (All Projects)', 'High Risk'], "id": "licHighCount"},
         {"name": ['License Risk (All Projects)', 'Medium Risk'], "id": "licMedCount"},
         {"name": ['License Risk (All Projects)', 'Low Risk'], "id": "licLowCount"},
+        {"name": ['License Risk (All Projects)', 'No Risk'], "id": "licOkCount"},
     ]
 
     # columns = [{"name": i, "id": i} for i in df.columns],
@@ -960,16 +961,18 @@ def create_lictab_table_lics(licdict):
 
     if len(licdict) == 0:
         thistable = dash_table.DataTable(id='lictab_table_lics',
-                                     columns=lic_cols,
-                                     )
+                                         columns=lic_cols,
+                                         filter_action='native',
+                                         )
     else:
         thistable = dash_table.DataTable(id='lictab_table_lics',
-                                     columns=lic_cols,
-                                     data=licdict.to_dict('records'),
-                                     page_size=20, sort_action='native',
-                                     row_selectable="single",
-                                     cell_selectable=False,
-                                     style_data_conditional=[
+                                         columns=lic_cols,
+                                         data=licdict.to_dict('records'),
+                                         page_size=20, sort_action='native',
+                                         filter_action='native',
+                                         row_selectable="single",
+                                         cell_selectable=False,
+                                         style_data_conditional=[
                                          {
                                              'if': {
                                                  'filter_query': '{licHighCount} > 0',
@@ -1006,11 +1009,16 @@ def create_lictab_table_lics(licdict):
                                              'if': {'column_id': 'licLowCount'},
                                              'width': '120px'
                                          },
-                                     ],
-                                     sort_by=[{'column_id': 'licHighCount', 'direction': 'desc'},
-                                              {'column_id': 'licMedCount', 'direction': 'desc'},
-                                              {'column_id': 'licLowCount', 'direction': 'desc'}],
-                                     merge_duplicate_headers=True,
+                                         {
+                                             'if': {'column_id': 'licOkCount'},
+                                             'width': '120px'
+                                         },
+                                         ],
+                                         sort_by=[{'column_id': 'licHighCount', 'direction': 'desc'},
+                                                  {'column_id': 'licMedCount', 'direction': 'desc'},
+                                                  {'column_id': 'licLowCount', 'direction': 'desc'},
+                                                  {'column_id': 'licOkCount', 'direction': 'asc'}],
+                                         merge_duplicate_headers=True,
                                      )
     return thistable
 
@@ -1112,7 +1120,7 @@ def create_comptab_card_comp(compdata):
     complic = ''
     projusedbytitle = html.P('Used in Projects:', className="card-text", )
     projselbutton = html.Div(
-        dbc.Button("Filter on Project", color="primary", className="mr-1", id="filter_compcard_proj_button", size='sm'),
+        dbc.Button("Filter on Used In Project", color="primary", className="mr-1", id="filter_compcard_proj_button", size='sm'),
     )
     projusedin_cols = [
         {"name": ['Project'], "id": "projName"},
@@ -1899,22 +1907,19 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, used
                                 projdata, projrows, projuseddata, projusedrows):
     print('callback_filterproj_buttons')
 
-    if compprojclicks is None and vulnprojclicks is None and projclicks is None and usedprojclicks is None:
+    changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
+
+    if 'filter_compcard_proj_button' in changed_id:
+        val = compprojdata[compprojrows[0]]['projName']
+    elif 'filter_vulncard_proj_button' in changed_id:
+        val = vulnprojdata[vulnprojrows[0]]['projName']
+    elif 'filter_thisproj_button' in changed_id:
+        val = projdata[projrows[0]]['projName']
+    elif 'filter_usedproj_button' in changed_id:
+        val = projuseddata[projusedrows[0]]['projName'].values[0]
+    else:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
-
-    val = ''
-    if compprojclicks is not None and compprojrows:
-        val = compprojdata[compprojrows[0]]['projName']
-
-    if vulnprojclicks is not None and vulnprojrows:
-        val = vulnprojdata[vulnprojrows[0]]['projName']
-
-    if projclicks is not None and projrows:
-        val = projdata[projrows[0]]['projName']
-
-    if usedprojclicks is not None and projusedrows:
-        val = projuseddata[projusedrows[0]]['projName'].values[0]
 
     return [val]
 
