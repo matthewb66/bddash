@@ -351,7 +351,7 @@ def create_projsummtab_fig_proj(thisdf, color_column):
                          color=color_column,
                          color_continuous_scale='Reds',
                          title='Project Versions (largest 200) - Size by Components ',
-                         height=800)
+                         height=700)
     thisfig.update_traces(
         hovertemplate="<br>".join([
             "Project: %{customdata[0]}",
@@ -1001,8 +1001,12 @@ def create_projtab_card_proj(projdata):
         # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
         id='projtab_detail_projtable',
     )
-    projbutton = html.Div(
+    usedprojbutton = html.Div(
         dbc.Button("Filter on Used in Project", id="filter_usedproj_button", className="mr-2", size='sm'),
+    )
+    thisprojbutton = html.Div(
+        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2",
+                   size='sm')
     )
 
     if projdata is not None:
@@ -1050,15 +1054,12 @@ def create_projtab_card_proj(projdata):
                 [
                     html.H4("Project: " + projname, className="card-title"),
                     html.H6("Project Version: " + projver, className="card-subtitle"),
-                    html.Div(
-                        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2",
-                                   size='sm')
-                    ),
+                    thisprojbutton,
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
             projusedbytitle, projstable,
-            projbutton,
+            usedprojbutton,
         ], id="projtab_card_proj",
         # style={"width": "28rem", "height":  "50rem"},
         # style={"width": "23rem"},
@@ -1351,7 +1352,7 @@ def create_projsummtab(projdf, color_col):
                             {'label': 'High Licenses', 'value': 'licHighCount'},
                         ],
                         id='summtab_radio',
-                        value='secCritCount',
+                        value=color_col,
                         inline=True,
                         # labelStyle={'display': 'inline-block'}
                     ), width=5
@@ -1612,6 +1613,7 @@ app.layout = dbc.Container(
     [
         # 		dcc.Store(id='sec_values', storage_type='local'),
         # 		dcc.Store(id='lic_values', storage_type='local'),
+        dcc.Store(id='proj_color', storage_type='local'),
         dbc.NavbarSimple(
             children=[
                 dbc.NavItem(dbc.NavLink("Documentation", href="#")),
@@ -1747,9 +1749,10 @@ app.layout = dbc.Container(
 )
 def callback_projtab_selproj_button(nclicks, data, rows):
     global df_proj
-    print('projtablecallback\n')
+    print('callback_projtab_selproj_button')
 
     if nclicks is None:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
@@ -1773,9 +1776,10 @@ def callback_projtab_selproj_button(nclicks, data, rows):
 )
 def callback_comptab_selcomp_button(nclicks, data, rows):
     global df_proj
-    print('callback_comptab_selcomp_button\n')
+    print('callback_comptab_selcomp_button')
 
     if nclicks is None:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
@@ -1795,9 +1799,10 @@ def callback_comptab_selcomp_button(nclicks, data, rows):
 )
 def callback_vulntab_selvuln_button(nclicks, data, rows):
     global df_vuln
-    print('callback_vulntab_selvuln_button\n')
+    print('callback_vulntab_selvuln_button')
 
     if nclicks is None:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
@@ -1831,9 +1836,10 @@ def callback_vulntab_selvuln_button(nclicks, data, rows):
 def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, usedprojclicks,
                                 compprojdata, compprojrows, vulnprojdata, vulnprojrows,
                                 projdata, projrows, projuseddata, projusedrows):
-    print('callback_filterproj_buttons\n')
+    print('callback_filterproj_buttons')
 
-    if compprojclicks is None and vulnprojclicks is None and vulnprojclicks is None and usedprojclicks is None:
+    if compprojclicks is None and vulnprojclicks is None and projclicks is None and usedprojclicks is None:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     val = ''
@@ -1862,9 +1868,10 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, used
 
 )
 def callback_filtercomp_buttons(nclicks, data, rows):
-    print('callback_filtercomp_buttons\n')
+    print('callback_filtercomp_buttons')
 
     if nclicks is None:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     val = ''
@@ -1878,6 +1885,7 @@ def callback_filtercomp_buttons(nclicks, data, rows):
 @app.callback(
     [
         Output('spinner_main', 'children'),
+        Output('proj_color', 'data'),
         # Output('tab_projsummary', 'children'),
         # Output('tab_projects', 'children'),
         # Output('tab_components', 'children'),
@@ -1902,18 +1910,20 @@ def callback_filtercomp_buttons(nclicks, data, rows):
         State('sel_secrisk', 'value'),
         State('sel_licrisk', 'value'),
         State('sel_comps', 'value'),
+        State('proj_color', 'data'),
     ]
 )
-def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secrisk, licrisk, comps):
+def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secrisk, licrisk, comps, proj_color_prev):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
     global df_lic, lic_compverid_dict, compverid_lic_dict
-    print('callback_main\n')
+    print('callback_main')
 
     ctx = dash.callback_context
 
-    if not ctx.triggered or nclicks is None:
+    if not ctx.triggered and nclicks is None and proj_radio == proj_color_prev:
+        print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     temp_df_proj = df_proj
@@ -1926,9 +1936,11 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
     try:
         # Process existing select dropdowns
         if projs is not None and len(projs) > 0:
-            # Filter projects from selection
-            temp_df_proj = temp_df_proj[temp_df_proj.projName.isin(projs)]
-            # Filter components based on projcompmap
+            if isinstance(projs, list):
+                # Filter projects from selection
+                temp_df_proj = temp_df_proj[temp_df_proj.projName.isin(projs)]
+            else:
+                temp_df_proj = temp_df_proj[temp_df_proj['projName'] == projs]
 
             # Set project version dropdowns
             sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
@@ -1938,14 +1950,21 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
             sel_vers_options = []
 
         if vers is not None and len(vers) > 0:
-            # Filter versions from selection
-            temp_df_proj = temp_df_proj[temp_df_proj.projVerName.isin(vers)]
+            if isinstance(vers, list):
+                # Filter versions from selection
+                temp_df_proj = temp_df_proj[temp_df_proj.projVerName.isin(vers)]
+            else:
+                temp_df_proj = temp_df_proj[temp_df_proj['projName'] == vers]
+
             recalc = True
 
         if comps is not None and len(comps) > 0:
             # Filter projects based on phase selection
 
-            temp_df_comp = temp_df_comp[temp_df_comp.compName.isin(comps)]
+            if isinstance(comps, list):
+                temp_df_comp = temp_df_comp[temp_df_comp.compName.isin(comps)]
+            else:
+                temp_df_comp = temp_df_comp[temp_df_comp['compName'] == comps]
 
             compverids = temp_df_comp['compVerId'].unique()
             projverids = df_projcompmap[df_projcompmap.compVerId.isin(compverids)]['projVerId'].unique()
@@ -2038,13 +2057,7 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
 
     if len(temp_df_proj) == 0 or len(temp_df_comp) == 0 or len(temp_df_vuln) == 0 or len(temp_df_lic) == 0:
         noprojs = True
-    # projtab_label = "Projects (" + str(temp_df_proj.projName.nunique()) + ") & Versions (" + \
-    #                 str(temp_df_proj.projVerId.nunique()) + ")"
-    #
-    # comptab_label = "Components (" + str(temp_df_comp.compName.nunique()) + ")"
-    #
-    # vulntab_label = "Vulnerabilities (" + str(temp_df_vuln.vulnId.nunique()) + ")"
-    #
+
     # # Click on projtab_treemap
     # if click_proj['points'][0]['parent'] == '':
     #     # All
@@ -2060,12 +2073,7 @@ def callback_main(nclicks, proj_radio, projs, vers, tiers, dists, phases, secris
 
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, proj_radio, noprojs),
-        # create_projsummtab(temp_df_proj, proj_radio),
-        # create_projtab(temp_df_proj),
-        # create_comptab(temp_df_comp),
-        # create_vulntab(temp_df_vuln),
-        # projtab_label, comptab_label, vulntab_label,
-        # sel_vers_options, sel_tiers_options, sel_dists_options, sel_phases_options, sel_comps_options
+        proj_radio,
     )
 
 
