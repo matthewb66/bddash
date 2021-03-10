@@ -81,8 +81,8 @@ def create_lictab_table_lics(licdict):
     return thistable
 
 
-def create_lictab_card_lic(licdata):
-    import app
+def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, licdata):
+    # from app import df_proj, df_comp, df_projcompmap, lic_compverid_dict
 
     licname = ''
 
@@ -97,12 +97,12 @@ def create_lictab_card_lic(licdata):
         compverlist = []
         projlist = []
         projverlist = []
-        for compid in app.lic_compverid_dict[licdata.licName.values[0]]:
-            complist.append(app.df_comp[app.df_comp['compVerId'] == compid].compName.values[0])
-            compverlist.append(app.df_comp[app.df_comp['compVerId'] == compid].compVerName.values[0])
-            for projverid in app.df_projcompmap[app.df_projcompmap['compVerId'] == compid].projVerId.values:
-                projlist.append(app.df_proj[app.df_proj['projVerId'] == projverid].projName.values[0])
-                projverlist.append(app.df_proj[app.df_proj['projVerId'] == projverid].projVerName.values[0])
+        for compid in lic_compverid_dict[licdata.licName.values[0]]:
+            complist.append(compdf[compdf['compVerId'] == compid].compName.values[0])
+            compverlist.append(compdf[compdf['compVerId'] == compid].compVerName.values[0])
+            for projverid in projcompmapdf[projcompmapdf['compVerId'] == compid].projVerId.values:
+                projlist.append(projdf[projdf['projVerId'] == projverid].projName.values[0])
+                projverlist.append(projdf[projdf['projVerId'] == projverid].projVerName.values[0])
 
         usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
 
@@ -170,7 +170,7 @@ def create_lictab(licdf):
     return dbc.Row(
         [
             dbc.Col(create_lictab_table_lics(licdf), width=7),
-            dbc.Col(create_lictab_card_lic(None), width=5,
+            dbc.Col(create_lictab_card_lic(None, None, None, None, None), width=5,
                     id='col_lictab_lic'),
         ]
     )

@@ -184,9 +184,7 @@ def create_projtab_fig_subdetails(thisdf):
     return thisfig
 
 
-def create_projtab_card_proj(projdata):
-    # global globals.df_comp, globals.df_projcompmap, globals.df_proj
-    import app
+def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
 
     # projName projVerName projVerId projVerDist projVerPhase projTier  All  compCount
     # secCritCount  secHighCount  secMedCount  secLowCount  secOkCount
@@ -221,14 +219,14 @@ def create_projtab_card_proj(projdata):
     if projdata is not None:
         projname = projdata['projName'].values[0]
         projver = projdata['projVerName'].values[0]
-        foundcomps = app.df_comp.loc[(app.df_comp['compName'] == projname) & (app.df_comp['compVerName'] == projver)]
+        foundcomps = compdf.loc[(compdf['compName'] == projname) & (compdf['compVerName'] == projver)]
 
         if foundcomps.shape[0] > 0:
             projlist = []
             projverlist = []
-            for projids in app.df_projcompmap[app.df_projcompmap['compVerId'] == foundcomps.
+            for projids in projcompmapdf[projcompmapdf['compVerId'] == foundcomps.
                                           compVerId.values[0]].projVerId.unique():
-                projs = app.df_proj[app.df_proj['projVerId'] == projids]
+                projs = projdf[projdf['projVerId'] == projids]
                 projlist.append(projs.projName.values[0])
                 projverlist.append(projs.projVerName.values[0])
 
@@ -303,7 +301,7 @@ def create_projtab(projdf):
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
                     dbc.Tab(
-                        create_projtab_card_proj(None),
+                        create_projtab_card_proj(None, None, None, None),
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )

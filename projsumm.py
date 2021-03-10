@@ -89,7 +89,7 @@ def create_projsummtab(projdf, color_col, size_col):
             dbc.Row(
                 dbc.Col(
                     dcc.Graph(id='projsummtab_graph_proj',
-                              figure=create_projsummtab_fig_proj(projdf, color_col, size_col,)
+                              figure=create_projsummtab_fig_proj(projdf, color_col, size_col,),
                     ),
                 ),
             ),

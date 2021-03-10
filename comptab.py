@@ -272,8 +272,8 @@ def create_comptab_table_compvers(thisdf):
     return thistable
 
 
-def create_comptab_card_comp(compdata):
-    import app
+def create_comptab_card_comp(projdf, projcompmapdf, compdata):
+    # from app import df_proj, df_projcompmap
 
     compname = ''
     compver = ''
@@ -304,9 +304,9 @@ def create_comptab_card_comp(compdata):
         projlist = []
         projverlist = []
 
-        for projid in app.df_projcompmap[app.df_projcompmap['compVerId'] == compverid].projVerId.unique():
-            projlist.append(app.df_proj[app.df_proj['projVerId'] == projid].projName.values[0])
-            projverlist.append(app.df_proj[app.df_proj['projVerId'] == projid].projVerName.values[0])
+        for projid in projcompmapdf[projcompmapdf['compVerId'] == compverid].projVerId.unique():
+            projlist.append(projdf[projdf['projVerId'] == projid].projName.values[0])
+            projverlist.append(projdf[projdf['projVerId'] == projid].projVerName.values[0])
 
         projs_data = pd.DataFrame({
             "projName": projlist,
@@ -376,7 +376,7 @@ def create_comptab(compdf):
                             tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
                         ),
                         dbc.Tab(
-                            create_comptab_card_comp(None),
+                            create_comptab_card_comp(None, None, None),
                             label='Selected Component',
                             tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
                         ),

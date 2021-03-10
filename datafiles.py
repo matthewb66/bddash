@@ -20,15 +20,13 @@ def read_data_files():
     return thisdfprojs, thisdfvulns
 
 
-def write_data_files():
-    import app
-    jsonout = app.df_main.to_json(orient="split")
+def write_data_files(df_main, df_vuln):
+    # from app import df_main, df_vuln
+    jsonout = df_main.to_json(orient="split")
     o = open("db_projs.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
-    jsonout = app.df_vuln.to_json(orient="split")
+    jsonout = df_vuln.to_json(orient="split")
     o = open("db_vulns.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
-
-

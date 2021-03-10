@@ -77,7 +77,7 @@ def proc_comp_data(thisdf):
     projcompmapdf = projcompmapdf.drop(
         ["projName", "projVerName", "projVerDist", "projVerPhase", "projTier", "compId", "compName",
          "compVerName", "secCritCount", "secHighCount", "secMedCount", "secLowCount", "secOkCount",
-         "licHighCount", "licMedCount", "licLowCount", "licOkCount", "licName", "All",],
+         "licHighCount", "licMedCount", "licLowCount", "licOkCount", "licName", "All", ],
         axis=1, inplace=False)
 
     projcompmapdf = projcompmapdf.sort_values(by=['projVerId', 'compVerId'], ascending=False)
@@ -176,5 +176,3 @@ def proc_vuln_data(thisdf):
     print('{} Vulnerabilities returned'.format(vulndf.vulnId.nunique()))
 
     return vulndf, projvulnmapdf, compvulnmapdf
-
-

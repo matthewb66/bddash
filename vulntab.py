@@ -80,8 +80,8 @@ def create_vulntab_table_vulns(thisdf):
     return thistable
 
 
-def create_vulntab_card_vuln(vulndata):
-    import app
+def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vulndata):
+    # from app import df_proj, df_comp, df_projvulnmap, df_compvulnmap
 
     vulnid = ''
     vulnrelated = ''
@@ -129,15 +129,15 @@ def create_vulntab_card_vuln(vulndata):
 
         projlist = []
         projverlist = []
-        for projid in app.df_projvulnmap[app.df_projvulnmap['vulnId'] == vulnid].projVerId.unique():
-            projlist.append(app.df_proj[app.df_proj['projVerId'] == projid].projName.values[0])
-            projverlist.append(app.df_proj[app.df_proj['projVerId'] == projid].projVerName.values[0])
+        for projid in df_projvulnmap[df_projvulnmap['vulnId'] == vulnid].projVerId.unique():
+            projlist.append(projdf[projdf['projVerId'] == projid].projName.values[0])
+            projverlist.append(projdf[projdf['projVerId'] == projid].projVerName.values[0])
 
         complist = []
         compverlist = []
-        for compid in app.df_compvulnmap[app.df_compvulnmap['vulnId'] == vulnid].compVerId.unique():
-            complist.append(app.df_comp[app.df_comp['compVerId'] == compid].compName.values[0])
-            compverlist.append(app.df_comp[app.df_comp['compVerId'] == compid].compVerName.values[0])
+        for compid in df_compvulnmap[df_compvulnmap['vulnId'] == vulnid].compVerId.unique():
+            complist.append(compdf[compdf['compVerId'] == compid].compName.values[0])
+            compverlist.append(compdf[compdf['compVerId'] == compid].compVerName.values[0])
 
         projs_data = pd.DataFrame({
             "projName": projlist,
@@ -206,7 +206,7 @@ def create_vulntab(vulndf):
                     ),
                 ], width=8
             ),
-            dbc.Col(create_vulntab_card_vuln(None), width=4, id='col_vulntab_vuln'),
+            dbc.Col(create_vulntab_card_vuln(None, None, None, None, None), width=4, id='col_vulntab_vuln'),
         ]
     )
 
