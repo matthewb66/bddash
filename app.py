@@ -9,7 +9,6 @@ import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import pandas as pd
 
-
 import dash_auth
 import db
 import data
@@ -19,9 +18,9 @@ import comptab
 import projtab
 import projsumm
 
-
 df_main = None
 df_vuln = None
+df_vuln_ori = None
 df_proj = None
 df_comp = None
 df_projcompmap = None
@@ -32,7 +31,6 @@ lic_compverid_dict = None
 compverid_lic_dict = None
 auth = None
 lastdbreadtime = 0
-
 
 
 def read_data_files():
@@ -60,6 +58,7 @@ def write_data_files():
     o = open("db_vulns.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
+
 
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
 if __name__ == '__main__':
@@ -104,11 +103,11 @@ if __name__ == '__main__':
         print("Getting project data ...")
         df_main = db.get_projdata(cur)
         print("Getting vulnerability data ...")
-        df_vuln = db.get_vulndata(cur)
+        df_vuln_ori = db.get_vulndata(cur)
         db.close_conn(conn, cur)
     elif readfrom == 'file':
         print('\nWill read data from json files')
-        df_main, df_vuln = read_data_files()
+        df_main, df_vuln_ori = read_data_files()
 
     if df_main is None or df_main.size == 0:
         print("No data obtained from DB or files")
@@ -119,9 +118,9 @@ if __name__ == '__main__':
         write_data_files()
 
     df_proj = data.proc_projdata(df_main)
-    print(df_proj)
+    # print(df_proj)
     df_comp, df_projcompmap = data.proc_comp_data(df_main)
-    df_vuln, df_projvulnmap, df_compvulnmap = data.proc_vuln_data(df_vuln)
+    df_vuln, df_projvulnmap, df_compvulnmap = data.proc_vuln_data(df_vuln_ori)
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
 
 
@@ -139,6 +138,17 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
                                 # {'label': 'High Licenses', 'value': 'licHighCount'},
                             ],
                             id='summtab_color_radio',
+                            value='secCritCount',
+                            inline=True,
+                            # labelStyle={'display': 'inline-block'}
+                        ),
+                        dbc.RadioItems(
+                            options=[
+                                # {'label': 'Critical Vulns', 'value': 'secCritCount'},
+                                # {'label': 'High Vulns', 'value': 'secHighCount'},
+                                # {'label': 'High Licenses', 'value': 'licHighCount'},
+                            ],
+                            id='summtab_size_radio',
                             value='secCritCount',
                             inline=True,
                             # labelStyle={'display': 'inline-block'}
@@ -265,7 +275,8 @@ if __name__ == '__main__':
             ),
             dbc.Row(
                 [
-                    dbc.Col(html.Div(children="Vuln Remediation Status"), width=1, align='center', style={'font-size': '12px'},),
+                    dbc.Col(html.Div(children="Vuln Remediation Status"), width=1, align='center',
+                            style={'font-size': '12px'}, ),
                     dbc.Col(
                         dcc.Dropdown(
                             id="sel_remstatus",
@@ -375,9 +386,6 @@ if __name__ == '__main__':
     )
 
 
-
-
-
 @app.callback(
     [
         Output('tab_comp_subdetail', 'children'),
@@ -400,7 +408,8 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
 
     if rows:
         return comptab.create_comptab_card_comp(df_comp, df_projcompmap,
-            df_comp[df_comp['compVerId'] == cdata[rows[0]]['compVerId']]), 'tab_comp_subdetail'
+                                                df_comp[df_comp['compVerId'] == cdata[rows[0]][
+                                                    'compVerId']]), 'tab_comp_subdetail'
 
     return comptab.create_comptab_card_comp(None, None, None), 'tab_comp_subsummary'
 
@@ -422,7 +431,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        print(df_vuln[df_vuln['vulnId'] == cdata[rows[0]]['vulnId']].to_string())
+        # print(df_vuln[df_vuln['vulnId'] == cdata[rows[0]]['vulnId']].to_string())
         return vulntab.create_vulntab_card_vuln(df_proj, df_comp, df_projvulnmap, df_compvulnmap,
                                                 df_vuln[df_vuln['vulnId'] == cdata[rows[0]]['vulnId']])
 
@@ -516,7 +525,8 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
 
     if rows:
         return projtab.create_projtab_card_proj(df_proj, df_comp, df_projcompmap,
-            df_proj[df_proj['projVerId'] == cdata[rows[0]]['projVerId']]), 'tab_proj_subdetail'
+                                                df_proj[df_proj['projVerId'] == cdata[rows[0]][
+                                                    'projVerId']]), 'tab_proj_subdetail'
 
     return projtab.create_projtab_card_proj(None, None, None, None), 'tab_proj_subsummary'
 
@@ -551,7 +561,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                   secrisk, licrisk, comps, proj_color_prev, proj_size_prev):
     global df_proj
     global df_comp, df_projcompmap
-    global df_vuln, df_projvulnmap, df_compvulnmap
+    global df_vuln, df_vuln_ori, df_projvulnmap, df_compvulnmap
     global df_lic, lic_compverid_dict, compverid_lic_dict
     print('callback_main')
 
@@ -581,11 +591,11 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                 temp_df_proj = temp_df_proj[temp_df_proj['projName'] == projs]
 
             # Set project version dropdowns
-            sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
+            # sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projVerName.unique()]
             recalc = True
-        else:
+        # else:
             # Version selection only possible if Project selected
-            sel_vers_options = []
+            # sel_vers_options = []
 
         if vers is not None and len(vers) > 0:
             if isinstance(vers, list):
@@ -661,17 +671,40 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             temp_df_lic = temp_df_lic[temp_df_lic.licName.isin(licnames)]
 
         if remstatus is not None and len(remstatus) > 0:
-            # Filter projects based on remstatus selection
+            # REMSTATUS START
             if isinstance(remstatus, list):
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.remStatus.isin(remstatus)]
+                dfprojgroup = df_vuln_ori[df_vuln_ori['remStatus'].
+                    isin(remstatus)].groupby(['projVerId', 'severity'])['projVerId'].count().unstack().fillna(0)
+                dfcompgroup = df_vuln_ori[df_vuln_ori['remStatus'].
+                    isin(remstatus)].groupby(['compVerId', 'severity'])['compVerId'].count().unstack().fillna(0)
             else:
-                temp_df_vuln = temp_df_vuln[temp_df_vuln['remStatus'] == remstatus]
+                dfprojgroup = df_vuln_ori[df_vuln_ori['remStatus'] == remstatus].\
+                    groupby(['projVerId', 'severity'])['projVerId'].count().unstack().fillna(0)
+                dfcompgroup = df_vuln_ori[df_vuln_ori['remStatus'] == remstatus].\
+                    groupby(['compVerId', 'severity'])['compVerId'].count().unstack().fillna(0)
 
-            vulnids = temp_df_vuln.vulnId.unique()
-            projids = df_projvulnmap[df_projvulnmap.vulnId.isin(vulnids)]['projVerId'].unique()
-            temp_df_proj = temp_df_proj[temp_df_proj['projVerId'].isin(projids)]
-            compids = df_compvulnmap[df_compvulnmap.vulnId.isin(vulnids)]['compVerId'].unique()
-            temp_df_comp = temp_df_comp[temp_df_comp['compVerId'].isin(compids)]
+            dfproj2 = pd.DataFrame(dfprojgroup, dtype='int64').reset_index()
+            dfproj2.columns = ['projVerId', "secCritCount", "secHighCount", "secMedCount", "secLowCount"]
+            temp_df_proj.drop(["secCritCount", "secHighCount", "secMedCount", "secLowCount"], axis=1, inplace=True)
+            temp_df_proj = pd.merge(temp_df_proj, dfproj2, on='projVerId')
+
+            dfcomp2 = pd.DataFrame(dfcompgroup, dtype='int64').reset_index()
+            dfcomp2.columns = ['compVerId', "secCritCount", "secHighCount", "secMedCount", "secLowCount"]
+            temp_df_comp.drop(["secCritCount", "secHighCount", "secMedCount", "secLowCount"], axis=1, inplace=True)
+            temp_df_comp = pd.merge(temp_df_comp, dfcomp2, on='compVerId')
+            # REMSTATUS END
+
+            # # Filter projects based on remstatus selection
+            # if isinstance(remstatus, list):
+            #     temp_df_vuln = temp_df_vuln[temp_df_vuln.remStatus.isin(remstatus)]
+            # else:
+            #     temp_df_vuln = temp_df_vuln[temp_df_vuln['remStatus'] == remstatus]
+
+            # vulnids = temp_df_vuln.vulnId.unique()
+            # projids = df_projvulnmap[df_projvulnmap.vulnId.isin(vulnids)]['projVerId'].unique()
+            # temp_df_proj = temp_df_proj[temp_df_proj['projVerId'].isin(projids)]
+            # compids = df_compvulnmap[df_compvulnmap.vulnId.isin(vulnids)]['compVerId'].unique()
+            # temp_df_comp = temp_df_comp[temp_df_comp['compVerId'].isin(compids)]
 
         if secrisk is not None and len(secrisk) > 0 and len(temp_df_proj) > 0:
             # Filter projects based on security risk selection
@@ -713,7 +746,9 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                 temp_df_lic = temp_df_lic[temp_df_lic.licLowCount > 0]
                 temp_df_proj = temp_df_proj[temp_df_proj.licLowCount > 0]
                 temp_df_comp = temp_df_comp[temp_df_comp.licLowCount > 0]
-    except:
+    except Exception as e:
+        print('Exception:')
+        print(e)
         noprojs = True
         # sel_tiers_options = [{'label': i, 'value': i} for i in df_proj.projTier.unique()]
         # sel_dists_options = [{'label': i, 'value': i} for i in df_proj.projVerDist.unique()]

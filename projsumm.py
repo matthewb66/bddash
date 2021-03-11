@@ -53,6 +53,7 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
 
 
 def create_projsummtab_fig_compsec(thisdf):
+    print(thisdf.head(20).to_string())
     sec_labels = ['Critical', 'High', 'Medium', 'Low', 'OK']
     sec_names = ['Critical', 'High', 'Medium', 'Low', 'OK']
 
