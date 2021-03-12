@@ -16,10 +16,10 @@ def create_projtab_table_projs(thisdf):
         {"name": ['', 'Components'], "id": "compcount"},
         {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
         {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
-        {"name": ['Vulnerabilities', 'Medium'], "id": "secmedcount"},
+        {"name": ['Vulnerabilities', 'Med'], "id": "secmedcount"},
         {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
         {"name": ['License Risk', 'High'], "id": "lichighcount"},
-        {"name": ['License Risk', 'Medium'], "id": "licmedcount"},
+        {"name": ['License Risk', 'Med'], "id": "licmedcount"},
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
     ]
@@ -39,11 +39,11 @@ def create_projtab_table_projs(thisdf):
                                      style_data_conditional=[
                                          {
                                              'if': {'column_id': 'projvername'},
-                                             'width': '160px'
+                                             'width': '200px'
                                          },
                                          {
                                              'if': {'column_id': 'compcount'},
-                                             'width': '60px'
+                                             'width': '80px'
                                          },
                                          {
                                              'if': {
@@ -160,7 +160,7 @@ def create_projtab_table_projs(thisdf):
 
 def create_projtab_fig_subsummary(thisdf):
     df_temp = thisdf[["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"]].sum()
-    sec_labels = ['Critical', 'High', 'Medium', 'Low']
+    sec_labels = ['Crit', 'High', 'Med', 'Low']
     sec_names = ['Critical', 'High', 'Medium', 'Low']
     compsec_values = [df_temp.seccritcount.sum(), df_temp.sechighcount.sum(), df_temp.secmedcount.sum(),
                       df_temp.seclowcount.sum()]
@@ -173,8 +173,8 @@ def create_projtab_fig_subsummary(thisdf):
 
 
 def create_projtab_fig_subdetails(thisdf):
-    lic_labels = ['High', 'Medium', 'Low', 'OK']
-    lic_names = ['High', 'Medium', 'Low', 'None']
+    lic_labels = ['High', 'Med', 'Low', 'OK']
+    lic_names = ['High', 'Med', 'Low', 'None']
     complic_values = [thisdf.lichighcount.sum(), thisdf.licmedcount.sum(), thisdf.liclowcount.sum(),
                       thisdf.licokcount.sum()]
     thisfig = px.pie(values=complic_values, labels=lic_labels, names=lic_names, title='License Risk Counts',

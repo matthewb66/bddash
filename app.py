@@ -17,6 +17,7 @@ import vulntab
 import comptab
 import projtab
 import projsumm
+import poltab
 
 df_main = None
 df_vuln = None
@@ -143,7 +144,7 @@ if __name__ == '__main__':
     df_pol = data.proc_pol_data(df_pol)
 
 
-def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield, noprojs):
+def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, sizefield, noprojs):
     if noprojs:
         return dbc.Tabs(
             [
@@ -192,6 +193,12 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
                     label="Vulnerabilties (0)",
                     tab_id="tab_vulns", id="tab_vulns"
                 ),
+                dbc.Tab(  # POLICY TAB
+                    html.Div(children='No Policies Selected by Filters'),
+                    label="Policies (0)",
+                    # label="Licenses",
+                    tab_id="tab_pols", id="tab_pols"
+                ),
                 dbc.Tab(  # LICENSE TAB
                     html.Div(children='No Projects Selected by Filters'),
                     label="Licenses (0)",
@@ -224,10 +231,16 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
     else:
         lictext = "Licenses (0)"
 
+    if poldata is not None:
+        poltext = "Policies (" + str(poldata.polname.nunique()) + ")"
+    else:
+        poltext = "Policies (0)"
+
     return dbc.Tabs(
         [
             dbc.Tab(  # SUMMARY TAB
-                projsumm.create_projsummtab(projdata, colorfield, sizefield), label="Projects Summary",
+                projsumm.create_projsummtab(projdata, colorfield, sizefield),
+                label="Projects Summary",
                 tab_id="tab_projsummary", id="tab_projsummary",
             ),
             dbc.Tab(  # PROJECTS TAB
@@ -244,6 +257,11 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
                 vulntab.create_vulntab(vulndata),
                 label=vulntext,
                 tab_id="tab_vulns", id="tab_vulns"
+            ),
+            dbc.Tab(  # POLICY TAB
+                poltab.create_poltab(poldata),
+                label=poltext,
+                tab_id="tab_pols", id="tab_pols",
             ),
             dbc.Tab(  # LICENSE TAB
                 lictab.create_lictab(licdata),
@@ -416,7 +434,8 @@ if __name__ == '__main__':
             dbc.Row(
                 dbc.Col(
                     dbc.Spinner(
-                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, 'seccritcountplus1', 'compcount', False),
+                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol,
+                                       'seccritcountplus1', 'compcount', False),
                         id='spinner_main',
                     ), width=12,
                 )
@@ -602,6 +621,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap
     global df_lic, lic_compverid_dict, compverid_lic_dict
+    global df_pol
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -617,6 +637,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     temp_df_comp = df_comp
     temp_df_vuln = df_vuln
     temp_df_lic = df_lic
+    temp_df_pol = df_pol
     noprojs = False
     recalc = False
 
@@ -800,7 +821,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     #
 
     return (
-        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic,
+        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
                        proj_treemap_color, proj_treemap_size, noprojs),
         proj_treemap_color, proj_treemap_size,
     )
