@@ -137,10 +137,10 @@ def get_vulndata(thisconn):
 def get_poldata(thisconn):
     thisdf = pd.read_sql('''SELECT component_policies.project_version_id as projverid,
                  component.component_version_id as compverid,
-                 policy_id as polId,
-                 policy_name as polName,
-                 policy_status as polStatus,
-                 overridden_by as overrideBy,
+                 policy_id as polid,
+                 policy_name as polname,
+                 policy_status as polstatus,
+                 overridden_by as overrideby,
                  description as desc,
                  severity
                  from component_policies

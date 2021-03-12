@@ -7,7 +7,7 @@ import pandas as pd
 def create_vulntab_table_vulns(thisdf):
     # "projname", "projvername", "compname", "compvername", "vulnid", "relatedvulnid",
     # "vulnsource", "severity", "remstatus"))
-    vuln_data = [
+    vuln_cols = [
         {"name": ['Vuln Id'], "id": "vulnid"},
         {"name": ['Related Vuln'], "id": "relatedvulnid"},
         {"name": ['Severity'], "id": "severity"},
@@ -21,15 +21,15 @@ def create_vulntab_table_vulns(thisdf):
     ]
     df_temp = thisdf
 
-    if len(df_temp) == 0:
+    if df_temp is None or len(df_temp) == 0:
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
-                                         columns=vuln_data,
+                                         columns=vuln_cols,
                                          )
     else:
         df_temp = df_temp.sort_values(by=["score"], ascending=False)
 
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
-                                         columns=vuln_data,
+                                         columns=vuln_cols,
                                          data=df_temp.to_dict('records'),
                                          page_size=20,
                                          sort_action='native',

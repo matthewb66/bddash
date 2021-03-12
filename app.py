@@ -34,19 +34,26 @@ lastdbreadtime = 0
 
 
 def read_data_files():
-    if not os.path.isfile('db_projs.json') or not os.path.isfile('db_vulns.json'):
+    if not os.path.isfile('db_projs.json') or not os.path.isfile('db_vulns.json') or \
+            not os.path.isfile('db_pols.json'):
         sys.exit(3)
 
     with open('db_projs.json') as jsonproj_file:
         dbprojdata = json.load(jsonproj_file)
     jsonproj_file.close()
     thisdfprojs = pd.read_json(dbprojdata, orient='split')
+
     with open('db_vulns.json') as jsonvuln_file:
         dbvulndata = json.load(jsonvuln_file)
     jsonvuln_file.close()
     thisdfvulns = pd.read_json(dbvulndata, orient='split')
 
-    return thisdfprojs, thisdfvulns
+    with open('db_pols.json') as jsonpol_file:
+        dbpoldata = json.load(jsonpol_file)
+    jsonpol_file.close()
+    thisdfpols = pd.read_json(dbpoldata, orient='split')
+
+    return thisdfprojs, thisdfvulns, thisdfpols
 
 
 def write_data_files(maindf, vulndf, poldf):
@@ -68,8 +75,8 @@ def write_data_files(maindf, vulndf, poldf):
     print("Done\n")
 
 
-
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
+
 if __name__ == '__main__':
 
     server = app.server
@@ -118,7 +125,7 @@ if __name__ == '__main__':
         db.close_conn(conn, cur)
     elif readfrom == 'file':
         print('\nWill read data from json files')
-        df_main, df_vuln = read_data_files()
+        df_main, df_vuln, df_pol = read_data_files()
 
     if df_main is None or df_main.size == 0 or df_vuln is None or df_vuln.size == 0 or df_pol is None:
         print("No data obtained from DB or files")
@@ -133,6 +140,7 @@ if __name__ == '__main__':
     df_comp, df_projcompmap = data.proc_comp_data(df_main)
     df_vuln = data.proc_vuln_data(df_vuln)
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
+    df_pol = data.proc_pol_data(df_pol)
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield, noprojs):
@@ -195,6 +203,27 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
             active_tab="tab_projsummary",
         )
 
+    if projdata is not None:
+        projtext = "Projects (" + str(projdata.projname.nunique()) + ") & Versions (" + \
+                   str(projdata.projverid.nunique()) + ")"
+    else:
+        projtext = "Projects (0)"
+
+    if compdata is not None:
+        comptext = "Components (" + str(compdata.compname.nunique()) + ")"
+    else:
+        comptext = "Components(0)"
+
+    if vulndata is not None:
+        vulntext = "Vulnerabilties (" + str(vulndata.vulnid.nunique()) + ")"
+    else:
+        vulntext = "Vulnerabilities (0)"
+
+    if licdata is not None:
+        lictext = "Licenses (" + str(licdata.licname.nunique()) + ")"
+    else:
+        lictext = "Licenses (0)"
+
     return dbc.Tabs(
         [
             dbc.Tab(  # SUMMARY TAB
@@ -203,23 +232,22 @@ def create_alltabs(projdata, compdata, vulndata, licdata, colorfield, sizefield,
             ),
             dbc.Tab(  # PROJECTS TAB
                 projtab.create_projtab(projdata),
-                label="Projects (" + str(projdata.projname.nunique()) + ") & Versions (" +
-                      str(projdata.projverid.nunique()) + ")",
+                label=projtext,
                 tab_id="tab_projects", id="tab_projects"
             ),
             dbc.Tab(  # COMPONENTS TAB
                 comptab.create_comptab(compdata),
-                label="Components (" + str(compdata.compname.nunique()) + ")",
+                label=comptext,
                 tab_id="tab_components", id="tab_components"
             ),
             dbc.Tab(  # VULNS TAB
                 vulntab.create_vulntab(vulndata),
-                label="Vulnerabilties (" + str(vulndata.vulnid.nunique()) + ")",
+                label=vulntext,
                 tab_id="tab_vulns", id="tab_vulns"
             ),
             dbc.Tab(  # LICENSE TAB
                 lictab.create_lictab(licdata),
-                label="Licenses (" + str(licdata.licname.nunique()) + ")",
+                label=lictext,
                 # label="Licenses",
                 tab_id="tab_lics", id="tab_lics"
             )
@@ -648,20 +676,6 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
             recalc = True
 
-        if projs is not None and len(projs) > 0:
-            if isinstance(projs, list):
-                # Filter projects from selection
-                temp_df_proj = temp_df_proj[temp_df_proj.projname.isin(projs)]
-            else:
-                temp_df_proj = temp_df_proj[temp_df_proj['projname'] == projs]
-
-            # Set project version dropdowns
-            # sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projvername.unique()]
-            recalc = True
-        # else:
-        #     # Version selection only possible if Project selected
-        #     sel_vers_options = []
-
         if recalc and len(temp_df_proj) > 0:
             # Filter components based on projcompmap
             projverids = temp_df_proj['projverid'].unique()
@@ -766,7 +780,10 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
         # sel_phases_options = [{'label': i, 'value': i} for i in df_proj.projverphase.unique()]
         # sel_comps_options = [{'label': i, 'value': i} for i in df_comp.compname.sort_values().unique()]
 
-    if len(temp_df_proj) == 0 or len(temp_df_comp) == 0 or len(temp_df_vuln) == 0 or len(temp_df_lic) == 0:
+    if temp_df_proj is None or len(temp_df_proj) == 0 or \
+            temp_df_comp is None or len(temp_df_comp) == 0 or \
+            temp_df_vuln is None or len(temp_df_vuln) == 0 or \
+            temp_df_lic is None or len(temp_df_lic) == 0:
         noprojs = True
 
     # # Click on projtab_treemap

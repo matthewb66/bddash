@@ -169,5 +169,12 @@ def proc_vuln_data(thisdf):
     #                                    axis=1, inplace=False)
 
     print('{} Vulnerabilities returned'.format(vulndf.vulnid.nunique()))
+    return thisdf
 
-    return vulndf
+
+def proc_pol_data(thisdf):
+    poldf = thisdf
+
+    print('{} Policies returned'.format(poldf.polid.nunique()))
+
+    return poldf
