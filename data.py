@@ -6,29 +6,29 @@ def proc_projdata(thisdf):
     newdf = thisdf
     newdf["All"] = "All"
     # Calculate total vulnerability count for all comps
-    newdf = pd.DataFrame(newdf.eval('secAll = secCritCount + secHighCount + secMedCount + secLowCount'))
-    newdf = pd.DataFrame(newdf.eval('secCritHighCountplus1 = secCritCount + secHighCount + 1'))
-    newdf = pd.DataFrame(newdf.eval('secCritCountplus1 = secCritCount + 1'))
-    newdf = pd.DataFrame(newdf.eval('licHighCountplus1 = licHighCount + 1'))
+    newdf = pd.DataFrame(newdf.eval('secAll = seccritcount + sechighcount + secmedcount + seclowcount'))
+    newdf = pd.DataFrame(newdf.eval('secCrithighcountplus1 = seccritcount + sechighcount + 1'))
+    newdf = pd.DataFrame(newdf.eval('seccritcountplus1 = seccritcount + 1'))
+    newdf = pd.DataFrame(newdf.eval('lichighcountplus1 = lichighcount + 1'))
 
     # Sum columns for projVers
-    sums = newdf.groupby("projVerId").sum().reset_index()
+    sums = newdf.groupby("projverid").sum().reset_index()
     # Remove duplicate component rows
-    newdf.drop_duplicates(subset="projVerId", keep="first", inplace=True)
+    newdf.drop_duplicates(subset="projverid", keep="first", inplace=True)
     # Count components in projvers
-    df_counts = pd.DataFrame(thisdf['projVerId'].value_counts(ascending=False).
-                             rename_axis('projVerId').reset_index(name='compCount'))
+    df_counts = pd.DataFrame(thisdf['projverid'].value_counts(ascending=False).
+                             rename_axis('projverid').reset_index(name='compcount'))
 
-    # Merge compCount into df
-    newdf = pd.merge(newdf, df_counts, on='projVerId')
+    # Merge compcount into df
+    newdf = pd.merge(newdf, df_counts, on='projverid')
     # Remove duplicate and unwanted columns before merge
-    newdf.drop(['secAll', 'secCritHighCountplus1', 'secCritCountplus1', 'licHighCountplus1',
-                'secCritCount', 'secHighCount', 'secMedCount',
-                'secLowCount', 'secOkCount', 'licHighCount', 'licMedCount', 'licLowCount', 'licOkCount', 'compId',
-                'compName', 'compVerId', 'compVerName', 'licName'], axis=1, inplace=True)
+    newdf.drop(['secAll', 'secCrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
+                'seccritcount', 'sechighcount', 'secmedcount',
+                'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
+                'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
     # Merge sums into df
-    newdf = pd.merge(newdf, sums, on='projVerId')
-    print('{} Projects and {} Versions returned'.format(newdf.projName.nunique(), newdf.projVerId.nunique()))
+    newdf = pd.merge(newdf, sums, on='projverid')
+    print('{} Projects and {} Versions returned'.format(newdf.projname.nunique(), newdf.projverid.nunique()))
 
     return newdf
 
@@ -37,61 +37,61 @@ def proc_comp_data(thisdf):
     # compdf will have 1 row per compver across all projvers
     # -  license risk will be the most severe across all projvers
     # projcompdf will have 1 row for each compver within each projver
-    # - will map projVerId to compVerId
+    # - will map projverid to compverid
 
     compdf = thisdf
 
     # sort by license risk
-    compdf = compdf.sort_values(by=['licHighCount', 'licMedCount', 'licLowCount'], ascending=False)
+    compdf = compdf.sort_values(by=['lichighcount', 'licmedcount', 'liclowcount'], ascending=False)
     # remove duplicates
-    compdf = compdf.drop_duplicates(subset="compVerId", keep="first", inplace=False)
+    compdf = compdf.drop_duplicates(subset="compverid", keep="first", inplace=False)
 
     def calc_license(row):
-        if row['licHighCount'] > 0:
+        if row['lichighcount'] > 0:
             return 'High'
-        elif row['licMedCount'] > 0:
+        elif row['licmedcount'] > 0:
             return 'Medium'
-        elif row['licLowCount'] > 0:
+        elif row['liclowcount'] > 0:
             return 'Low'
-        elif row['licOkCount'] > 0:
+        elif row['licokcount'] > 0:
             return 'OK'
         return ''
 
-    # Calculate license risk value as licRisk
-    compdf['licRisk'] = compdf.apply(calc_license, axis=1)
-    compdf = compdf.drop(["projName", "projVerName", "projVerId", "projVerDist", "projVerPhase", "projTier"],
-                         axis=1, inplace=False)
+    # Calculate license risk value as licrisk
+    compdf['licrisk'] = compdf.apply(calc_license, axis=1)
+    # compdf = compdf.drop(["projname", "projvername", "projverid", "projverdist", "projverphase", "projtier"],
+    #                      axis=1, inplace=False)
 
-    compdf = compdf.sort_values(by=['compName'], ascending=True)
+    compdf = compdf.sort_values(by=['compname'], ascending=True)
 
     def calc_lic_nounknown(row):
-        if row['licName'] == 'Unknown License':
+        if row['licname'] == 'Unknown License':
             return 1
         else:
             return 0
 
-    compdf['licRiskNoUnk'] = compdf.apply(calc_lic_nounknown, axis=1)
+    compdf['licriskNoUnk'] = compdf.apply(calc_lic_nounknown, axis=1)
     # Calculate mapping of projvers to compvers
     projcompmapdf = thisdf
 
     projcompmapdf = projcompmapdf.drop(
-        ["projName", "projVerName", "projVerDist", "projVerPhase", "projTier", "compId", "compName",
-         "compVerName", "secCritCount", "secHighCount", "secMedCount", "secLowCount", "secOkCount",
-         "licHighCount", "licMedCount", "licLowCount", "licOkCount", "licName", "All", ],
+        ["projname", "projvername", "compid", "compname",
+         "compvername", "seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount",
+         "lichighcount", "licmedcount", "liclowcount", "licokcount", "licname", "All", ],
         axis=1, inplace=False)
 
-    projcompmapdf = projcompmapdf.sort_values(by=['projVerId', 'compVerId'], ascending=False)
+    projcompmapdf = projcompmapdf.sort_values(by=['projverid', 'compverid'], ascending=False)
 
-    print('{} Components and {} Component Versions returned'.format(compdf.compName.nunique(),
-                                                                    compdf.compVerId.nunique()))
+    print('{} Components and {} Component Versions returned'.format(compdf.compname.nunique(),
+                                                                    compdf.compverid.nunique()))
 
     return compdf, projcompmapdf
 
 
 def proc_licdata(thisdf):
-    licnames = thisdf.licName.values
-    compids = thisdf.compVerId.values
-    # licrisks = thisdf.licRisk.values
+    licnames = thisdf.licname.values
+    compids = thisdf.compverid.values
+    # licrisks = thisdf.licrisk.values
 
     thislic_compverid_dict = {}  # Map of license names to compverids (dict of lists of compverids)
     thiscompverid_lic_dict = {}  # Map of compverids to licnames (dict of lists of licnames)
@@ -99,8 +99,8 @@ def proc_licdata(thisdf):
     licname_list = []
 
     tempdf = thisdf
-    sums = tempdf[~tempdf['licName'].str.startswith('(') &
-                  ~tempdf['licName'].str.endswith(')')].groupby("licName").sum().reset_index()
+    sums = tempdf[~tempdf['licname'].str.startswith('(') &
+                  ~tempdf['licname'].str.endswith(')')].groupby("licname").sum().reset_index()
     # print(sums.head(100).to_string())
 
     compindex = 0
@@ -121,7 +121,7 @@ def proc_licdata(thisdf):
                 splits = re.split(' OR | AND ', lic)
 
         for item in splits:
-            # lics = thisdf[thisdf['licName'] == item].licRisk.unique()
+            # lics = thisdf[thisdf['licname'] == item].licrisk.unique()
             # maxrisk = get_maxlicrisk(lics)
             compverid = compids[compindex]
             if item not in thislic_compverid_dict.keys():
@@ -142,37 +142,32 @@ def proc_licdata(thisdf):
     # print(list(zip(licmap_dict.keys(), licrisk_dict.values())))
     print("{} Licenses returned".format(len(sums)))
     # temp_df = pd.DataFrame.from_records(list(zip(licmap_dict.keys(),
-    #                                     licrisk_dict.values())), columns=['licName', 'licRisk'])
+    #                                     licrisk_dict.values())), columns=['licname', 'licrisk'])
     # sorter = ['OK', 'Low', 'Medium', 'High']
-    # temp_df.licRisk = temp_df.licRisk.astype("category")
-    # temp_df.licRisk.cat.set_categories(sorter, inplace=True)
+    # temp_df.licrisk = temp_df.licrisk.astype("category")
+    # temp_df.licrisk.cat.set_categories(sorter, inplace=True)
     return sums, thislic_compverid_dict, thiscompverid_lic_dict
 
 
 def proc_vuln_data(thisdf):
-    # vulndf will have 1 row per vulnId
+    # vulndf will have 1 row per vulnid
     # projvulnmapdf will have 1 row for each vuln within each projver
-    # - will map projVerId to compVerId
+    # - will map projverid to compverid
 
     vulndf = thisdf
-    projvulnmapdf = thisdf
-    compvulnmapdf = thisdf
 
-    vulndf = vulndf.drop(["projVerId", "projName", "projVerName", "compName", "compId", "compVerId", "compVerName"],
-                         axis=1, inplace=False)
+    # vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
+    # vulndf = vulndf.sort_values(by=['score'], ascending=False)
 
-    vulndf = vulndf.drop_duplicates(subset=["vulnId"], keep="first", inplace=False)
-    vulndf = vulndf.sort_values(by=['score'], ascending=False)
+    # projvulnmapdf = projvulnmapdf.drop(["projname", "projvername", "compname", " compid", "compverid",
+    #                                     "compvername", "relatedvulnid", "vulnsource", "severity", "score",
+    #                                     "remstatus", "solution", "workaround", "published_on", "desc"],
+    #                                    axis=1, inplace=False)
+    # compvulnmapdf = compvulnmapdf.drop(["projverid", "projname", "projvername", "compname", " compid",
+    #                                     "compvername", "relatedvulnid", "vulnsource", "severity", "score",
+    #                                     "remstatus", "solution", "workaround", "published_on", "desc"],
+    #                                    axis=1, inplace=False)
 
-    projvulnmapdf = projvulnmapdf.drop(["projName", "projVerName", "compName", "compId", "compVerId",
-                                        "compVerName", "relatedVulnId", "vulnSource", "severity", "score",
-                                        "remStatus", "solution", "workaround", "published_on", "desc"],
-                                       axis=1, inplace=False)
-    compvulnmapdf = compvulnmapdf.drop(["projVerId", "projName", "projVerName", "compName", "compId",
-                                        "compVerName", "relatedVulnId", "vulnSource", "severity", "score",
-                                        "remStatus", "solution", "workaround", "published_on", "desc"],
-                                       axis=1, inplace=False)
+    print('{} Vulnerabilities returned'.format(vulndf.vulnid.nunique()))
 
-    print('{} Vulnerabilities returned'.format(vulndf.vulnId.nunique()))
-
-    return vulndf, projvulnmapdf, compvulnmapdf
+    return vulndf

@@ -7,21 +7,21 @@ import plotly.express as px
 
 
 def create_projtab_table_projs(thisdf):
-    # projName projVerName projVerId projVerDist projVerPhase projTier  All  compCount
-    # secCritCount  secHighCount  secMedCount  secLowCount  secOkCount
-    # licHighCount  licMedCount  licLowCount  licOkCount  secAll
+    # projname projvername projverid projverdist projverphase projtier  All  compcount
+    # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
+    # lichighcount  licmedcount  liclowcount  licokcount  secAll
     col_data = [
-        {"name": ['', 'Project'], "id": "projName"},
-        {"name": ['', 'Project Version'], "id": "projVerName"},
-        {"name": ['', 'Components'], "id": "compCount"},
-        {"name": ['Vulnerabilities', 'Crit'], "id": "secCritCount"},
-        {"name": ['Vulnerabilities', 'High'], "id": "secHighCount"},
-        {"name": ['Vulnerabilities', 'Medium'], "id": "secMedCount"},
-        {"name": ['Vulnerabilities', 'Low'], "id": "secLowCount"},
-        {"name": ['License Risk', 'High'], "id": "licHighCount"},
-        {"name": ['License Risk', 'Medium'], "id": "licMedCount"},
-        {"name": ['License Risk', 'Low'], "id": "licLowCount"},
-        {"name": ['License Risk', 'None'], "id": "licOkCount"},
+        {"name": ['', 'Project'], "id": "projname"},
+        {"name": ['', 'Project Version'], "id": "projvername"},
+        {"name": ['', 'Components'], "id": "compcount"},
+        {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
+        {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
+        {"name": ['Vulnerabilities', 'Medium'], "id": "secmedcount"},
+        {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
+        {"name": ['License Risk', 'High'], "id": "lichighcount"},
+        {"name": ['License Risk', 'Medium'], "id": "licmedcount"},
+        {"name": ['License Risk', 'Low'], "id": "liclowcount"},
+        {"name": ['License Risk', 'None'], "id": "licokcount"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',
@@ -38,132 +38,132 @@ def create_projtab_table_projs(thisdf):
                                      cell_selectable=False,
                                      style_data_conditional=[
                                          {
-                                             'if': {'column_id': 'projVerName'},
+                                             'if': {'column_id': 'projvername'},
                                              'width': '160px'
                                          },
                                          {
-                                             'if': {'column_id': 'compCount'},
+                                             'if': {'column_id': 'compcount'},
                                              'width': '60px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{secCritCount} > 0',
-                                                 'column_id': 'secCritCount'
+                                                 'filter_query': '{seccritcount} > 0',
+                                                 'column_id': 'seccritcount'
                                              },
                                              'backgroundColor': 'maroon',
                                              'color': 'white'
                                          },
                                          {
-                                             'if': {'column_id': 'secCritCount'},
+                                             'if': {'column_id': 'seccritcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{secHighCount} > 0',
-                                                 'column_id': 'secHighCount'
+                                                 'filter_query': '{sechighcount} > 0',
+                                                 'column_id': 'sechighcount'
                                              },
                                              'backgroundColor': 'crimson',
                                              'color': 'black'
                                          },
                                          {
-                                             'if': {'column_id': 'secHighCount'},
+                                             'if': {'column_id': 'sechighcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{secMedCount} > 0',
-                                                 'column_id': 'secMedCount'
+                                                 'filter_query': '{secmedcount} > 0',
+                                                 'column_id': 'secmedcount'
                                              },
                                              'backgroundColor': 'coral',
                                              'color': 'black'
                                          },
                                          {
-                                             'if': {'column_id': 'secMedCount'},
+                                             'if': {'column_id': 'secmedcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{secLowCount} > 0',
-                                                 'column_id': 'secLowCount'
+                                                 'filter_query': '{seclowcount} > 0',
+                                                 'column_id': 'seclowcount'
                                              },
                                              'backgroundColor': 'gold',
                                              'color': 'black'
                                          },
                                          {
-                                             'if': {'column_id': 'secLowCount'},
+                                             'if': {'column_id': 'seclowcount'},
                                              'width': '50px'
                                          },
                                          {
-                                             'if': {'column_id': 'projName'},
+                                             'if': {'column_id': 'projname'},
                                              'width': '400px',
                                          },
                                          {
-                                             'if': {'column_id': 'projVerName'},
+                                             'if': {'column_id': 'projvername'},
                                              'width': '100px',
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{licHighCount} > 0',
-                                                 'column_id': 'licHighCount'
+                                                 'filter_query': '{lichighcount} > 0',
+                                                 'column_id': 'lichighcount'
                                              },
                                              'backgroundColor': 'crimson',
                                              'color': 'black',
                                          },
                                          {
-                                             'if': {'column_id': 'licHighCount'},
+                                             'if': {'column_id': 'lichighcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{licMedCount} > 0',
-                                                 'column_id': 'licMedCount'
+                                                 'filter_query': '{licmedcount} > 0',
+                                                 'column_id': 'licmedcount'
                                              },
                                              'backgroundColor': 'coral',
                                              'color': 'black',
                                          },
                                          {
-                                             'if': {'column_id': 'licMedCount'},
+                                             'if': {'column_id': 'licmedcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{licLowCount} > 0',
-                                                 'column_id': 'licLowCount'
+                                                 'filter_query': '{liclowcount} > 0',
+                                                 'column_id': 'liclowcount'
                                              },
                                              'backgroundColor': 'gold',
                                              'color': 'black',
                                          },
                                          {
-                                             'if': {'column_id': 'licLowCount'},
+                                             'if': {'column_id': 'liclowcount'},
                                              'width': '50px'
                                          },
                                          {
                                              'if': {
-                                                 'filter_query': '{licOkCount} > 0',
-                                                 'column_id': 'licOkCount'
+                                                 'filter_query': '{licokcount} > 0',
+                                                 'column_id': 'licokcount'
                                              },
                                              'width': '50px',
                                          },
                                          {
-                                             'if': {'column_id': 'licOkCount'},
+                                             'if': {'column_id': 'licokcount'},
                                              'width': '50px'
                                          },
                                      ],
-                                     sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
-                                              {'column_id': 'secHighCount', 'direction': 'desc'},
-                                              {'column_id': 'secMedCount', 'direction': 'desc'},
-                                              {'column_id': 'secLowCount', 'direction': 'desc'}],
+                                     sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
+                                              {'column_id': 'sechighcount', 'direction': 'desc'},
+                                              {'column_id': 'secmedcount', 'direction': 'desc'},
+                                              {'column_id': 'seclowcount', 'direction': 'desc'}],
                                      merge_duplicate_headers=True
                                      )
     return thistable
 
 
 def create_projtab_fig_subsummary(thisdf):
-    df_temp = thisdf[["secCritCount", "secHighCount", "secMedCount", "secLowCount", "secOkCount"]].sum()
+    df_temp = thisdf[["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"]].sum()
     sec_labels = ['Critical', 'High', 'Medium', 'Low']
     sec_names = ['Critical', 'High', 'Medium', 'Low']
-    compsec_values = [df_temp.secCritCount.sum(), df_temp.secHighCount.sum(), df_temp.secMedCount.sum(),
-                      df_temp.secLowCount.sum()]
+    compsec_values = [df_temp.seccritcount.sum(), df_temp.sechighcount.sum(), df_temp.secmedcount.sum(),
+                      df_temp.seclowcount.sum()]
     thisfig = px.pie(values=compsec_values, labels=sec_labels, names=sec_names,
                      title='Vulnerability Counts',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
@@ -175,8 +175,8 @@ def create_projtab_fig_subsummary(thisdf):
 def create_projtab_fig_subdetails(thisdf):
     lic_labels = ['High', 'Medium', 'Low', 'OK']
     lic_names = ['High', 'Medium', 'Low', 'None']
-    complic_values = [thisdf.licHighCount.sum(), thisdf.licMedCount.sum(), thisdf.licLowCount.sum(),
-                      thisdf.licOkCount.sum()]
+    complic_values = [thisdf.lichighcount.sum(), thisdf.licmedcount.sum(), thisdf.liclowcount.sum(),
+                      thisdf.licokcount.sum()]
     thisfig = px.pie(values=complic_values, labels=lic_labels, names=lic_names, title='License Risk Counts',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
     thisfig.update_traces(textinfo='value')
@@ -186,9 +186,9 @@ def create_projtab_fig_subdetails(thisdf):
 
 def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
 
-    # projName projVerName projVerId projVerDist projVerPhase projTier  All  compCount
-    # secCritCount  secHighCount  secMedCount  secLowCount  secOkCount
-    # licHighCount  licMedCount  licLowCount  licOkCount  secAll
+    # projname projvername projverid projverdist projverphase projtier  All  compcount
+    # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
+    # lichighcount  licmedcount  liclowcount  licokcount  secAll
     projname = ''
     projver = ''
     row1 = ''
@@ -197,8 +197,8 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
     row4 = ''
     projusedbytitle = html.P('Used as sub-project in Projects:', className="card-text", )
     projusedin_cols = [
-        {"name": ['Project'], "id": "projName"},
-        {"name": ['Project Version'], "id": "projVerName"},
+        {"name": ['Project'], "id": "projname"},
+        {"name": ['Project Version'], "id": "projvername"},
     ]
     projstable = dash_table.DataTable(
         # columns=[],
@@ -217,22 +217,22 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
     )
 
     if projdata is not None:
-        projname = projdata['projName'].values[0]
-        projver = projdata['projVerName'].values[0]
-        foundcomps = compdf.loc[(compdf['compName'] == projname) & (compdf['compVerName'] == projver)]
+        projname = projdata['projname'].values[0]
+        projver = projdata['projvername'].values[0]
+        foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
 
         if foundcomps.shape[0] > 0:
             projlist = []
             projverlist = []
-            for projids in projcompmapdf[projcompmapdf['compVerId'] == foundcomps.
-                                          compVerId.values[0]].projVerId.unique():
-                projs = projdf[projdf['projVerId'] == projids]
-                projlist.append(projs.projName.values[0])
-                projverlist.append(projs.projVerName.values[0])
+            for projids in projcompmapdf[projcompmapdf['compverid'] == foundcomps.
+                                         compverid.values[0]].projverid.unique():
+                projs = projdf[projdf['projverid'] == projids]
+                projlist.append(projs.projname.values[0])
+                projverlist.append(projs.projvername.values[0])
 
             projs_data = pd.DataFrame({
-                "projName": projlist,
-                "projVerName": projverlist
+                "projname": projlist,
+                "projvername": projverlist
             })
 
             projstable = dash_table.DataTable(
@@ -245,9 +245,9 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
                 id='projtab_detail_projtable',
             )
 
-        row1 = html.Tr([html.Td("Distribution"), html.Td(projdata['projVerDist'])])
-        row2 = html.Tr([html.Td("Tier"), html.Td(projdata['projTier'])])
-        row3 = html.Tr([html.Td("Phase"), html.Td(projdata['projVerPhase'])])
+        row1 = html.Tr([html.Td("Distribution"), html.Td(projdata['projverdist'])])
+        row2 = html.Tr([html.Td("tier"), html.Td(projdata['projtier'])])
+        row3 = html.Tr([html.Td("Phase"), html.Td(projdata['projverphase'])])
         row4 = html.Tr([html.Td("Total Vulns"), html.Td(projdata['secAll'])])
 
     table_header = []
@@ -309,4 +309,3 @@ def create_projtab(projdf):
             ), width=4
         ),
     ])
-

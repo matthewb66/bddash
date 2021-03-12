@@ -7,11 +7,11 @@ import plotly.express as px
 
 
 def create_comptab_fig_compsec(thisdf):
-    df_temp = thisdf[["secCritCount", "secHighCount", "secMedCount", "secLowCount", "secOkCount"]].sum()
+    df_temp = thisdf[["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"]].sum()
     sec_labels = ['Critical', 'High', 'Medium', 'Low']
     sec_names = ['Critical', 'High', 'Medium', 'Low']
-    compsec_values = [df_temp.secCritCount.sum(), df_temp.secHighCount.sum(), df_temp.secMedCount.sum(),
-                      df_temp.secLowCount.sum()]
+    compsec_values = [df_temp.seccritcount.sum(), df_temp.sechighcount.sum(), df_temp.secmedcount.sum(),
+                      df_temp.seclowcount.sum()]
     thisfig = px.pie(values=compsec_values, labels=sec_labels, names=sec_names,
                      title='Vulnerability Counts',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
@@ -23,8 +23,8 @@ def create_comptab_fig_compsec(thisdf):
 def create_comptab_fig_complic(thisdf):
     lic_labels = ['High', 'Medium', 'Low', 'OK']
     lic_names = ['High', 'Medium', 'Low', 'None']
-    complic_values = [thisdf.licHighCount.sum(), thisdf.licMedCount.sum(), thisdf.licLowCount.sum(),
-                      thisdf.licOkCount.sum()]
+    complic_values = [thisdf.lichighcount.sum(), thisdf.licmedcount.sum(), thisdf.liclowcount.sum(),
+                      thisdf.licokcount.sum()]
     thisfig = px.pie(values=complic_values, labels=lic_labels, names=lic_names, title='License Risk Counts',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
     thisfig.update_traces(textinfo='value')
@@ -34,14 +34,14 @@ def create_comptab_fig_complic(thisdf):
 
 def create_comptab_table_compvers(thisdf):
     col_data = [
-        {"name": ['', 'Component'], "id": "compName"},
-        {"name": ['', 'Version'], "id": "compVerName"},
-        {"name": ['Vulnerabilities', 'Crit'], "id": "secCritCount"},
-        {"name": ['Vulnerabilities', 'High'], "id": "secHighCount"},
-        {"name": ['Vulnerabilities', 'Medium'], "id": "secMedCount"},
-        {"name": ['Vulnerabilities', 'Low'], "id": "secLowCount"},
-        {"name": ['License', 'Risk'], "id": "licRisk"},
-        {"name": ['License', 'Name'], "id": "licName"},
+        {"name": ['', 'Component'], "id": "compname"},
+        {"name": ['', 'Version'], "id": "compvername"},
+        {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
+        {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
+        {"name": ['Vulnerabilities', 'Medium'], "id": "secmedcount"},
+        {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
+        {"name": ['License', 'Risk'], "id": "licrisk"},
+        {"name": ['License', 'Name'], "id": "licname"},
     ]
     df_temp = thisdf
 
@@ -62,70 +62,70 @@ def create_comptab_table_compvers(thisdf):
                                          style_data_conditional=[
                                              {
                                                  'if': {
-                                                     'filter_query': '{secCritCount} > 0',
-                                                     'column_id': 'secCritCount'
+                                                     'filter_query': '{seccritcount"} > 0',
+                                                     'column_id': 'seccritcount'
                                                  },
                                                  'backgroundColor': 'maroon',
                                                  'color': 'white'
                                              },
                                              {
-                                                 'if': {'column_id': 'secCritCount'},
+                                                 'if': {'column_id': 'seccritcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secHighCount} > 0',
-                                                     'column_id': 'secHighCount'
+                                                     'filter_query': '{sechighcount} > 0',
+                                                     'column_id': 'sechighcount'
                                                  },
                                                  'backgroundColor': 'crimson',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secHighCount'},
+                                                 'if': {'column_id': 'sechighcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secMedCount} > 0',
-                                                     'column_id': 'secMedCount'
+                                                     'filter_query': '{secmedcount} > 0',
+                                                     'column_id': 'secmedcount'
                                                  },
                                                  'backgroundColor': 'coral',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secMedCount'},
+                                                 'if': {'column_id': 'secmedcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secLowCount} > 0',
-                                                     'column_id': 'secLowCount'
+                                                     'filter_query': '{seclowcount} > 0',
+                                                     'column_id': 'seclowcount'
                                                  },
                                                  'backgroundColor': 'gold',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secLowCount'},
+                                                 'if': {'column_id': 'seclowcount'},
                                                  'width': '50px'
                                              },
                                              {
-                                                 'if': {'column_id': 'licName'},
+                                                 'if': {'column_id': 'licname'},
                                                  'width': '300px',
                                                  'overflow': 'hidden',
                                                  'textOverflow': 'ellipsis',
                                              },
                                              {
-                                                 'if': {'column_id': 'compName'},
+                                                 'if': {'column_id': 'compname'},
                                                  'width': '400px',
                                              },
                                              {
-                                                 'if': {'column_id': 'compVerName'},
+                                                 'if': {'column_id': 'compvername'},
                                                  'width': '100px',
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "High"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "High"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'crimson',
                                                  'color': 'black',
@@ -133,8 +133,8 @@ def create_comptab_table_compvers(thisdf):
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "Medium"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "Medium"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'coral',
                                                  'color': 'black',
@@ -142,8 +142,8 @@ def create_comptab_table_compvers(thisdf):
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "Low"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "Low"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'gold',
                                                  'color': 'black',
@@ -151,10 +151,10 @@ def create_comptab_table_compvers(thisdf):
                                              },
 
                                          ],
-                                         sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
-                                                  {'column_id': 'secHighCount', 'direction': 'desc'},
-                                                  {'column_id': 'secMedCount', 'direction': 'desc'},
-                                                  {'column_id': 'secLowCount', 'direction': 'desc'}],
+                                         sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
+                                                  {'column_id': 'sechighcount', 'direction': 'desc'},
+                                                  {'column_id': 'secmedcount', 'direction': 'desc'},
+                                                  {'column_id': 'seclowcount', 'direction': 'desc'}],
                                          merge_duplicate_headers=True
                                          )
     else:
@@ -174,70 +174,70 @@ def create_comptab_table_compvers(thisdf):
                                          style_data_conditional=[
                                              {
                                                  'if': {
-                                                     'filter_query': '{secCritCount} > 0',
-                                                     'column_id': 'secCritCount'
+                                                     'filter_query': '{seccritcount"} > 0',
+                                                     'column_id': 'seccritcount'
                                                  },
                                                  'backgroundColor': 'maroon',
                                                  'color': 'white'
                                              },
                                              {
-                                                 'if': {'column_id': 'secCritCount'},
+                                                 'if': {'column_id': 'seccritcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secHighCount} > 0',
-                                                     'column_id': 'secHighCount'
+                                                     'filter_query': '{sechighcount} > 0',
+                                                     'column_id': 'sechighcount'
                                                  },
                                                  'backgroundColor': 'crimson',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secHighCount'},
+                                                 'if': {'column_id': 'sechighcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secMedCount} > 0',
-                                                     'column_id': 'secMedCount'
+                                                     'filter_query': '{secmedcount} > 0',
+                                                     'column_id': 'secmedcount'
                                                  },
                                                  'backgroundColor': 'coral',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secMedCount'},
+                                                 'if': {'column_id': 'secmedcount'},
                                                  'width': '50px'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{secLowCount} > 0',
-                                                     'column_id': 'secLowCount'
+                                                     'filter_query': '{seclowcount} > 0',
+                                                     'column_id': 'seclowcount'
                                                  },
                                                  'backgroundColor': 'gold',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'secLowCount'},
+                                                 'if': {'column_id': 'seclowcount'},
                                                  'width': '50px'
                                              },
                                              {
-                                                 'if': {'column_id': 'licName'},
+                                                 'if': {'column_id': 'licname'},
                                                  'width': '300px',
                                                  'overflow': 'hidden',
                                                  'textOverflow': 'ellipsis',
                                              },
                                              {
-                                                 'if': {'column_id': 'compName'},
+                                                 'if': {'column_id': 'compname'},
                                                  'width': '400px',
                                              },
                                              {
-                                                 'if': {'column_id': 'compVerName'},
+                                                 'if': {'column_id': 'compvername'},
                                                  'width': '100px',
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "High"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "High"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'crimson',
                                                  'color': 'black',
@@ -245,8 +245,8 @@ def create_comptab_table_compvers(thisdf):
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "Medium"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "Medium"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'coral',
                                                  'color': 'black',
@@ -254,8 +254,8 @@ def create_comptab_table_compvers(thisdf):
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{licRisk} = "Low"',
-                                                     'column_id': 'licRisk'
+                                                     'filter_query': '{licrisk} = "Low"',
+                                                     'column_id': 'licrisk'
                                                  },
                                                  'backgroundColor': 'gold',
                                                  'color': 'black',
@@ -263,10 +263,10 @@ def create_comptab_table_compvers(thisdf):
                                              },
 
                                          ],
-                                         sort_by=[{'column_id': 'secCritCount', 'direction': 'desc'},
-                                                  {'column_id': 'secHighCount', 'direction': 'desc'},
-                                                  {'column_id': 'secMedCount', 'direction': 'desc'},
-                                                  {'column_id': 'secLowCount', 'direction': 'desc'}],
+                                         sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
+                                                  {'column_id': 'sechighcount', 'direction': 'desc'},
+                                                  {'column_id': 'secmedcount', 'direction': 'desc'},
+                                                  {'column_id': 'seclowcount', 'direction': 'desc'}],
                                          merge_duplicate_headers=True
                                          )
     return thistable
@@ -280,11 +280,12 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
     complic = ''
     projusedbytitle = html.P('Used in Projects:', className="card-text", )
     projselbutton = html.Div(
-        dbc.Button("Filter on Used In Project", color="primary", className="mr-1", id="filter_compcard_proj_button", size='sm'),
+        dbc.Button("Filter on Used In Project", color="primary", className="mr-1",
+                   id="filter_compcard_proj_button", size='sm'),
     )
     projusedin_cols = [
-        {"name": ['Project'], "id": "projName"},
-        {"name": ['Project Version'], "id": "projVerName"},
+        {"name": ['Project'], "id": "projname"},
+        {"name": ['Project Version'], "id": "projvername"},
     ]
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
@@ -296,21 +297,21 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
     )
 
     if compdata is not None:
-        compname = compdata['compName'].values[0]
-        compver = compdata['compVerName'].values[0]
-        compverid = compdata['compVerId'].values[0]
-        complic = compdata['licName'].values[0]
+        compname = compdata['compname'].values[0]
+        compver = compdata['compvername'].values[0]
+        compverid = compdata['compverid'].values[0]
+        complic = compdata['licname'].values[0]
 
         projlist = []
         projverlist = []
 
-        for projid in projcompmapdf[projcompmapdf['compVerId'] == compverid].projVerId.unique():
-            projlist.append(projdf[projdf['projVerId'] == projid].projName.values[0])
-            projverlist.append(projdf[projdf['projVerId'] == projid].projVerName.values[0])
+        for projid in projcompmapdf[projcompmapdf['compverid'] == compverid].projverid.unique():
+            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
+            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
 
         projs_data = pd.DataFrame({
-            "projName": projlist,
-            "projVerName": projverlist
+            "projname": projlist,
+            "projvername": projverlist
         })
 
         projstable = dash_table.DataTable(
@@ -385,5 +386,3 @@ def create_comptab(compdf):
             ),
         ]
     )
-
-

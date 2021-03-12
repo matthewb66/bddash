@@ -5,20 +5,20 @@ import plotly.express as px
 
 
 def create_projsummtab_fig_proj(thisdf, color_column, size_column):
-    if size_column == 'secCritCountplus1':
+    if size_column == 'seccritcountplus1':
         sizetext = 'Critical Vulnerabilities'
-    elif size_column == 'secCritHighCountplus1':
+    elif size_column == 'secCrithighcountplus1':
         sizetext = 'Critical & High Vulnerabilities'
-    elif size_column == 'licHighCountplus1':
+    elif size_column == 'lichighcountplus1':
         sizetext = 'High License Risk'
     else:
         sizetext = 'Components'
 
-    if color_column == 'secCritCountplus1':
+    if color_column == 'seccritcountplus1':
         colortext = 'Critical Vulnerabilities'
-    elif color_column == 'secCritHighCountplus1':
+    elif color_column == 'secCrithighcountplus1':
         colortext = 'Critical & High Vulnerabilities'
-    elif color_column == 'licHighCountplus1':
+    elif color_column == 'lichighcountplus1':
         colortext = 'High License Risk'
     else:
         colortext = 'Components'
@@ -31,14 +31,14 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
     ])
 
     temp_df = thisdf.nlargest(200, size_column)
-    thisfig = px.treemap(temp_df, path=['All', 'projName', 'projVerName'],
+    thisfig = px.treemap(temp_df, path=['All', 'projname', 'projvername'],
                          custom_data=[color_column],
                          values=size_column,
                          color=color_column,
-                         # hover_data={'projName':True, 'projVerName':True, 'secAll':':2d', 'secCritCount':True,
-                         #             'secHighCount':True, 'licHighCount':True, 'compCount':True},
-                         # hover_data={'projName': True, 'projVerName': True,},
-                         # hover_name='projName',
+                         # hover_data={'projname':True, 'projvername':True, 'secAll':':2d', 'seccritcount':True,
+                         #             'sechighcount':True, 'lichighcount':True, 'compcount':True},
+                         # hover_data={'projname': True, 'projvername': True,},
+                         # hover_name='projname',
                          color_continuous_scale='Reds',
                          title='Top 200 Project Versions - Size by ' + sizetext,
                          height=700)
@@ -53,15 +53,15 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
 
 
 def create_projsummtab_fig_compsec(thisdf):
-    print(thisdf.head(20).to_string())
+    # print(thisdf.head(20).to_string())
     sec_labels = ['Critical', 'High', 'Medium', 'Low', 'OK']
     sec_names = ['Critical', 'High', 'Medium', 'Low', 'OK']
 
-    # sec_values = [len(thisdf[thisdf['secCritCount'] > 0]), len(thisdf[thisdf['secHighCount'] > 0]),
-    #                len(thisdf[thisdf['secMedCount'] > 0]), len(thisdf[thisdf['secLowCount'] > 0]),
-    #                len(thisdf[thisdf['secOkCount'] > 0])]
-    sec_values = [thisdf.secCritCount.sum(), thisdf.secHighCount.sum(), thisdf.secMedCount.sum(),
-                  thisdf.secLowCount.sum(), thisdf.secOkCount.sum()]
+    # sec_values = [len(thisdf[thisdf['seccritcount'] > 0]), len(thisdf[thisdf['sechighcount'] > 0]),
+    #                len(thisdf[thisdf['secmedcount'] > 0]), len(thisdf[thisdf['seclowcount'] > 0]),
+    #                len(thisdf[thisdf['secokcount'] > 0])]
+    sec_values = [thisdf.seccritcount.sum(), thisdf.sechighcount.sum(), thisdf.secmedcount.sum(),
+                  thisdf.seclowcount.sum(), thisdf.secokcount.sum()]
 
     thisfig = px.pie(values=sec_values, labels=sec_labels, names=sec_names,
                      title='Component Security Risk',
@@ -73,10 +73,10 @@ def create_projsummtab_fig_compsec(thisdf):
 def create_projsummtab_fig_complic(thisdf):
     lic_labels = ['High', 'Medium', 'Low', 'OK']
     lic_names = ['High', 'Medium', 'Low', 'None']
-    # lic_values = [len(thisdf[thisdf['licHighCount'] > 0]), len(thisdf[thisdf['licMedCount'] > 0]),
-    #               len(thisdf[thisdf['licLowCount'] > 0]), len(thisdf[thisdf['licOkCount'] > 0])]
-    lic_values = [thisdf.licHighCount.sum(), thisdf.licMedCount.sum(), thisdf.licLowCount.sum(),
-                  thisdf.licOkCount.sum()]
+    # lic_values = [len(thisdf[thisdf['lichighcount'] > 0]), len(thisdf[thisdf['licmedcount'] > 0]),
+    #               len(thisdf[thisdf['liclowcount'] > 0]), len(thisdf[thisdf['licokcount'] > 0])]
+    lic_values = [thisdf.lichighcount.sum(), thisdf.licmedcount.sum(), thisdf.liclowcount.sum(),
+                  thisdf.licokcount.sum()]
 
     thisfig = px.pie(values=lic_values, labels=lic_labels, names=lic_names, title='Component License Risk',
                      hole=0.3, color_discrete_sequence=px.colors.sequential.RdBu, height=400)
@@ -101,10 +101,10 @@ def create_projsummtab(projdf, color_col, size_col):
                 dbc.Col(
                     dbc.RadioItems(
                         options=[
-                            {'label': 'Component Count', 'value': 'compCount'},
-                            {'label': 'Critical Vulns', 'value': 'secCritCountplus1'},
-                            {'label': 'Crit & High Vulns', 'value': 'secCritHighCountplus1'},
-                            {'label': 'High Licenses', 'value': 'licHighCountplus1'},
+                            {'label': 'Component Count', 'value': 'compcount'},
+                            {'label': 'Critical Vulns', 'value': 'seccritcountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'secCrithighcountplus1'},
+                            {'label': 'High Licenses', 'value': 'lichighcountplus1'},
                         ],
                         id='summtab_size_radio',
                         value=size_col,
@@ -120,10 +120,10 @@ def create_projsummtab(projdf, color_col, size_col):
                 dbc.Col(
                     dbc.RadioItems(
                         options=[
-                            {'label': 'Component Count', 'value': 'compCount'},
-                            {'label': 'Critical Vulns', 'value': 'secCritCountplus1'},
-                            {'label': 'Crit & High Vulns', 'value': 'secCritHighCountplus1'},
-                            {'label': 'High Licenses', 'value': 'licHighCountplus1'},
+                            {'label': 'Component Count', 'value': 'compcount'},
+                            {'label': 'Critical Vulns', 'value': 'seccritcountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'secCrithighcountplus1'},
+                            {'label': 'High Licenses', 'value': 'lichighcountplus1'},
                         ],
                         id='summtab_color_radio',
                         value=color_col,

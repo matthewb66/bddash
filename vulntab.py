@@ -5,14 +5,14 @@ import pandas as pd
 
 
 def create_vulntab_table_vulns(thisdf):
-    # "projName", "projVerName", "compName", "compVerName", "vulnId", "relatedVulnId",
-    # "vulnSource", "severity", "remStatus"))
+    # "projname", "projvername", "compname", "compvername", "vulnid", "relatedvulnid",
+    # "vulnsource", "severity", "remstatus"))
     vuln_data = [
-        {"name": ['Vuln Id'], "id": "vulnId"},
-        {"name": ['Related Vuln'], "id": "relatedVulnId"},
+        {"name": ['Vuln Id'], "id": "vulnid"},
+        {"name": ['Related Vuln'], "id": "relatedvulnid"},
         {"name": ['Severity'], "id": "severity"},
         {"name": ['CVSS3 Score'], "id": "score"},
-        {"name": ['Rem Status'], "id": "remStatus"},
+        {"name": ['Rem Status'], "id": "remstatus"},
         # {"name": ['Description'], "id": "desc"},
         {"name": ['Solution'], "id": "solution"},
         {"name": ['Workaround'], "id": "workaround"},
@@ -87,12 +87,12 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
     vulnrelated = ''
     desc = ''
     projusedin_cols = [
-        {"name": ['Project'], "id": "projName"},
-        {"name": ['Project Version'], "id": "projVerName"},
+        {"name": ['Project'], "id": "projname"},
+        {"name": ['Project Version'], "id": "projvername"},
     ]
     compusedin_cols = [
-        {"name": ['Component'], "id": "compName"},
-        {"name": ['Component Version'], "id": "compVerName"},
+        {"name": ['Component'], "id": "compname"},
+        {"name": ['Component Version'], "id": "compvername"},
     ]
     usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
     usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
@@ -121,27 +121,27 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
                    size='sm'),
     )
     if vulndata is not None:
-        vulnid = vulndata['vulnId'].values[0]
-        vulnrelated = vulndata['relatedVulnId'].values[0]
+        vulnid = vulndata['vulnid'].values[0]
+        vulnrelated = vulndata['relatedvulnid'].values[0]
         if vulnrelated == '':
             vulnrelated = 'None'
         desc = vulndata['desc'].values[0]
 
         projlist = []
         projverlist = []
-        for projid in df_projvulnmap[df_projvulnmap['vulnId'] == vulnid].projVerId.unique():
-            projlist.append(projdf[projdf['projVerId'] == projid].projName.values[0])
-            projverlist.append(projdf[projdf['projVerId'] == projid].projVerName.values[0])
+        for projid in df_projvulnmap[df_projvulnmap['vulnid'] == vulnid].projverid.unique():
+            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
+            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
 
         complist = []
         compverlist = []
-        for compid in df_compvulnmap[df_compvulnmap['vulnId'] == vulnid].compVerId.unique():
-            complist.append(compdf[compdf['compVerId'] == compid].compName.values[0])
-            compverlist.append(compdf[compdf['compVerId'] == compid].compVerName.values[0])
+        for compid in df_compvulnmap[df_compvulnmap['vulnid'] == vulnid].compverid.unique():
+            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
+            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
 
         projs_data = pd.DataFrame({
-            "projName": projlist,
-            "projVerName": projverlist
+            "projname": projlist,
+            "projvername": projverlist
         })
 
         projstable = dash_table.DataTable(
@@ -154,8 +154,8 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
         )
 
         comps_data = pd.DataFrame({
-            "compName": complist,
-            "compVerName": compverlist
+            "compname": complist,
+            "compvername": compverlist
         })
 
         compstable = dash_table.DataTable(
@@ -209,5 +209,3 @@ def create_vulntab(vulndf):
             dbc.Col(create_vulntab_card_vuln(None, None, None, None, None), width=4, id='col_vulntab_vuln'),
         ]
     )
-
-

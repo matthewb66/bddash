@@ -6,11 +6,11 @@ import pandas as pd
 
 def create_lictab_table_lics(licdict):
     lic_cols = [
-        {"name": ['', 'License Name'], "id": "licName"},
-        {"name": ['License Risk (All Projects)', 'High Risk'], "id": "licHighCount"},
-        {"name": ['License Risk (All Projects)', 'Medium Risk'], "id": "licMedCount"},
-        {"name": ['License Risk (All Projects)', 'Low Risk'], "id": "licLowCount"},
-        {"name": ['License Risk (All Projects)', 'No Risk'], "id": "licOkCount"},
+        {"name": ['', 'License Name'], "id": "licname"},
+        {"name": ['License Risk (All Projects)', 'High Risk'], "id": "lichighcount"},
+        {"name": ['License Risk (All Projects)', 'Medium Risk'], "id": "licmedcount"},
+        {"name": ['License Risk (All Projects)', 'Low Risk'], "id": "liclowcount"},
+        {"name": ['License Risk (All Projects)', 'No Risk'], "id": "licokcount"},
     ]
 
     # columns = [{"name": i, "id": i} for i in df.columns],
@@ -31,53 +31,53 @@ def create_lictab_table_lics(licdict):
                                          row_selectable="single",
                                          cell_selectable=False,
                                          style_data_conditional=[
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licHighCount} > 0',
-                                                 'column_id': 'licHighCount'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{lichighcount} > 0',
+                                                     'column_id': 'lichighcount'
+                                                 },
+                                                 'backgroundColor': 'crimson',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'crimson',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licMedCount} > 0',
-                                                 'column_id': 'licMedCount'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{licmedcount} > 0',
+                                                     'column_id': 'licmedcount'
+                                                 },
+                                                 'backgroundColor': 'coral',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'coral',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {
-                                                 'filter_query': '{licLowCount} > 0',
-                                                 'column_id': 'licLowCount'
+                                             {
+                                                 'if': {
+                                                     'filter_query': '{liclowcount} > 0',
+                                                     'column_id': 'liclowcount'
+                                                 },
+                                                 'backgroundColor': 'gold',
+                                                 'color': 'black'
                                              },
-                                             'backgroundColor': 'gold',
-                                             'color': 'black'
-                                         },
-                                         {
-                                             'if': {'column_id': 'licHighCount'},
-                                             'width': '120px'
-                                         },
-                                         {
-                                             'if': {'column_id': 'licMedCount'},
-                                             'width': '120px'
-                                         },
-                                         {
-                                             'if': {'column_id': 'licLowCount'},
-                                             'width': '120px'
-                                         },
-                                         {
-                                             'if': {'column_id': 'licOkCount'},
-                                             'width': '120px'
-                                         },
+                                             {
+                                                 'if': {'column_id': 'lichighcount'},
+                                                 'width': '120px'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'licmedcount'},
+                                                 'width': '120px'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'liclowcount'},
+                                                 'width': '120px'
+                                             },
+                                             {
+                                                 'if': {'column_id': 'licokcount'},
+                                                 'width': '120px'
+                                             },
                                          ],
-                                         sort_by=[{'column_id': 'licHighCount', 'direction': 'desc'},
-                                                  {'column_id': 'licMedCount', 'direction': 'desc'},
-                                                  {'column_id': 'licLowCount', 'direction': 'desc'},
-                                                  {'column_id': 'licOkCount', 'direction': 'asc'}],
+                                         sort_by=[{'column_id': 'lichighcount', 'direction': 'desc'},
+                                                  {'column_id': 'licmedcount', 'direction': 'desc'},
+                                                  {'column_id': 'liclowcount', 'direction': 'desc'},
+                                                  {'column_id': 'licokcount', 'direction': 'asc'}],
                                          merge_duplicate_headers=True,
-                                     )
+                                         )
     return thistable
 
 
@@ -91,34 +91,34 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
     projstable = ''
     compstable = ''
     if licdata is not None:
-        licname = licdata['licName'].values[0]
+        licname = licdata['licname'].values[0]
 
         complist = []
         compverlist = []
         projlist = []
         projverlist = []
-        for compid in lic_compverid_dict[licdata.licName.values[0]]:
-            complist.append(compdf[compdf['compVerId'] == compid].compName.values[0])
-            compverlist.append(compdf[compdf['compVerId'] == compid].compVerName.values[0])
-            for projverid in projcompmapdf[projcompmapdf['compVerId'] == compid].projVerId.values:
-                projlist.append(projdf[projdf['projVerId'] == projverid].projName.values[0])
-                projverlist.append(projdf[projdf['projVerId'] == projverid].projVerName.values[0])
+        for compid in lic_compverid_dict[licdata.licname.values[0]]:
+            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
+            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
+            for projverid in projcompmapdf[projcompmapdf['compverid'] == compid].projverid.values:
+                projlist.append(projdf[projdf['projverid'] == projverid].projname.values[0])
+                projverlist.append(projdf[projdf['projverid'] == projverid].projvername.values[0])
 
         usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
 
-        # for projid in df_projvulnmap[df_projvulnmap['vulnId'] == vulnid].projVerId.unique():
-        #     projlist.append(df_proj[df_proj['projVerId'] == projid].projName.values[0])
-        #     projverlist.append(df_proj[df_proj['projVerId'] == projid].projVerName.values[0])
+        # for projid in df_projvulnmap[df_projvulnmap['vulnid'] == vulnid].projverid.unique():
+        #     projlist.append(df_proj[df_proj['projverid'] == projid].projname.values[0])
+        #     projverlist.append(df_proj[df_proj['projverid'] == projid].projvername.values[0])
         usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
 
         projs_data = pd.DataFrame({
-            "projName": projlist,
-            "projVerName": projverlist
+            "projname": projlist,
+            "projvername": projverlist
         })
 
         projusedin_cols = [
-            {"name": ['Project'], "id": "projName"},
-            {"name": ['Project Version'], "id": "projVerName"},
+            {"name": ['Project'], "id": "projname"},
+            {"name": ['Project Version'], "id": "projvername"},
         ]
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
@@ -129,13 +129,13 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
         )
 
         comps_data = pd.DataFrame({
-            "compName": complist,
-            "compVerName": compverlist
+            "compname": complist,
+            "compvername": compverlist
         })
 
         compusedin_cols = [
-            {"name": ['Component'], "id": "compName"},
-            {"name": ['Component Version'], "id": "compVerName"},
+            {"name": ['Component'], "id": "compname"},
+            {"name": ['Component Version'], "id": "compvername"},
         ]
         compstable = dash_table.DataTable(
             columns=compusedin_cols,
@@ -174,5 +174,3 @@ def create_lictab(licdf):
                     id='col_lictab_lic'),
         ]
     )
-
-
