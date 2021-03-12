@@ -188,6 +188,10 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
 
 
 def create_vulntab(vulndf):
+    if vulndf is not None:
+        vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
+        vulndf = vulndf.sort_values(by=['score'], ascending=False)
+
     return dbc.Row(
         [
             dbc.Col(
