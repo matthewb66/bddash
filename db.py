@@ -120,7 +120,8 @@ def get_vulndata(thisconn):
                   solution_available as solution, 
                   workaround_available as workaround,
                   TO_CHAR(published_on, 'YYYY/MM/DD') as pubdate, 
-                  component_vulnerability.description, TO_CHAR(target_date, 'YYYY/MM/DD') as targetdate,
+                  component_vulnerability.description as description, 
+                  TO_CHAR(target_date, 'YYYY/MM/DD') as targetdate,
                   TO_CHAR(actual_date, 'YYYY/MM/DD') as actualdate,
                   comment as comment, attack_vector as attackvector, 
                   TO_CHAR(updated_on, 'YYYY/MM/DD') as updateddate

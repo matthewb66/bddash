@@ -27,6 +27,7 @@ df_comp = None
 df_projcompmap = None
 df_projvulnmap = None
 df_compvulnmap = None
+df_vulnactivelist = []
 df_lic = None
 lic_compverid_dict = None
 compverid_lic_dict = None
@@ -139,7 +140,7 @@ if __name__ == '__main__':
     df_proj = data.proc_projdata(df_main)
     # print(df_proj)
     df_comp, df_projcompmap = data.proc_comp_data(df_main)
-    df_vuln = data.proc_vuln_data(df_vuln)
+    df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
     df_pol = data.proc_pol_data(df_pol)
 
@@ -332,20 +333,22 @@ if __name__ == '__main__':
             ),
             dbc.Row(
                 [
-                    dbc.Col(html.Div(children="Vuln Remediation Status"), width=1, align='center',
+                    dbc.Col(html.Div(children="Vuln Status"), width=1, align='center',
                             style={'font-size': '12px'}, ),
                     dbc.Col(
                         dcc.Dropdown(
                             id="sel_remstatus",
                             options=[
-                                {'label': 'New', 'value': 'NEW'},
-                                {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
-                                {'label': 'Patched', 'value': 'PATCHED'},
-                                {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
-                                {'label': 'Remdtd', 'value': 'REMEDIATED'},
-                                {'label': 'Ignored', 'value': 'IGNORED'},
+                                {'label': 'Active', 'value': 'ACTIVE'},
+                                {'label': 'Inactive', 'value': 'INACTIVE'},
+                                # {'label': 'Active', 'value': 'NEW'},
+                                # {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
+                                # {'label': 'Patched', 'value': 'PATCHED'},
+                                # {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
+                                # {'label': 'Remdtd', 'value': 'REMEDIATED'},
+                                # {'label': 'Ignored', 'value': 'IGNORED'},
                             ],
-                            value=['NEW', 'NEEDS_REVIEW', 'REMEDIATION_REQUIRED'],
+                            value=['ACTIVE'],
                             multi=True
                         ), width=3,
                         align='center',
@@ -619,7 +622,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                   secrisk, licrisk, comps, proj_color_prev, proj_size_prev):
     global df_proj
     global df_comp, df_projcompmap
-    global df_vuln, df_projvulnmap, df_compvulnmap
+    global df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist
     global df_lic, lic_compverid_dict, compverid_lic_dict
     global df_pol
     print('callback_main')
@@ -639,172 +642,119 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     temp_df_lic = df_lic
     temp_df_pol = df_pol
     noprojs = False
-    recalc = False
 
-    try:
+    # try:
+    if True:
         # Process existing select dropdowns
         if projs is not None and len(projs) > 0:
             if isinstance(projs, list):
-                # Filter projects from selection
                 temp_df_proj = temp_df_proj[temp_df_proj.projname.isin(projs)]
             else:
                 temp_df_proj = temp_df_proj[temp_df_proj['projname'] == projs]
 
-            # Set project version dropdowns
-            # sel_vers_options = [{'label': i, 'value': i} for i in temp_df_proj.projvername.unique()]
-            recalc = True
-        # else:
-        # Version selection only possible if Project selected
-        # sel_vers_options = []
-
         if vers is not None and len(vers) > 0:
             if isinstance(vers, list):
-                # Filter versions from selection
                 temp_df_proj = temp_df_proj[temp_df_proj.projvername.isin(vers)]
             else:
                 temp_df_proj = temp_df_proj[temp_df_proj['projname'] == vers]
 
-            recalc = True
-
         if comps is not None and len(comps) > 0:
             # Filter projects based on phase selection
-
             if isinstance(comps, list):
                 temp_df_comp = temp_df_comp[temp_df_comp.compname.isin(comps)]
             else:
                 temp_df_comp = temp_df_comp[temp_df_comp['compname'] == comps]
 
-            # compverids = temp_df_comp['compverid'].unique()
-            # projverids = df_projcompmap[df_projcompmap.compverid.isin(compverids)]['projverid'].unique()
-            # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projverids)]
-            #
-            # vulnids = df_compvulnmap[df_compvulnmap.compverid.isin(compverids)]['vulnid'].unique()
-            # temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(vulnids)]
-            # recalc = True
-
-        # Modify dropdown options
-        # sel_tiers_options = [{'label': i, 'value': i} for i in temp_df_proj.projtier.unique()]
-        # sel_dists_options = [{'label': i, 'value': i} for i in temp_df_proj.projverdist.unique()]
-        # sel_phases_options = [{'label': i, 'value': i} for i in temp_df_proj.projverphase.unique()]
-        # sel_comps_options = [{'label': i, 'value': i} for i in temp_df_comp.compname.sort_values().unique()]
-
-        if dists is not None and len(dists) > 0 and len(temp_df_proj) > 0:
+        if dists is not None and len(dists) > 0:
             # Filter projects based on distribution selection
-            temp_df_proj = temp_df_proj[temp_df_proj.projverdist.isin(dists)]
-            recalc = True
-        if phases is not None and len(phases) > 0 and len(temp_df_proj) > 0:
+            if isinstance(dists, list):
+                temp_df_proj = temp_df_proj[temp_df_proj.projverdist.isin(dists)]
+            else:
+                temp_df_proj = temp_df_proj[temp_df_proj.projverdist == dists]
+
+        if phases is not None and len(phases) > 0:
             # Filter projects based on phase selection
-            temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
-            recalc = True
+            if isinstance(phases, list):
+                temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
+            else:
+                temp_df_proj = temp_df_proj[temp_df_proj.projverphase == phases]
 
-        if recalc and len(temp_df_proj) > 0:
-            # Filter components based on projcompmap
-            projverids = temp_df_proj['projverid'].unique()
+        if remstatus is not None and len(remstatus) > 0:
+            # tempvulnidlist = []
+            if 'ACTIVE' in remstatus:
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(df_vulnactivelist)]
+            if 'INACTIVE' in remstatus:
+                temp_df_vuln = temp_df_vuln[~temp_df_vuln.vulnid.isin(df_vulnactivelist)]
+            # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
-            compverids = df_projcompmap[df_projcompmap.projverid.isin(projverids)]['compverid'].unique()
+        if secrisk is not None and len(secrisk) > 0:
+            # Filter projects based on security risk selection
+            secvals = []
+            if 'Critical' in secrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.seccritcount > 0]
+                secvals.append('CRITICAL')
+            if 'High' in secrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.sechighcount > 0]
+                secvals.append('HIGH')
+            if 'Medium' in secrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.secmedcount > 0]
+                secvals.append('MEDIUM')
+            if 'Low' in secrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.seclowcount > 0]
+                secvals.append('LOW')
 
-            temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compverids)]
+        if licrisk is not None and len(licrisk) > 0:
+            # Filter projects based on security risk selection
+            if 'High' in licrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.lichighcount > 0]
 
-            # Filter vulns based on projvulnmap
-            # vulnids = df_projvulnmap[df_projvulnmap.projverid.isin(projverids)]['vulnid'].unique()
-            # temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(vulnids)]
+            if 'Medium' in licrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.licmedcount > 0]
 
+            if 'Low' in licrisk:
+                temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
+
+        if temp_df_comp.size < df_comp.size:
+            temp = df_compvulnmap[df_compvulnmap.compverid.isin(temp_df_comp.compverid.unique())].vulnid.unique()
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin[temp]]
+
+            temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.compverid.unique())].projverid.unique()
+            temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin[temp]]
+
+            # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
+
+        elif temp_df_proj.size < df_proj.size:
+            temp = df_projcompmap[df_projcompmap.projverid.isin(temp_df_proj.projverid.unique())].compverid.unique()
+            temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
+
+            temp = df_projvulnmap[df_projvulnmap.projverid.isin(temp_df_proj.projverid.unique())].vulnid.unique()
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+
+            # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
+
+        if temp_df_comp.size < df_comp.size:
             licnames = []
-            for cid in compverids:
+            for cid in temp_df_comp.compverid.unique():
                 if cid in compverid_lic_dict.keys():
                     [licnames.append(x) for x in compverid_lic_dict[cid] if x not in licnames]
             licnames.sort()
             temp_df_lic = temp_df_lic[temp_df_lic.licname.isin(licnames)]
 
-        # if remstatus is not None and len(remstatus) > 0:
-        #     # remstatus START
-        #     if isinstance(remstatus, list):
-        #         dfprojgroup = df_vuln[df_vuln['remstatus'].
-        #             isin(remstatus)].groupby(['projverid', 'severity'])['projverid'].count().unstack().fillna(0)
-        #         dfcompgroup = df_vuln[df_vuln['remstatus'].
-        #             isin(remstatus)].groupby(['compverid', 'severity'])['compverid'].count().unstack().fillna(0)
-        #     else:
-        #         dfprojgroup = df_vuln[df_vuln['remstatus'] == remstatus]. \
-        #             groupby(['projverid', 'severity'])['projverid'].count().unstack().fillna(0)
-        #         dfcompgroup = df_vuln[df_vuln['remstatus'] == remstatus]. \
-        #             groupby(['compverid', 'severity'])['compverid'].count().unstack().fillna(0)
-        #
-        #     dfproj2 = pd.DataFrame(dfprojgroup, dtype='int64').reset_index()
-        #     dfproj2.columns = ['projverid', "seccritcount", "sechighcount", "secmedcount", "seclowcount"]
-        #     temp_df_proj.drop(["seccritcount", "sechighcount", "secmedcount", "seclowcount"], axis=1, inplace=True)
-        #     temp_df_proj = pd.merge(temp_df_proj, dfproj2, on='projverid')
-        #
-        #     dfcomp2 = pd.DataFrame(dfcompgroup, dtype='int64').reset_index()
-        #     dfcomp2.columns = ['compverid', "seccritcount", "sechighcount", "secmedcount", "seclowcount"]
-        #     temp_df_comp.drop(["seccritcount", "sechighcount", "secmedcount", "seclowcount"], axis=1, inplace=True)
-        #     temp_df_comp = pd.merge(temp_df_comp, dfcomp2, on='compverid')
-        #     # remstatus END
+        # if temp_df_vuln.size > 0:
+        #     temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(vulnidlist)]
 
-            # # Filter projects based on remstatus selection
-            # if isinstance(remstatus, list):
-            #     temp_df_vuln = temp_df_vuln[temp_df_vuln.remstatus.isin(remstatus)]
-            # else:
-            #     temp_df_vuln = temp_df_vuln[temp_df_vuln['remstatus'] == remstatus]
+    # except Exception as e:
+    #     print('Exception:')
+    #     print(e)
+    #     noprojs = True
 
-            # vulnids = temp_df_vuln.vulnid.unique()
-            # projids = df_projvulnmap[df_projvulnmap.vulnid.isin(vulnids)]['projverid'].unique()
-            # temp_df_proj = temp_df_proj[temp_df_proj['projverid'].isin(projids)]
-            #  compids = df_compvulnmap[df_compvulnmap.vulnid.isin(vulnids)]['compverid'].unique()
-            # temp_df_comp = temp_df_comp[temp_df_comp['compverid'].isin( compids)]
-
-        if secrisk is not None and len(secrisk) > 0 and len(temp_df_proj) > 0:
-            # Filter projects based on security risk selection
-            secvals = []
-            if 'Critical' in secrisk:
-                temp_df_proj = temp_df_proj[temp_df_proj.seccritcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.seccritcount > 0]
-                secvals.append('CRITICAL')
-            if 'High' in secrisk:
-                temp_df_proj = temp_df_proj[temp_df_proj.sechighcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.sechighcount > 0]
-                secvals.append('HIGH')
-            if 'Medium' in secrisk:
-                temp_df_proj = temp_df_proj[temp_df_proj.secmedcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.secmedcount > 0]
-                secvals.append('MEDIUM')
-            if 'Low' in secrisk:
-                temp_df_proj = temp_df_proj[temp_df_proj.seclowcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.seclowcount > 0]
-                secvals.append('LOW')
-            if isinstance(secrisk, list):
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity.isin(secvals)]
-            else:
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.severity in secvals]
-
-        if licrisk is not None and len(licrisk) > 0 and len(temp_df_proj) > 0:
-            # Filter projects based on security risk selection
-            if 'High' in licrisk:
-                temp_df_lic = temp_df_lic[temp_df_lic.lichighcount > 0]
-                temp_df_proj = temp_df_proj[temp_df_proj.lichighcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.lichighcount > 0]
-
-            if 'Medium' in licrisk:
-                temp_df_lic = temp_df_lic[temp_df_lic.licmedcount > 0]
-                temp_df_proj = temp_df_proj[temp_df_proj.licmedcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.licmedcount > 0]
-
-            if 'Low' in licrisk:
-                temp_df_lic = temp_df_lic[temp_df_lic.liclowcount > 0]
-                temp_df_proj = temp_df_proj[temp_df_proj.liclowcount > 0]
-                temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
-    except Exception as e:
-        print('Exception:')
-        print(e)
-        noprojs = True
         # sel_tiers_options = [{'label': i, 'value': i} for i in df_proj.projtier.unique()]
         # sel_dists_options = [{'label': i, 'value': i} for i in df_proj.projverdist.unique()]
         # sel_phases_options = [{'label': i, 'value': i} for i in df_proj.projverphase.unique()]
         # sel_comps_options = [{'label': i, 'value': i} for i in df_comp.compname.sort_values().unique()]
 
     if temp_df_proj is None or len(temp_df_proj) == 0 or \
-            temp_df_comp is None or len(temp_df_comp) == 0 or \
-            temp_df_vuln is None or len(temp_df_vuln) == 0 or \
-            temp_df_lic is None or len(temp_df_lic) == 0:
+            temp_df_comp is None or len(temp_df_comp) == 0:
         noprojs = True
 
     # # Click on projtab_treemap

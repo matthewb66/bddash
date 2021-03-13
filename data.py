@@ -7,7 +7,7 @@ def proc_projdata(thisdf):
     newdf["All"] = "All"
     # Calculate total vulnerability count for all comps
     newdf = pd.DataFrame(newdf.eval('secAll = seccritcount + sechighcount + secmedcount + seclowcount'))
-    newdf = pd.DataFrame(newdf.eval('secCrithighcountplus1 = seccritcount + sechighcount + 1'))
+    newdf = pd.DataFrame(newdf.eval('seccrithighcountplus1 = seccritcount + sechighcount + 1'))
     newdf = pd.DataFrame(newdf.eval('seccritcountplus1 = seccritcount + 1'))
     newdf = pd.DataFrame(newdf.eval('lichighcountplus1 = lichighcount + 1'))
 
@@ -22,7 +22,7 @@ def proc_projdata(thisdf):
     # Merge compcount into df
     newdf = pd.merge(newdf, df_counts, on='projverid')
     # Remove duplicate and unwanted columns before merge
-    newdf.drop(['secAll', 'secCrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
+    newdf.drop(['secAll', 'seccrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
                 'seccritcount', 'sechighcount', 'secmedcount',
                 'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
                 'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
@@ -59,8 +59,8 @@ def proc_comp_data(thisdf):
 
     # Calculate license risk value as licrisk
     compdf['licrisk'] = compdf.apply(calc_license, axis=1)
-    # compdf = compdf.drop(["projname", "projvername", "projverid", "projverdist", "projverphase", "projtier"],
-    #                      axis=1, inplace=False)
+    compdf = compdf.drop(["projname", "projvername", "projverid", "projverdist", "projverphase", "projtier"],
+                         axis=1, inplace=False)
 
     compdf = compdf.sort_values(by=['compname'], ascending=True)
 
@@ -71,6 +71,7 @@ def proc_comp_data(thisdf):
             return 0
 
     compdf['licriskNoUnk'] = compdf.apply(calc_lic_nounknown, axis=1)
+
     # Calculate mapping of projvers to compvers
     projcompmapdf = thisdf
 
@@ -155,21 +156,30 @@ def proc_vuln_data(thisdf):
     # - will map projverid to compverid
 
     vulndf = thisdf
+    projvulnmapdf = thisdf
+    compvulnmapdf = thisdf
 
-    # vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
-    # vulndf = vulndf.sort_values(by=['score'], ascending=False)
+    vuln_active_list = vulndf[vulndf['remstatus'].isin(['NEW', 'NEEDS_REVIEW', 'REMEDIATION_REQUIRED'])].vulnid.unique()
+    # vuln_inactive_list = vulndf[~vulndf['remstatus'].isin(['NEW', 'NEEDS_REVIEW',
+    #                                                          'REMEDIATION_REQUIRED'])].vulnid.unique()
 
-    # projvulnmapdf = projvulnmapdf.drop(["projname", "projvername", "compname", " compid", "compverid",
-    #                                     "compvername", "relatedvulnid", "vulnsource", "severity", "score",
-    #                                     "remstatus", "solution", "workaround", "published_on", "desc"],
-    #                                    axis=1, inplace=False)
-    # compvulnmapdf = compvulnmapdf.drop(["projverid", "projname", "projvername", "compname", " compid",
-    #                                     "compvername", "relatedvulnid", "vulnsource", "severity", "score",
-    #                                     "remstatus", "solution", "workaround", "published_on", "desc"],
-    #                                    axis=1, inplace=False)
+    vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
+    vulndf = vulndf.sort_values(by=['score'], ascending=False)
+    vulndf = vulndf.drop(["projname", "projvername", "compname", "compid", "compverid",
+                          "compvername", "remstatus"],
+                         axis=1, inplace=False)
+
+    projvulnmapdf = projvulnmapdf.drop(["projname", "projvername", "compname", "compid", "compverid",
+                                        "compvername", "relatedvulnid", "vulnsource", "severity", "score",
+                                        "remstatus", "solution", "workaround", "pubdate", "description"],
+                                       axis=1, inplace=False)
+    compvulnmapdf = compvulnmapdf.drop(["projverid", "projname", "projvername", "compname", "compid",
+                                        "compvername", "relatedvulnid", "vulnsource", "severity", "score",
+                                        "remstatus", "solution", "workaround", "pubdate", "description"],
+                                       axis=1, inplace=False)
 
     print('{} Vulnerabilities returned'.format(vulndf.vulnid.nunique()))
-    return thisdf
+    return thisdf, projvulnmapdf, compvulnmapdf, vuln_active_list
 
 
 def proc_pol_data(thisdf):

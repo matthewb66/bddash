@@ -7,7 +7,7 @@ import plotly.express as px
 def create_projsummtab_fig_proj(thisdf, color_column, size_column):
     if size_column == 'seccritcountplus1':
         sizetext = 'Critical Vulnerabilities'
-    elif size_column == 'secCrithighcountplus1':
+    elif size_column == 'seccrithighcountplus1':
         sizetext = 'Critical & High Vulnerabilities'
     elif size_column == 'lichighcountplus1':
         sizetext = 'High License Risk'
@@ -16,7 +16,7 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
 
     if color_column == 'seccritcountplus1':
         colortext = 'Critical Vulnerabilities'
-    elif color_column == 'secCrithighcountplus1':
+    elif color_column == 'seccrithighcountplus1':
         colortext = 'Critical & High Vulnerabilities'
     elif color_column == 'lichighcountplus1':
         colortext = 'High License Risk'
@@ -103,7 +103,7 @@ def create_projsummtab(projdf, color_col, size_col):
                         options=[
                             {'label': 'Component Count', 'value': 'compcount'},
                             {'label': 'Critical Vulns', 'value': 'seccritcountplus1'},
-                            {'label': 'Crit & High Vulns', 'value': 'secCrithighcountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'seccrithighcountplus1'},
                             {'label': 'High Licenses', 'value': 'lichighcountplus1'},
                         ],
                         id='summtab_size_radio',
@@ -122,7 +122,7 @@ def create_projsummtab(projdf, color_col, size_col):
                         options=[
                             {'label': 'Component Count', 'value': 'compcount'},
                             {'label': 'Critical Vulns', 'value': 'seccritcountplus1'},
-                            {'label': 'Crit & High Vulns', 'value': 'secCrithighcountplus1'},
+                            {'label': 'Crit & High Vulns', 'value': 'seccrithighcountplus1'},
                             {'label': 'High Licenses', 'value': 'lichighcountplus1'},
                         ],
                         id='summtab_color_radio',

@@ -62,7 +62,7 @@ def create_comptab_table_compvers(thisdf):
                                          style_data_conditional=[
                                              {
                                                  'if': {
-                                                     'filter_query': '{seccritcount"} > 0',
+                                                     'filter_query': '{seccritcount} > 0',
                                                      'column_id': 'seccritcount'
                                                  },
                                                  'backgroundColor': 'maroon',
@@ -174,7 +174,7 @@ def create_comptab_table_compvers(thisdf):
                                          style_data_conditional=[
                                              {
                                                  'if': {
-                                                     'filter_query': '{seccritcount"} > 0',
+                                                     'filter_query': '{seccritcount} > 0',
                                                      'column_id': 'seccritcount'
                                                  },
                                                  'backgroundColor': 'maroon',
