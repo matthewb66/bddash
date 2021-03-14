@@ -31,6 +31,9 @@ df_vulnactivelist = []
 df_lic = None
 lic_compverid_dict = None
 compverid_lic_dict = None
+df_projpolmap = None
+df_comppolmap = None
+
 auth = None
 lastdbreadtime = 0
 
@@ -142,7 +145,7 @@ if __name__ == '__main__':
     df_comp, df_projcompmap = data.proc_comp_data(df_main)
     df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
-    df_pol = data.proc_pol_data(df_pol)
+    df_pol, df_projpolmap, df_comppolmap = data.proc_pol_data(df_pol)
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, sizefield, noprojs):
@@ -334,23 +337,24 @@ if __name__ == '__main__':
             dbc.Row(
                 [
                     dbc.Col(html.Div(children="Vuln Status"), width=1, align='center',
-                            style={'font-size': '12px'}, ),
+                            # style={'font-size': '14px'},
+                            ),
                     dbc.Col(
                         dcc.Dropdown(
                             id="sel_remstatus",
                             options=[
-                                {'label': 'Active', 'value': 'ACTIVE'},
-                                {'label': 'Inactive', 'value': 'INACTIVE'},
-                                # {'label': 'Active', 'value': 'NEW'},
+                                {'label': 'UNREMEDIATED', 'value': 'UNREMEDIATED'},
+                                {'label': 'REMEDIATED', 'value': 'REMEDIATED'},
+                                # {'label': 'UNREMEDIATED', 'value': 'NEW'},
                                 # {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
                                 # {'label': 'Patched', 'value': 'PATCHED'},
                                 # {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
                                 # {'label': 'Remdtd', 'value': 'REMEDIATED'},
                                 # {'label': 'Ignored', 'value': 'IGNORED'},
                             ],
-                            value=['ACTIVE'],
+                            value=['UNREMEDIATED'],
                             multi=True
-                        ), width=3,
+                        ), width=2,
                         align='center',
                     ),
                     dbc.Col(html.Div(children="Security Risk"), width=1, align='center'),
@@ -364,7 +368,7 @@ if __name__ == '__main__':
                                 {'label': 'Low', 'value': 'Low'},
                             ],
                             multi=True
-                        ), width=3,
+                        ), width=2,
                         align='center',
                     ),
                     dbc.Col(html.Div(children="License Risk"), width=1, align='center'),
@@ -377,7 +381,25 @@ if __name__ == '__main__':
                                 {'label': 'Low', 'value': 'Low'},
                             ],
                             multi=True
-                        ), width=3,
+                        ), width=2,
+                        align='center',
+                    ),
+                    dbc.Col(html.Div(children="Policy Severity"), width=1, align='center',
+                            style={'font-size': '14px'},
+                            ),
+                    dbc.Col(
+                        dcc.Dropdown(
+                            id="sel_polsev",
+                            options=[
+                                {'label': 'Blocker', 'value': 'BLOCKER'},
+                                {'label': 'Critical', 'value': 'CRITICAL'},
+                                {'label': 'Major', 'value': 'MAJOR'},
+                                {'label': 'Minor', 'value': 'MINOR'},
+                                {'label': 'Trivial', 'value': 'TRIVIAL'},
+                                {'label': 'Unspec', 'value': 'UNSPECIFIED'},
+                            ],
+                            multi=True
+                        ), width=2,
                         align='center',
                     ),
                     dbc.Col(html.Div(children="Tiers"), width=1, align='center'),
@@ -448,6 +470,31 @@ if __name__ == '__main__':
 
 
 @app.callback(
+    Output('poltab_card_pol', 'children'),
+    [
+        Input('sel_pol_button', 'n_clicks'),
+        State('poltab_table_pols', 'derived_virtual_data'),
+        State('poltab_table_pols', 'derived_virtual_selected_rows'),
+    ]
+
+)
+def callback_poltab_selpol_button(nclicks, cdata, rows):
+    global df_proj, df_comp, df_pol, df_projpolmap, df_comppolmap
+    print('callback_poltab_selpol_button')
+
+    if nclicks is None:
+        print('NO ACTION')
+        raise dash.exceptions.PreventUpdate
+
+    if rows:
+        return poltab.create_poltab_card_pol(df_proj, df_comp, df_projpolmap, df_comppolmap,
+                                             df_pol[df_pol['polid'] == cdata[rows[0]][
+                                                    'polid']]), 'tab_pol_subdetail'
+
+    return poltab.create_poltab_card_pol(None, None, None, None, None), 'tab_pol_subsummary'
+
+
+@app.callback(
     [
         Output('tab_comp_subdetail', 'children'),
         Output('comptab_detail_tabs', 'active_tab'),
@@ -460,7 +507,7 @@ if __name__ == '__main__':
 
 )
 def callback_comptab_selcomp_button(nclicks, cdata, rows):
-    global df_proj
+    global df_proj, df_comp, df_projcompmap
     print('callback_comptab_selcomp_button')
 
     if nclicks is None:
@@ -468,7 +515,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return comptab.create_comptab_card_comp(df_comp, df_projcompmap,
+        return comptab.create_comptab_card_comp(df_proj, df_projcompmap,
                                                 df_comp[df_comp['compverid'] == cdata[rows[0]][
                                                     'compverid']]), 'tab_comp_subdetail'
 
@@ -484,7 +531,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
     ]
 )
 def callback_vulntab_selvuln_button(nclicks, cdata, rows):
-    global df_vuln
+    global df_vuln, df_proj, df_comp, df_projvulnmap, df_compvulnmap
     print('callback_vulntab_selvuln_button')
 
     if nclicks is None:
@@ -507,20 +554,24 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
     [
         Input('filter_compcard_proj_button', 'n_clicks'),
         Input('filter_vulncard_proj_button', 'n_clicks'),
+        Input('filter_polcard_proj_button', 'n_clicks'),
         Input('filter_thisproj_button', 'n_clicks'),
         Input('filter_usedproj_button', 'n_clicks'),
         State('comptab_card_projtable', 'derived_virtual_data'),
         State('comptab_card_projtable', 'derived_virtual_selected_rows'),
         State('vulntab_card_projtable', 'derived_virtual_data'),
         State('vulntab_card_projtable', 'derived_virtual_selected_rows'),
+        State('poltab_card_projtable', 'derived_virtual_data'),
+        State('poltab_card_projtable', 'derived_virtual_selected_rows'),
         State('projtab_table_projs', 'derived_virtual_data'),
         State('projtab_table_projs', 'derived_virtual_selected_rows'),
         State('projtab_detail_projtable', 'derived_virtual_data'),
         State('projtab_detail_projtable', 'derived_virtual_selected_rows'),
+
     ]
 )
-def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, usedprojclicks,
-                                compprojdata, compprojrows, vulnprojdata, vulnprojrows,
+def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, projclicks, usedprojclicks,
+                                compprojdata, compprojrows, vulnprojdata, vulnprojrows, polprojdata, polprojrows,
                                 projdata, projrows, projuseddata, projusedrows):
     print('callback_filterproj_buttons')
     # print(projdata)
@@ -531,6 +582,8 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, projclicks, used
         val = compprojdata[compprojrows[0]]['projname']
     elif vulnprojdata is not None and 'filter_vulncard_proj_button' in changed_id and len(vulnprojrows) > 0:
         val = vulnprojdata[vulnprojrows[0]]['projname']
+    elif polprojdata is not None and 'filter_polcard_proj_button' in changed_id and len(polprojrows) > 0:
+        val = polprojdata[polprojrows[0]]['projname']
     elif projdata is not None and 'filter_thisproj_button' in changed_id and len(projrows) > 0:
         val = projdata[projrows[0]]['projname']
     elif projuseddata is not None and 'filter_usedproj_button' in changed_id and len(projusedrows) > 0:
@@ -611,6 +664,7 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         State('sel_phases', 'value'),
         State('sel_secrisk', 'value'),
         State('sel_licrisk', 'value'),
+        State('sel_polsev', 'value'),
         # State('sel_ignore_unklic', 'value'),
         State('sel_comps', 'value'),
         State('proj_color', 'data'),
@@ -619,12 +673,12 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
 )
 def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, remstatus,
                   tiers, dists, phases,
-                  secrisk, licrisk, comps, proj_color_prev, proj_size_prev):
+                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
     global df_proj
     global df_comp, df_projcompmap
     global df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist
     global df_lic, lic_compverid_dict, compverid_lic_dict
-    global df_pol
+    global df_pol, df_projpolmap, df_comppolmap
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -681,9 +735,9 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
 
         if remstatus is not None and len(remstatus) > 0:
             # tempvulnidlist = []
-            if 'ACTIVE' in remstatus:
+            if 'UNREMEDIATED' in remstatus:
                 temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(df_vulnactivelist)]
-            if 'INACTIVE' in remstatus:
+            if 'REMEDIATED' in remstatus:
                 temp_df_vuln = temp_df_vuln[~temp_df_vuln.vulnid.isin(df_vulnactivelist)]
             # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
@@ -702,6 +756,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             if 'Low' in secrisk:
                 temp_df_comp = temp_df_comp[temp_df_comp.seclowcount > 0]
                 secvals.append('LOW')
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.severity.isin(secvals)]
 
         if licrisk is not None and len(licrisk) > 0:
             # Filter projects based on security risk selection
@@ -714,25 +769,57 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             if 'Low' in licrisk:
                 temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
 
-        if temp_df_comp.size < df_comp.size:
+        if polsev is not None and len(polsev) > 0:
+            # Filter projects based on security risk selection
+            for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
+                if sev in polsev:
+                    temp_df_pol = temp_df_pol[temp_df_pol.severity == sev]
+            comps = df_comppolmap[df_comppolmap.polid.isin(temp_df_pol.polid.unique())].compverid.unique()
+            temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
+
+        if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
             temp = df_compvulnmap[df_compvulnmap.compverid.isin(temp_df_comp.compverid.unique())].vulnid.unique()
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin[temp]]
+            if temp.size > 0:
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+            else:
+                temp_df_vuln = None
 
             temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.compverid.unique())].projverid.unique()
-            temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin[temp]]
+            if temp_df_proj.size > 0 and temp.size > 0:
+                temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(temp)]
+            else:
+                temp_df_proj = None
+
+            temp = df_comppolmap[df_comppolmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
+            if temp_df_pol.size > 0 and temp.size > 0:
+                temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
+            else:
+                temp_df_pol = None
 
             # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
 
-        elif temp_df_proj.size < df_proj.size:
+        elif temp_df_proj.size > 0 and temp_df_proj.size < df_proj.size:
             temp = df_projcompmap[df_projcompmap.projverid.isin(temp_df_proj.projverid.unique())].compverid.unique()
-            temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
+            if temp.size > 0:
+                temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
+            else:
+                temp_df_comp = None
 
             temp = df_projvulnmap[df_projvulnmap.projverid.isin(temp_df_proj.projverid.unique())].vulnid.unique()
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+            if temp.size > 0:
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+            else:
+                temp_df_vuln = None
+
+            temp = df_projpolmap[df_projpolmap.projverid.isin(temp_df_proj.projverid.unique())].polid.unique()
+            if temp_df_pol.size > 0 and temp.size > 0:
+                temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
+            else:
+                temp_df_pol = None
 
             # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
 
-        if temp_df_comp.size < df_comp.size:
+        if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
             licnames = []
             for cid in temp_df_comp.compverid.unique():
                 if cid in compverid_lic_dict.keys():

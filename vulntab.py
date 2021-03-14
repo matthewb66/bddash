@@ -125,7 +125,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
         vulnrelated = vulndata['relatedvulnid'].values[0]
         if vulnrelated == '':
             vulnrelated = 'None'
-        desc = vulndata['desc'].values[0]
+        desc = vulndata.description.values[0]
 
         projlist = []
         projverlist = []

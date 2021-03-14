@@ -179,12 +179,21 @@ def proc_vuln_data(thisdf):
                                        axis=1, inplace=False)
 
     print('{} Vulnerabilities returned'.format(vulndf.vulnid.nunique()))
-    return thisdf, projvulnmapdf, compvulnmapdf, vuln_active_list
+    return vulndf, projvulnmapdf, compvulnmapdf, vuln_active_list
 
 
 def proc_pol_data(thisdf):
-    poldf = thisdf
+    projpolmap = thisdf
+    comppolmap = thisdf
 
-    print('{} Policies returned'.format(poldf.polid.nunique()))
+    projpolmap = projpolmap.drop(["compverid", "polname", "polstatus", "overrideby", "desc", "severity"],
+                                 axis=1, inplace=False)
+    comppolmap = comppolmap.drop(["projverid", "polname", "polstatus", "overrideby", "desc", "severity"],
+                                 axis=1, inplace=False)
 
-    return poldf
+
+    thisdf = thisdf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
+
+    print('{} Policies returned'.format(thisdf.polid.nunique()))
+
+    return thisdf, projpolmap, comppolmap

@@ -27,7 +27,14 @@ def create_poltab_table_pols(thisdf):
                                          columns=pol_cols,
                                          )
     else:
-        df_temp = df_temp.sort_values(by=["polname"], ascending=True)
+        # df_temp = df_temp.sort_values(by=["severity"], ascending=False)
+        def tm_sorter(column):
+            """Sort function"""
+            severities = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']
+            correspondence = {severity: order for order, severity in enumerate(severities)}
+            return column.map(correspondence)
+
+        df_temp.sort_values(by='severity', key=tm_sorter, inplace=True)
 
         thistable = dash_table.DataTable(id='poltab_table_pols',
                                          columns=pol_cols,
@@ -75,14 +82,13 @@ def create_poltab_table_pols(thisdf):
                                                  'width': '120px'
                                              },
                                          ],
-                                         sort_by=[{'column_id': 'polname', 'direction': 'asc'}],
+                                         sort_by=[{'column_id': 'severity', 'direction': 'asc'}],
                                          merge_duplicate_headers=False
                                          )
     return thistable
 
 
-def create_poltab_card_pol(projdf, compdf, df_projvulnmap, df_compvulnmap, poldata):
-
+def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
     polname = ''
     desc = ''
     projusedin_cols = [
@@ -97,7 +103,7 @@ def create_poltab_card_pol(projdf, compdf, df_projvulnmap, df_compvulnmap, polda
     usedbycompstitle = html.P('Components with Violations:', className="card-text", )
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
-        id='poltab_card_poltable'
+        id='poltab_card_projtable'
     )
     compstable = dash_table.DataTable(
         columns=compusedin_cols,
@@ -116,21 +122,22 @@ def create_poltab_card_pol(projdf, compdf, df_projvulnmap, df_compvulnmap, polda
                    size='sm'),
     )
     if poldata is not None:
+        polid = poldata['polid'].values[0]
         polname = poldata['polname'].values[0]
         desc = poldata['desc'].values[0]
 
         projlist = []
         projverlist = []
-        # for projid in [df_projvulnmap['vulnid'] == vulnid].projverid.unique():
-        #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
-        #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
-        #
+        for projid in projpolmapdf[projpolmapdf['polid'] == polid].projverid.unique():
+            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
+            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+
         complist = []
         compverlist = []
-        # for compid in df_compvulnmap[df_compvulnmap['vulnid'] == vulnid].compverid.unique():
-        #     complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
-        #     compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
-        #
+        for compid in comppolmapdf[comppolmapdf['polid'] == polid].compverid.unique():
+            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
+            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
+
         projs_data = pd.DataFrame({
             "projname": projlist,
             "projvername": projverlist
@@ -142,7 +149,7 @@ def create_poltab_card_pol(projdf, compdf, df_projvulnmap, df_compvulnmap, polda
             page_size=4, sort_action='native',
             row_selectable="single",
             merge_duplicate_headers=False,
-            id='vulntab_card_projtable'
+            id='poltab_card_projtable'
         )
 
         comps_data = pd.DataFrame({
@@ -156,7 +163,7 @@ def create_poltab_card_pol(projdf, compdf, df_projvulnmap, df_compvulnmap, polda
             page_size=4, sort_action='native',
             row_selectable="single",
             merge_duplicate_headers=False,
-            id='vulntab_card_comptable'
+            id='poltab_card_comptable'
         )
 
     return dbc.Card(
