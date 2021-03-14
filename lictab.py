@@ -124,6 +124,7 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
             page_size=5, sort_action='native',
+            filter_action='native',
             # row_selectable="single",
             merge_duplicate_headers=False
         )
@@ -141,6 +142,7 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
             columns=compusedin_cols,
             data=comps_data.to_dict('records'),
             page_size=5, sort_action='native',
+            filter_action='native',
             # row_selectable="single",
             # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
             merge_duplicate_headers=False

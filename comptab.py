@@ -149,7 +149,10 @@ def create_comptab_table_compvers(thisdf):
                                                  'color': 'black',
                                                  'width': '50px',
                                              },
-
+                                             {
+                                                 'if': {'column_id': 'licrisk'},
+                                                 'width': '50px',
+                                             },
                                          ],
                                          sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
                                                   {'column_id': 'sechighcount', 'direction': 'desc'},
@@ -261,7 +264,10 @@ def create_comptab_table_compvers(thisdf):
                                                  'color': 'black',
                                                  'width': '50px',
                                              },
-
+                                             {
+                                                 'if': {'column_id': 'licrisk'},
+                                                 'width': '50px',
+                                             },
                                          ],
                                          sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
                                                   {'column_id': 'sechighcount', 'direction': 'desc'},
@@ -292,6 +298,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
         # data=projs_data.to_dict('records'),
         # page_size=6, sort_action='native',
         row_selectable="single",
+        filter_action='native',
         # merge_duplicate_headers=False,
         id='comptab_card_projtable'
     )
@@ -305,9 +312,14 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
         projlist = []
         projverlist = []
 
-        for projid in projcompmapdf[projcompmapdf['compverid'] == compverid].projverid.unique():
-            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
-            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+        # for projid in projcompmapdf[projcompmapdf['compverid'] == compverid].projverid.unique():
+        #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
+        #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+
+        for projid in projdf.projverid:
+            if projcompmapdf[(projcompmapdf['compverid'] == compverid)].size > 0:
+                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
+                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -319,6 +331,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
             data=projs_data.to_dict('records'),
             page_size=6, sort_action='native',
             row_selectable="single",
+            filter_action='native',
             merge_duplicate_headers=False,
             id='comptab_card_projtable',
         )

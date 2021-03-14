@@ -221,7 +221,7 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
         projver = projdata['projvername'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
 
-        if foundcomps.shape[0] > 0:
+        if foundcomps.size > 0:
             projlist = []
             projverlist = []
             for projids in projcompmapdf[projcompmapdf['compverid'] == foundcomps.
@@ -240,19 +240,21 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
                 data=projs_data.to_dict('records'),
                 page_size=6, sort_action='native',
                 row_selectable="single",
+                filter_action='native',
                 # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
                 merge_duplicate_headers=False,
                 id='projtab_detail_projtable',
             )
 
         row1 = html.Tr([html.Td("Distribution"), html.Td(projdata['projverdist'])])
-        row2 = html.Tr([html.Td("tier"), html.Td(projdata['projtier'])])
+        row2 = html.Tr([html.Td("Tier"), html.Td(projdata['projtier'])])
         row3 = html.Tr([html.Td("Phase"), html.Td(projdata['projverphase'])])
         row4 = html.Tr([html.Td("Total Vulns"), html.Td(projdata['secAll'])])
+        row5 = html.Tr([html.Td("Total Policy Violations"), html.Td(projdata['secAll'])])
 
     table_header = []
 
-    table_body = [html.Tbody([row1, row2, row3, row4])]
+    table_body = [html.Tbody([row1, row2, row3, row4, row5])]
 
     return dbc.Card(
         [

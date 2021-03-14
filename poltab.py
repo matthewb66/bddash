@@ -126,17 +126,31 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
         polname = poldata['polname'].values[0]
         desc = poldata['desc'].values[0]
 
+        # projlist = []
+        # projverlist = []
+        # for projid in projpolmapdf[projpolmapdf['polid'] == polid].projverid.unique():
+        #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
+        #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+        #
+        # complist = []
+        # compverlist = []
+        # for compid in comppolmapdf[comppolmapdf['polid'] == polid].compverid.unique():
+        #     complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
+        #     compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
+        #
         projlist = []
         projverlist = []
-        for projid in projpolmapdf[projpolmapdf['polid'] == polid].projverid.unique():
-            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
-            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+        for projid in projdf.projverid:
+            if projpolmapdf[(projpolmapdf['polid'] == polid)].size > 0:
+                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
+                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         complist = []
         compverlist = []
-        for compid in comppolmapdf[comppolmapdf['polid'] == polid].compverid.unique():
-            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
-            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
+        for compid in compdf.compverid:
+            if comppolmapdf[(comppolmapdf['polid'] == polid)].size > 0:
+                complist.append(compdf[compdf.compverid == compid].compname.values[0])
+                compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -148,6 +162,7 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
             data=projs_data.to_dict('records'),
             page_size=4, sort_action='native',
             row_selectable="single",
+            filter_action='native',
             merge_duplicate_headers=False,
             id='poltab_card_projtable'
         )
@@ -162,6 +177,7 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
             data=comps_data.to_dict('records'),
             page_size=4, sort_action='native',
             row_selectable="single",
+            filter_action='native',
             merge_duplicate_headers=False,
             id='poltab_card_comptable'
         )

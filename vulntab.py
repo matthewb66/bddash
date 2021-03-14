@@ -11,8 +11,8 @@ def create_vulntab_table_vulns(thisdf):
         {"name": ['Vuln Id'], "id": "vulnid"},
         {"name": ['Related Vuln'], "id": "relatedvulnid"},
         {"name": ['Severity'], "id": "severity"},
-        {"name": ['CVSS3 Score'], "id": "score"},
-        {"name": ['Rem Status'], "id": "remstatus"},
+        {"name": ['Score'], "id": "score"},
+        # {"name": ['Rem Status'], "id": "remstatus"},
         # {"name": ['Description'], "id": "desc"},
         {"name": ['Solution'], "id": "solution"},
         {"name": ['Workaround'], "id": "workaround"},
@@ -129,15 +129,19 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
 
         projlist = []
         projverlist = []
-        for projid in df_projvulnmap[df_projvulnmap['vulnid'] == vulnid].projverid.unique():
-            projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
-            projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
+        for projid in projdf.projverid:
+            if df_projvulnmap[(df_projvulnmap['vulnid'] == vulnid) &
+                              (df_projvulnmap['projverid'] == projid)].size > 0:
+                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
+                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         complist = []
         compverlist = []
-        for compid in df_compvulnmap[df_compvulnmap['vulnid'] == vulnid].compverid.unique():
-            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
-            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
+        for compid in compdf.compverid:
+            if df_compvulnmap[(df_compvulnmap['vulnid'] == vulnid) &
+                              (df_compvulnmap['compverid'] == compid)].size > 0:
+                complist.append(compdf[compdf.compverid == compid].compname.values[0])
+                compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -149,6 +153,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
             data=projs_data.to_dict('records'),
             page_size=4, sort_action='native',
             row_selectable="single",
+            filter_action='native',
             merge_duplicate_headers=False,
             id='vulntab_card_projtable'
         )
@@ -163,6 +168,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
             data=comps_data.to_dict('records'),
             page_size=4, sort_action='native',
             row_selectable="single",
+            filter_action='native',
             merge_duplicate_headers=False,
             id='vulntab_card_comptable'
         )
