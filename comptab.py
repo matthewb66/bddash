@@ -54,6 +54,7 @@ def create_comptab_table_compvers(thisdf):
                                              'maxWidth': 0
                                          },
                                          data=df_temp.to_dict('records'),
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          row_selectable="single",
                                          page_size=20,
                                          sort_action='native',
@@ -169,6 +170,7 @@ def create_comptab_table_compvers(thisdf):
                                              'maxWidth': 0
                                          },
                                          data=df_temp.to_dict('records'),
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          row_selectable="single",
                                          page_size=20,
                                          sort_action='native',
@@ -297,6 +299,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
         columns=projusedin_cols,
         # data=projs_data.to_dict('records'),
         # page_size=6, sort_action='native',
+        style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
         row_selectable="single",
         filter_action='native',
         # merge_duplicate_headers=False,
@@ -329,6 +332,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, compdata):
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=6, sort_action='native',
             row_selectable="single",
             filter_action='native',

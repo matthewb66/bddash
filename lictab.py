@@ -20,11 +20,13 @@ def create_lictab_table_lics(licdict):
     if len(licdict) == 0:
         thistable = dash_table.DataTable(id='lictab_table_lics',
                                          columns=lic_cols,
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          filter_action='native',
                                          )
     else:
         thistable = dash_table.DataTable(id='lictab_table_lics',
                                          columns=lic_cols,
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          data=licdict.to_dict('records'),
                                          page_size=20, sort_action='native',
                                          filter_action='native',
@@ -123,6 +125,7 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=5, sort_action='native',
             filter_action='native',
             # row_selectable="single",
@@ -141,6 +144,7 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
         compstable = dash_table.DataTable(
             columns=compusedin_cols,
             data=comps_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=5, sort_action='native',
             filter_action='native',
             # row_selectable="single",

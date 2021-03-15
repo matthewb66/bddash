@@ -39,6 +39,7 @@ def create_poltab_table_pols(thisdf):
         thistable = dash_table.DataTable(id='poltab_table_pols',
                                          columns=pol_cols,
                                          data=df_temp.to_dict('records'),
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          page_size=20,
                                          sort_action='native',
                                          filter_action='native',
@@ -103,10 +104,12 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
     usedbycompstitle = html.P('Components with Violations:', className="card-text", )
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
+        style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
         id='poltab_card_projtable'
     )
     compstable = dash_table.DataTable(
         columns=compusedin_cols,
+        style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
         # data=comps_data.to_dict('records'),
         # page_size=4, sort_action='native',
         # row_selectable="single",
@@ -160,6 +163,7 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=4, sort_action='native',
             row_selectable="single",
             filter_action='native',
@@ -175,6 +179,7 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
         compstable = dash_table.DataTable(
             columns=compusedin_cols,
             data=comps_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=4, sort_action='native',
             row_selectable="single",
             filter_action='native',

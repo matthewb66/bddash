@@ -24,6 +24,7 @@ def create_vulntab_table_vulns(thisdf):
     if df_temp is None or len(df_temp) == 0:
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          )
     else:
         df_temp = df_temp.sort_values(by=["score"], ascending=False)
@@ -31,6 +32,7 @@ def create_vulntab_table_vulns(thisdf):
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
                                          data=df_temp.to_dict('records'),
+                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          page_size=20,
                                          sort_action='native',
                                          filter_action='native',
@@ -98,6 +100,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
     usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
+        style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
         # data=projs_data.to_dict('records'),
         # page_size=4, sort_action='native',
         # row_selectable="single",
@@ -106,6 +109,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
     )
     compstable = dash_table.DataTable(
         columns=compusedin_cols,
+        style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
         # data=comps_data.to_dict('records'),
         # page_size=4, sort_action='native',
         # row_selectable="single",
@@ -129,17 +133,13 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
 
         projlist = []
         projverlist = []
-        for projid in projdf.projverid:
-            if df_projvulnmap[(df_projvulnmap['vulnid'] == vulnid) &
-                              (df_projvulnmap['projverid'] == projid)].size > 0:
-                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
-                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
+        for projid in df_projvulnmap[df_projvulnmap.vulnid == vulnid].projverid:
+            projlist.append(projdf[projdf.projverid == projid].projname.values[0])
+            projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         complist = []
         compverlist = []
-        for compid in compdf.compverid:
-            if df_compvulnmap[(df_compvulnmap['vulnid'] == vulnid) &
-                              (df_compvulnmap['compverid'] == compid)].size > 0:
+        for compid in df_compvulnmap[df_compvulnmap.vulnid == vulnid].compverid:
                 complist.append(compdf[compdf.compverid == compid].compname.values[0])
                 compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
@@ -151,6 +151,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
         projstable = dash_table.DataTable(
             columns=projusedin_cols,
             data=projs_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=4, sort_action='native',
             row_selectable="single",
             filter_action='native',
@@ -166,6 +167,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
         compstable = dash_table.DataTable(
             columns=compusedin_cols,
             data=comps_data.to_dict('records'),
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
             page_size=4, sort_action='native',
             row_selectable="single",
             filter_action='native',

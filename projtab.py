@@ -36,6 +36,7 @@ def create_projtab_table_projs(thisdf):
                                      filter_action='native',
                                      row_selectable="single",
                                      cell_selectable=False,
+                                     style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                      style_data_conditional=[
                                          {
                                              'if': {'column_id': 'projvername'},
