@@ -32,6 +32,13 @@ def create_lictab_table_lics(licdict):
                                          filter_action='native',
                                          row_selectable="single",
                                          cell_selectable=False,
+                                         tooltip_data=[
+                                             {
+                                                 column: {'value': str(value), 'type': 'markdown'}
+                                                 for column, value in row.items()
+                                             } for row in licdict.to_dict('records')
+                                         ],
+                                         tooltip_duration=None,
                                          style_data_conditional=[
                                              {
                                                  'if': {
@@ -59,19 +66,19 @@ def create_lictab_table_lics(licdict):
                                              },
                                              {
                                                  'if': {'column_id': 'lichighcount'},
-                                                 'width': '120px'
+                                                 'width': '12%'
                                              },
                                              {
                                                  'if': {'column_id': 'licmedcount'},
-                                                 'width': '120px'
+                                                 'width': '12%'
                                              },
                                              {
                                                  'if': {'column_id': 'liclowcount'},
-                                                 'width': '120px'
+                                                 'width': '12%'
                                              },
                                              {
                                                  'if': {'column_id': 'licokcount'},
-                                                 'width': '120px'
+                                                 'width': '12%'
                                              },
                                          ],
                                          sort_by=[{'column_id': 'lichighcount', 'direction': 'desc'},

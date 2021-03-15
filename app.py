@@ -24,6 +24,7 @@ df_vuln = None
 df_vuln_viz = None
 df_pol = None
 df_pol_viz = None
+df_pol_map = None
 df_proj = None
 df_proj_viz = None
 df_comp = None
@@ -36,8 +37,6 @@ df_compvulnmap = None
 df_vulnactivelist = []
 lic_compverid_dict = None
 compverid_lic_dict = None
-df_projpolmap = None
-df_comppolmap = None
 
 auth = None
 lastdbreadtime = 0
@@ -154,12 +153,13 @@ if __name__ == '__main__':
     df_vuln_viz = df_vuln
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
     df_lic_viz = df_lic
-    df_proj, df_comp, df_pol, df_projpolmap, df_comppolmap = data.proc_pol_data(df_proj, df_comp, df_pol)
+    df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
     df_pol_viz = df_pol
     # data.proc_projinproj(df_proj, df_comp)
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, sizefield, noprojs):
+
     if noprojs:
         return dbc.Tabs(
             [
@@ -356,7 +356,7 @@ if __name__ == '__main__':
                             options=[
                                 {'label': 'UNREMEDIATED', 'value': 'UNREMEDIATED'},
                                 {'label': 'REMEDIATED', 'value': 'REMEDIATED'},
-                                # {'label': 'UNREMEDIATED', 'value': 'NEW'},
+                                # {'label': 'New', 'value': 'NEW'},
                                 # {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
                                 # {'label': 'Patched', 'value': 'PATCHED'},
                                 # {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
@@ -490,7 +490,7 @@ if __name__ == '__main__':
 
 )
 def callback_poltab_selpol_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_pol_viz, df_projpolmap, df_comppolmap
+    global df_proj_viz, df_comp_viz, df_pol_viz
     print('callback_poltab_selpol_button')
 
     if nclicks is None:
@@ -498,11 +498,11 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_projpolmap, df_comppolmap,
+        return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
                                              df_pol_viz[df_pol_viz['polid'] == cdata[rows[0]][
                                                     'polid']])
 
-    return poltab.create_poltab_card_pol(None, None, None, None, None)
+    return poltab.create_poltab_card_pol(None, None, None, None)
 
 
 @app.callback(
@@ -518,7 +518,7 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
 
 )
 def callback_comptab_selcomp_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_projcompmap
+    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap
     print('callback_comptab_selcomp_button')
 
     if nclicks is None:
@@ -526,11 +526,11 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap,
+        return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
                                                 df_comp_viz[df_comp_viz['compverid'] == cdata[rows[0]][
                                                     'compverid']]), 'tab_comp_subdetail'
 
-    return comptab.create_comptab_card_comp(None, None, None), 'tab_comp_subsummary'
+    return comptab.create_comptab_card_comp(None, None, None, None), 'tab_comp_subsummary'
 
 
 @app.callback(
@@ -641,7 +641,7 @@ def callback_filtercomp_buttons(nclicks, cdata, rows):
     ]
 )
 def callback_projtab_selproj_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_projcompmap
+    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap
     print('callback_projtab_selproj_button')
 
     if nclicks is None:
@@ -649,11 +649,11 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_projcompmap,
+        return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_projcompmap, df_polmap,
                                                 df_proj_viz[df_proj_viz['projverid'] == cdata[rows[0]][
                                                     'projverid']]), 'tab_proj_subdetail'
 
-    return projtab.create_projtab_card_proj(None, None, None, None), 'tab_proj_subsummary'
+    return projtab.create_projtab_card_proj(None, None, None, None, None), 'tab_proj_subsummary'
 
 
 # Update graphs and select options based on selection inputs
@@ -689,7 +689,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     global df_comp, df_projcompmap, df_comp_viz
     global df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist, df_vuln_viz
     global df_lic, lic_compverid_dict, compverid_lic_dict, df_lic_viz
-    global df_pol, df_projpolmap, df_comppolmap, df_pol_viz
+    global df_pol, df_pol_viz, df_polmap
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -785,7 +785,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
                 if sev in polsev:
                     temp_df_pol = temp_df_pol[temp_df_pol.polseverity == sev]
-            comps = df_comppolmap[df_comppolmap.polid.isin(temp_df_pol.polid.unique())].compverid.unique()
+            comps = df_polmap[df_polmap.polid.isin(temp_df_pol.polid.unique())].compverid.unique()
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
         if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
@@ -801,7 +801,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             else:
                 temp_df_proj = None
 
-            temp = df_comppolmap[df_comppolmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
+            temp = df_polmap[df_polmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
             if temp_df_pol.size > 0 and temp.size > 0:
                 temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
             else:
@@ -822,7 +822,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             else:
                 temp_df_vuln = None
 
-            temp = df_projpolmap[df_projpolmap.projverid.isin(temp_df_proj.projverid.unique())].polid.unique()
+            temp = df_polmap[df_polmap.projverid.isin(temp_df_proj.projverid.unique())].polid.unique()
             if temp_df_pol.size > 0 and temp.size > 0:
                 temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
             else:
@@ -838,18 +838,10 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             licnames.sort()
             temp_df_lic = temp_df_lic[temp_df_lic.licname.isin(licnames)]
 
-        # if temp_df_vuln.size > 0:
-        #     temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(vulnidlist)]
-
     # except Exception as e:
     #     print('Exception:')
     #     print(e)
     #     noprojs = True
-
-        # sel_tiers_options = [{'label': i, 'value': i} for i in df_proj.projtier.unique()]
-        # sel_dists_options = [{'label': i, 'value': i} for i in df_proj.projverdist.unique()]
-        # sel_phases_options = [{'label': i, 'value': i} for i in df_proj.projverphase.unique()]
-        # sel_comps_options = [{'label': i, 'value': i} for i in df_comp.compname.sort_values().unique()]
 
     if temp_df_proj is None or len(temp_df_proj) == 0 or \
             temp_df_comp is None or len(temp_df_comp) == 0:

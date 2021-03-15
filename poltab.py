@@ -17,7 +17,7 @@ def create_poltab_table_pols(thisdf):
 
     pol_cols = [
         {"name": ['Policy'], "id": "polname"},
-        {"name": ['Dewscription'], "id": "desc"},
+        {"name": ['Description'], "id": "desc"},
         {"name": ['Severity'], "id": "polseverity"},
     ]
     df_temp = thisdf
@@ -28,13 +28,6 @@ def create_poltab_table_pols(thisdf):
                                          )
     else:
         # df_temp = df_temp.sort_values(by=["severity"], ascending=False)
-        def tm_sorter(column):
-            """Sort function"""
-            severities = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']
-            correspondence = {polseverity: order for order, polseverity in enumerate(severities)}
-            return column.map(correspondence)
-
-        df_temp.sort_values(by='polseverity', key=tm_sorter, inplace=True)
 
         thistable = dash_table.DataTable(id='poltab_table_pols',
                                          columns=pol_cols,
@@ -45,30 +38,37 @@ def create_poltab_table_pols(thisdf):
                                          filter_action='native',
                                          row_selectable="single",
                                          cell_selectable=False,
+                                         tooltip_data=[
+                                             {
+                                                 column: {'value': str(value), 'type': 'markdown'}
+                                                 for column, value in row.items()
+                                             } for row in df_temp.to_dict('records')
+                                         ],
+                                         tooltip_duration=None,
                                          style_data_conditional=[
                                              {
                                                  'if': {
                                                      'filter_query': '{polseverity} = "BLOCKER"',
                                                      'column_id': 'polseverity'
                                                  },
-                                                 'backgroundColor': 'maroon',
-                                                 'color': 'white'
+                                                 'backgroundColor': 'indigo',
+                                                 'color': 'white',
                                              },
                                              {
                                                  'if': {
                                                      'filter_query': '{polseverity} = "CRITICAL"',
                                                      'column_id': 'polseverity'
                                                  },
-                                                 'backgroundColor': 'crimson',
-                                                 'color': 'black'
+                                                 'backgroundColor': 'darkviolet',
+                                                 'color': 'white',
                                              },
                                              {
                                                  'if': {
                                                      'filter_query': '{polseverity} = "MAJOR"',
                                                      'column_id': 'polseverity'
                                                  },
-                                                 'backgroundColor': 'coral',
-                                                 'color': 'black'
+                                                 'backgroundColor': 'violet',
+                                                 'color': 'black',
                                              },
                                              {
                                                  'if': {
@@ -80,7 +80,7 @@ def create_poltab_table_pols(thisdf):
                                              },
                                              {
                                                  'if': {'column_id': 'polseverity'},
-                                                 'width': '120px'
+                                                 'width': '12%'
                                              },
                                          ],
                                          sort_by=[{'column_id': 'polseverity', 'direction': 'asc'}],
@@ -89,7 +89,7 @@ def create_poltab_table_pols(thisdf):
     return thistable
 
 
-def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
+def create_poltab_card_pol(projdf, compdf, poldf, poldata):
     polname = ''
     desc = ''
     projusedin_cols = [
@@ -144,14 +144,14 @@ def create_poltab_card_pol(projdf, compdf, projpolmapdf, comppolmapdf, poldata):
         projlist = []
         projverlist = []
         for projid in projdf.projverid:
-            if projpolmapdf[(projpolmapdf['polid'] == polid)].size > 0:
+            if poldf[(poldf['polid'] == polid)].size > 0:
                 projlist.append(projdf[projdf.projverid == projid].projname.values[0])
                 projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         complist = []
         compverlist = []
         for compid in compdf.compverid:
-            if comppolmapdf[(comppolmapdf['polid'] == polid)].size > 0:
+            if poldf[(poldf['polid'] == polid)].size > 0:
                 complist.append(compdf[compdf.compverid == compid].compname.values[0])
                 compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
@@ -229,6 +229,6 @@ def create_poltab(poldf):
                     ),
                 ], width=8
             ),
-            dbc.Col(create_poltab_card_pol(None, None, None, None, None), width=4, id='col_poltab_pol'),
+            dbc.Col(create_poltab_card_pol(None, None, None, None), width=4, id='col_poltab_pol'),
         ]
     )

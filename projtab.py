@@ -13,7 +13,7 @@ def create_projtab_table_projs(thisdf):
     col_data = [
         {"name": ['', 'Project'], "id": "projname"},
         {"name": ['', 'Project Version'], "id": "projvername"},
-        {"name": ['', 'Components'], "id": "compcount"},
+        {"name": ['', 'Comps'], "id": "compcount"},
         {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
         {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
         {"name": ['Vulnerabilities', 'Med'], "id": "secmedcount"},
@@ -22,7 +22,7 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'Med'], "id": "licmedcount"},
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
-        {"name": ['Policies', 'Violation Severity'], "id": "polseverity"},
+        {"name": ['Policy', 'Violations'], "id": "polseverity"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',
@@ -38,14 +38,25 @@ def create_projtab_table_projs(thisdf):
                                      row_selectable="single",
                                      cell_selectable=False,
                                      style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
+                                     tooltip_data=[
+                                         {
+                                             column: {'value': str(value), 'type': 'markdown'}
+                                             for column, value in row.items()
+                                         } for row in df_temp.to_dict('records')
+                                     ],
+                                     tooltip_duration=None,
                                      style_data_conditional=[
                                          {
+                                             'if': {'column_id': 'projname'},
+                                             'width': '25%'
+                                         },
+                                         {
                                              'if': {'column_id': 'projvername'},
-                                             'width': '200px'
+                                             'width': '15%'
                                          },
                                          {
                                              'if': {'column_id': 'compcount'},
-                                             'width': '80px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -57,7 +68,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'seccritcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -69,7 +80,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'sechighcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -81,7 +92,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'secmedcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -93,15 +104,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'seclowcount'},
-                                             'width': '50px'
-                                         },
-                                         {
-                                             'if': {'column_id': 'projname'},
-                                             'width': '400px',
-                                         },
-                                         {
-                                             'if': {'column_id': 'projvername'},
-                                             'width': '100px',
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -113,7 +116,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'lichighcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -125,7 +128,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'licmedcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
@@ -137,18 +140,46 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'liclowcount'},
-                                             'width': '50px'
+                                             'width': '5%'
                                          },
                                          {
                                              'if': {
                                                  'filter_query': '{licokcount} > 0',
                                                  'column_id': 'licokcount'
                                              },
-                                             'width': '50px',
+                                             'width': '5%',
                                          },
                                          {
                                              'if': {'column_id': 'licokcount'},
-                                             'width': '50px'
+                                             'width': '5%'
+                                         },
+                                         {
+                                             'if': {
+                                                 'filter_query': '{polseverity} = "BLOCKER"',
+                                                 'column_id': 'polseverity'
+                                             },
+                                             'backgroundColor': 'indigo',
+                                             'color': 'white',
+                                         },
+                                         {
+                                             'if': {
+                                                 'filter_query': '{polseverity} = "CRITICAL"',
+                                                 'column_id': 'polseverity'
+                                             },
+                                             'backgroundColor': 'darkviolet',
+                                             'color': 'white',
+                                         },
+                                         {
+                                             'if': {
+                                                 'filter_query': '{polseverity} = "MAJOR"',
+                                                 'column_id': 'polseverity'
+                                             },
+                                             'backgroundColor': 'violet',
+                                             'color': 'black',
+                                         },
+                                         {
+                                             'if': {'column_id': 'polseverity'},
+                                             'width': '10%'
                                          },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
@@ -186,7 +217,7 @@ def create_projtab_fig_subdetails(thisdf):
     return thisfig
 
 
-def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
+def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
 
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
@@ -197,6 +228,7 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
     row2 = ''
     row3 = ''
     row4 = ''
+
     projusedbytitle = html.P('Used as sub-project in Projects:', className="card-text", )
     projusedin_cols = [
         {"name": ['Project'], "id": "projname"},
@@ -218,10 +250,14 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
                    size='sm')
     )
 
+    poltext = []
     if projdata is not None:
         projname = projdata['projname'].values[0]
         projver = projdata['projvername'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
+        comppols = polmapdf[polmapdf.projverid == projdata['projverid'].values[0]].polname.unique()
+        for pols in comppols:
+            poltext.append(html.P(pols))
 
         if foundcomps.size > 0:
             projlist = []
@@ -252,7 +288,6 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
         row2 = html.Tr([html.Td("Tier"), html.Td(projdata['projtier'])])
         row3 = html.Tr([html.Td("Phase"), html.Td(projdata['projverphase'])])
         row4 = html.Tr([html.Td("Total Vulns"), html.Td(projdata['secAll'])])
-        row5 = html.Tr([html.Td("Total Policy Violations"), html.Td(projdata['secAll'])])
 
     table_header = []
 
@@ -264,8 +299,11 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
             dbc.CardBody(
                 [
                     html.H4("Project: " + projname, className="card-title"),
-                    html.H6("Project Version: " + projver, className="card-subtitle"),
+                    html.H5("Project Version: " + projver, className="card-subtitle"),
                     thisprojbutton,
+                    html.Br(),
+                    html.H6("Policies Violated: "),
+                    html.Div(poltext),
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
@@ -305,7 +343,7 @@ def create_projtab(projdf):
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
                     dbc.Tab(
-                        create_projtab_card_proj(None, None, None, None),
+                        create_projtab_card_proj(None, None, None, None, None),
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )

@@ -18,8 +18,28 @@ def create_vulntab_table_vulns(thisdf):
         {"name": ['Workaround'], "id": "workaround"},
         # {"name": ['Comment'], "id": "comment"},
         {"name": ['Published Date'], "id": "published_on"},
+        {"name": ['Update Date'], "id": "updateddate"},
+        {"name": ['Attack Vector'], "id": "attackvector"},
     ]
     df_temp = thisdf
+
+    # projverid,
+    # compid,
+    # compverid,
+    # compname,
+    # compvername,
+    # projvername,
+    # projname,
+    # vulnid, relatedvulnid, vulnsource, severity, score,
+    # remstatus,
+    # solution,
+    # workaround,
+    # pubdate,
+    # description,
+    # targetdate,
+    # actualdate,
+    # attackvector,
+    # updateddate
 
     if df_temp is None or len(df_temp) == 0:
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
@@ -38,6 +58,13 @@ def create_vulntab_table_vulns(thisdf):
                                          filter_action='native',
                                          row_selectable="single",
                                          cell_selectable=False,
+                                         tooltip_data=[
+                                             {
+                                                 column: {'value': str(value), 'type': 'markdown'}
+                                                 for column, value in row.items()
+                                             } for row in df_temp.to_dict('records')
+                                         ],
+                                         tooltip_duration=None,
                                          style_data_conditional=[
                                              {
                                                  'if': {
@@ -73,7 +100,7 @@ def create_vulntab_table_vulns(thisdf):
                                              },
                                              {
                                                  'if': {'column_id': 'severity'},
-                                                 'width': '80px'
+                                                 'width': '8%'
                                              },
                                          ],
                                          sort_by=[{'column_id': 'score', 'direction': 'desc'}],
@@ -140,8 +167,8 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
         complist = []
         compverlist = []
         for compid in df_compvulnmap[df_compvulnmap.vulnid == vulnid].compverid:
-                complist.append(compdf[compdf.compverid == compid].compname.values[0])
-                compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
+            complist.append(compdf[compdf.compverid == compid].compname.values[0])
+            compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
         projs_data = pd.DataFrame({
             "projname": projlist,

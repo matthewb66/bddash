@@ -255,19 +255,16 @@ def proc_vuln_data(thisdf):
 
 
 def proc_pol_data(projdf, compdf, poldf):
-    projpolmap = poldf
-    comppolmap = poldf
 
-    projpolmap = projpolmap.drop(["compverid", "polname", "polstatus", "overrideby", "desc", "polseverity"],
-                                 axis=1, inplace=False)
-    comppolmap = comppolmap.drop(["projverid", "polname", "polstatus", "overrideby", "desc", "polseverity"],
-                                 axis=1, inplace=False)
+    def tm_sorter(column):
+        """Sort function"""
+        severities = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']
+        correspondence = {polseverity: order for order, polseverity in enumerate(severities)}
+        return column.map(correspondence)
 
+    poldf.sort_values(by='polseverity', key=tm_sorter, inplace=True, ascending=True)
 
-    poldf = poldf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
-
-    print('{} Policies returned'.format(poldf.polid.nunique()))
-
+    polmapdf = poldf
     # Add policies to projects
         # SELECT
         # component_policies.project_version_id as projverid,
@@ -277,13 +274,19 @@ def proc_pol_data(projdf, compdf, poldf):
         # policy_status as polstatus,
         # overridden_by as overrideby,
         # description as desc,
-        # severity
+        # polseverity
 
-    projdf = pd.merge(projdf, poldf, on='projverid', how='outer')
+    tempdf = poldf.drop_duplicates(subset=["projverid"], keep="first", inplace=False)
+    projdf = pd.merge(projdf, tempdf, on='projverid', how='outer')
     projdf.fillna(value='', inplace=True)
 
-    compdf = pd.merge(compdf, poldf, on='compverid', how='outer')
+    tempdf = poldf.drop_duplicates(subset=["compverid"], keep="first", inplace=False)
+    compdf = pd.merge(compdf, tempdf, on='compverid', how='outer')
     compdf.fillna(value='', inplace=True)
+    compdf = compdf.drop_duplicates(subset=["compverid"], keep="first", inplace=False)
 
-    return projdf, compdf, poldf, projpolmap, comppolmap
+    poldf = poldf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
+    print('{} Policies returned'.format(poldf.polid.nunique()))
+
+    return projdf, compdf, poldf, polmapdf
 
