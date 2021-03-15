@@ -254,7 +254,7 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, projdata):
 
     table_header = []
 
-    table_body = [html.Tbody([row1, row2, row3, row4, row5])]
+    table_body = [html.Tbody([row1, row2, row3, row4])]
 
     return dbc.Card(
         [

@@ -145,17 +145,18 @@ if __name__ == '__main__':
         print("Writing data to JSON files ...")
         write_data_files(df_main, df_vuln, df_pol)
 
-    df_proj = data.proc_projdata(df_main)
+    df_proj, df_comp, df_projcompmap = data.proc_comp_data(df_main)
+    df_comp_viz = df_comp
+    # df_proj = data.proc_projdata(df_main)
     df_proj_viz = df_proj
     # print(df_proj)
-    df_comp, df_projcompmap = data.proc_comp_data(df_main)
-    df_comp_viz = df_comp
     df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
     df_vuln_viz = df_vuln
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
     df_lic_viz = df_lic
     df_pol, df_projpolmap, df_comppolmap = data.proc_pol_data(df_pol)
     df_pol_viz = df_pol
+    # data.proc_projinproj(df_proj, df_comp)
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, sizefield, noprojs):
