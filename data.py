@@ -39,23 +39,23 @@ def proc_comp_data(thisdf):
     # projcompdf will have 1 row for each compver within each projver
     # - will map projverid to compverid
 
-    tempdf = thisdf
+    newmaindf = thisdf
 
     comps_as_projs = 0
     comps_as_projs_parents = 0
-    for projverid in tempdf.projverid.unique():
-        if tempdf[tempdf.compverid == projverid].size > 0:
+    for projverid in newmaindf.projverid.unique():
+        if newmaindf[newmaindf.compverid == projverid].size > 0:
             # compverid is also a project
             # Find projs where it is used
-            projsusingcomp = tempdf[tempdf.compverid == projverid]
+            projsusingcomp = newmaindf[newmaindf.compverid == projverid]
             comps_as_projs += 1
             usedinprojids = projsusingcomp.projverid.unique()
             for projid in usedinprojids:
                 # Need to replace component with components from matching sub-project
-                newcomps = tempdf[tempdf.projverid == projverid].replace({projverid: projid}, inplace=False)
+                newcomps = newmaindf[newmaindf.projverid == projverid].replace({projverid: projid}, inplace=False)
 
                 # Remove the sub-proj component from projid
-                tempdf = pd.concat([tempdf[~((tempdf.projverid == projid) & (tempdf.compverid == projverid))],
+                newmaindf = pd.concat([newmaindf[~((newmaindf.projverid == projid) & (newmaindf.compverid == projverid))],
                                     newcomps])
                 comps_as_projs_parents += 1
 
@@ -85,7 +85,7 @@ def proc_comp_data(thisdf):
     #                         parentprojs += 1
 
     # Calculate mapping of projvers to compvers
-    projcompmapdf = tempdf
+    projcompmapdf = newmaindf
 
     projcompmapdf = projcompmapdf.drop(
         ["projname", "projvername", "compid", "compname",
@@ -93,7 +93,7 @@ def proc_comp_data(thisdf):
          "lichighcount", "licmedcount", "liclowcount", "licokcount", "licname", ],
         axis=1, inplace=False)
 
-    projdf = tempdf
+    projdf = newmaindf
     projdf["All"] = "All"
 
     projdf = pd.DataFrame(projdf.eval('secAll = seccritcount + sechighcount + secmedcount + seclowcount'))
@@ -134,7 +134,7 @@ def proc_comp_data(thisdf):
 
     # compdf = tempdf
     # remove duplicates
-    compdf = tempdf.drop_duplicates(subset="compverid", keep="first", inplace=False)
+    compdf = newmaindf.drop_duplicates(subset="compverid", keep="first", inplace=False)
 
     # sort by license risk
     compdf = compdf.sort_values(by=['lichighcount', 'licmedcount', 'liclowcount'], ascending=False)
@@ -254,33 +254,36 @@ def proc_vuln_data(thisdf):
     return vulndf, projvulnmapdf, compvulnmapdf, vuln_active_list
 
 
-def proc_pol_data(thisdf):
-    projpolmap = thisdf
-    comppolmap = thisdf
+def proc_pol_data(projdf, compdf, poldf):
+    projpolmap = poldf
+    comppolmap = poldf
 
-    projpolmap = projpolmap.drop(["compverid", "polname", "polstatus", "overrideby", "desc", "severity"],
+    projpolmap = projpolmap.drop(["compverid", "polname", "polstatus", "overrideby", "desc", "polseverity"],
                                  axis=1, inplace=False)
-    comppolmap = comppolmap.drop(["projverid", "polname", "polstatus", "overrideby", "desc", "severity"],
+    comppolmap = comppolmap.drop(["projverid", "polname", "polstatus", "overrideby", "desc", "polseverity"],
                                  axis=1, inplace=False)
 
 
-    thisdf = thisdf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
+    poldf = poldf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
 
-    print('{} Policies returned'.format(thisdf.polid.nunique()))
+    print('{} Policies returned'.format(poldf.polid.nunique()))
 
-    return thisdf, projpolmap, comppolmap
+    # Add policies to projects
+        # SELECT
+        # component_policies.project_version_id as projverid,
+        # component.component_version_id as compverid,
+        # policy_id as polid,
+        # policy_name as polname,
+        # policy_status as polstatus,
+        # overridden_by as overrideby,
+        # description as desc,
+        # severity
 
+    projdf = pd.merge(projdf, poldf, on='projverid', how='outer')
+    projdf.fillna(value='', inplace=True)
 
-def proc_projinproj(projdf, compdf, projcompmapdf):
-    projs_as_comps_dict = {}
-    for index, row in projdf.iterrows():
-        comp = compdf[compdf.compname == row['projname']]
-        if row['projvername'] in comp.compvername.values:
-            # Found project matching component
-            foundcompverid = comp[comp.compvername == row['projvername']].compverid
-            projs_as_comps_dict[row['projverid']] = foundcompverid
-            # Copy components for projects within projects
+    compdf = pd.merge(compdf, poldf, on='compverid', how='outer')
+    compdf.fillna(value='', inplace=True)
 
-            # for proj in projcompmapdf.projverid.values:
+    return projdf, compdf, poldf, projpolmap, comppolmap
 
-    print("Found {} projects within projects".format(len(projs_as_comps_dict)))

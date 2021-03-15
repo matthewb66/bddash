@@ -22,6 +22,7 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'Med'], "id": "licmedcount"},
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
+        {"name": ['Policies', 'Violation Severity'], "id": "polseverity"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',

@@ -91,7 +91,7 @@ def get_projdata(thisconn):
                   component.license_medium_count as licmedcount, 
                   component.license_low_count as liclowcount, 
                   component.license_ok_count as licokcount,
-                  component_license.license_display as licname  
+                  component_license.license_display as licname
                   from component
                   Inner join project_version on component.project_version_id = project_version.version_id
                   Inner join component_license on component.id = component_license.component_table_id
@@ -143,7 +143,7 @@ def get_poldata(thisconn):
                  policy_status as polstatus,
                  overridden_by as overrideby,
                  description as desc,
-                 severity
+                 severity as polseverity
                  from component_policies
                  Inner join component on component.id = component_policies.component_table_id;''', con=thisconn)
     print('{} policy rows returned'.format(thisdf.size))

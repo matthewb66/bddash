@@ -18,7 +18,7 @@ def create_poltab_table_pols(thisdf):
     pol_cols = [
         {"name": ['Policy'], "id": "polname"},
         {"name": ['Dewscription'], "id": "desc"},
-        {"name": ['Severity'], "id": "severity"},
+        {"name": ['Severity'], "id": "polseverity"},
     ]
     df_temp = thisdf
 
@@ -31,10 +31,10 @@ def create_poltab_table_pols(thisdf):
         def tm_sorter(column):
             """Sort function"""
             severities = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']
-            correspondence = {severity: order for order, severity in enumerate(severities)}
+            correspondence = {polseverity: order for order, polseverity in enumerate(severities)}
             return column.map(correspondence)
 
-        df_temp.sort_values(by='severity', key=tm_sorter, inplace=True)
+        df_temp.sort_values(by='polseverity', key=tm_sorter, inplace=True)
 
         thistable = dash_table.DataTable(id='poltab_table_pols',
                                          columns=pol_cols,
@@ -48,42 +48,42 @@ def create_poltab_table_pols(thisdf):
                                          style_data_conditional=[
                                              {
                                                  'if': {
-                                                     'filter_query': '{severity} = "BLOCKER"',
-                                                     'column_id': 'severity'
+                                                     'filter_query': '{polseverity} = "BLOCKER"',
+                                                     'column_id': 'polseverity'
                                                  },
                                                  'backgroundColor': 'maroon',
                                                  'color': 'white'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{severity} = "CRITICAL"',
-                                                     'column_id': 'severity'
+                                                     'filter_query': '{polseverity} = "CRITICAL"',
+                                                     'column_id': 'polseverity'
                                                  },
                                                  'backgroundColor': 'crimson',
                                                  'color': 'black'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{severity} = "MAJOR"',
-                                                     'column_id': 'severity'
+                                                     'filter_query': '{polseverity} = "MAJOR"',
+                                                     'column_id': 'polseverity'
                                                  },
                                                  'backgroundColor': 'coral',
                                                  'color': 'black'
                                              },
                                              {
                                                  'if': {
-                                                     'filter_query': '{severity} = "MINOR"',
-                                                     'column_id': 'severity'
+                                                     'filter_query': '{polseverity} = "MINOR"',
+                                                     'column_id': 'polseverity'
                                                  },
                                                  'backgroundColor': 'gold',
                                                  'color': 'black'
                                              },
                                              {
-                                                 'if': {'column_id': 'severity'},
+                                                 'if': {'column_id': 'polseverity'},
                                                  'width': '120px'
                                              },
                                          ],
-                                         sort_by=[{'column_id': 'severity', 'direction': 'asc'}],
+                                         sort_by=[{'column_id': 'polseverity', 'direction': 'asc'}],
                                          merge_duplicate_headers=False
                                          )
     return thistable

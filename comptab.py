@@ -42,6 +42,7 @@ def create_comptab_table_compvers(thisdf):
         {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
         {"name": ['License', 'Risk'], "id": "licrisk"},
         {"name": ['License', 'Name'], "id": "licname"},
+        {"name": ['Policies', 'Violation Severity'], "id": "polseverity"},
     ]
     df_temp = thisdf
 

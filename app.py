@@ -154,7 +154,7 @@ if __name__ == '__main__':
     df_vuln_viz = df_vuln
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
     df_lic_viz = df_lic
-    df_pol, df_projpolmap, df_comppolmap = data.proc_pol_data(df_pol)
+    df_proj, df_comp, df_pol, df_projpolmap, df_comppolmap = data.proc_pol_data(df_proj, df_comp, df_pol)
     df_pol_viz = df_pol
     # data.proc_projinproj(df_proj, df_comp)
 
@@ -784,7 +784,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             # Filter projects based on security risk selection
             for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
                 if sev in polsev:
-                    temp_df_pol = temp_df_pol[temp_df_pol.severity == sev]
+                    temp_df_pol = temp_df_pol[temp_df_pol.polseverity == sev]
             comps = df_comppolmap[df_comppolmap.polid.isin(temp_df_pol.polid.unique())].compverid.unique()
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
