@@ -2,38 +2,38 @@ import pandas as pd
 import re
 
 
-def proc_projdata(projdf):
-    newdf = projdf
-    newdf["All"] = "All"
+# def proc_projdata(projdf):
+#     newdf = projdf
+#     newdf["All"] = "All"
+#
+#     newdf = pd.DataFrame(newdf.eval('secAll = seccritcount + sechighcount + secmedcount + seclowcount'))
+#     newdf = pd.DataFrame(newdf.eval('seccrithighcountplus1 = seccritcount + sechighcount + 1'))
+#     newdf = pd.DataFrame(newdf.eval('seccritcountplus1 = seccritcount + 1'))
+#     newdf = pd.DataFrame(newdf.eval('lichighcountplus1 = lichighcount + 1'))
+#
+#     # Sum columns for projVers
+#     sums = newdf.groupby("projverid").sum().reset_index()
+#     # Remove duplicate component rows
+#     newdf.drop_duplicates(subset="projverid", keep="first", inplace=True)
+#     # Count components in projvers
+#     df_counts = pd.DataFrame(projdf['projverid'].value_counts(ascending=False).
+#                              rename_axis('projverid').reset_index(name='compcount'))
+#
+#     # Merge compcount into df
+#     newdf = pd.merge(newdf, df_counts, on='projverid')
+#     # Remove duplicate and unwanted columns before merge
+#     newdf.drop(['secAll', 'seccrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
+#                 'seccritcount', 'sechighcount', 'secmedcount',
+#                 'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
+#                 'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
+#     # Merge sums into df
+#     newdf = pd.merge(newdf, sums, on='projverid')
+#     print('{} Projects and {} Versions returned'.format(newdf.projname.nunique(), newdf.projverid.nunique()))
+#
+#     return newdf
 
-    newdf = pd.DataFrame(newdf.eval('secAll = seccritcount + sechighcount + secmedcount + seclowcount'))
-    newdf = pd.DataFrame(newdf.eval('seccrithighcountplus1 = seccritcount + sechighcount + 1'))
-    newdf = pd.DataFrame(newdf.eval('seccritcountplus1 = seccritcount + 1'))
-    newdf = pd.DataFrame(newdf.eval('lichighcountplus1 = lichighcount + 1'))
 
-    # Sum columns for projVers
-    sums = newdf.groupby("projverid").sum().reset_index()
-    # Remove duplicate component rows
-    newdf.drop_duplicates(subset="projverid", keep="first", inplace=True)
-    # Count components in projvers
-    df_counts = pd.DataFrame(projdf['projverid'].value_counts(ascending=False).
-                             rename_axis('projverid').reset_index(name='compcount'))
-
-    # Merge compcount into df
-    newdf = pd.merge(newdf, df_counts, on='projverid')
-    # Remove duplicate and unwanted columns before merge
-    newdf.drop(['secAll', 'seccrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
-                'seccritcount', 'sechighcount', 'secmedcount',
-                'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
-                'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
-    # Merge sums into df
-    newdf = pd.merge(newdf, sums, on='projverid')
-    print('{} Projects and {} Versions returned'.format(newdf.projname.nunique(), newdf.projverid.nunique()))
-
-    return newdf
-
-
-def proc_comp_data(thisdf):
+def proc_comp_data(thisdf, serverurl):
     # compdf will have 1 row per compver across all projvers
     # -  license risk will be the most severe across all projvers
     # projcompdf will have 1 row for each compver within each projver
@@ -55,8 +55,8 @@ def proc_comp_data(thisdf):
                 newcomps = newmaindf[newmaindf.projverid == projverid].replace({projverid: projid}, inplace=False)
 
                 # Remove the sub-proj component from projid
-                newmaindf = pd.concat([newmaindf[~((newmaindf.projverid == projid) & (newmaindf.compverid == projverid))],
-                                    newcomps])
+                newmaindf = pd.concat([newmaindf[~((newmaindf.projverid == projid) &
+                                                   (newmaindf.compverid == projverid))], newcomps])
                 comps_as_projs_parents += 1
 
     # OLD
@@ -100,6 +100,10 @@ def proc_comp_data(thisdf):
     projdf = pd.DataFrame(projdf.eval('seccrithighcountplus1 = seccritcount + sechighcount + 1'))
     projdf = pd.DataFrame(projdf.eval('seccritcountplus1 = seccritcount + 1'))
     projdf = pd.DataFrame(projdf.eval('lichighcountplus1 = lichighcount + 1'))
+    # projdf = projdf.assign(projverurl=lambda x: ("{}/api/projects/{}/versions/{}".format(serverurl, x['projid'],
+    #                                                                                    x['projverid'])))
+    projdf['projverurl'] = serverurl + '/api/projects/' + projdf['projid'].astype(str) + '/versions/' \
+        + projdf['projverid'] + '/components'
 
     # Sum columns for projVers
     sums = projdf.groupby("projverid").sum().reset_index()
@@ -112,9 +116,9 @@ def proc_comp_data(thisdf):
     projdf.drop_duplicates(subset="projverid", keep="first", inplace=True)
     # Remove duplicate and unwanted columns before merge
     projdf.drop(['secAll', 'seccrithighcountplus1', 'seccritcountplus1', 'lichighcountplus1',
-                'seccritcount', 'sechighcount', 'secmedcount',
-                'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
-                'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
+                 'seccritcount', 'sechighcount', 'secmedcount',
+                 'seclowcount', 'secokcount', 'lichighcount', 'licmedcount', 'liclowcount', 'licokcount', 'compid',
+                 'compname', 'compverid', 'compvername', 'licname'], axis=1, inplace=True)
     # Merge sums into df
     projdf = pd.merge(projdf, sums, on='projverid')
     print('{} Projects and {} Versions returned'.format(projdf.projname.nunique(), projdf.projverid.nunique()))
@@ -153,7 +157,7 @@ def proc_comp_data(thisdf):
 
     compdf['licriskNoUnk'] = compdf.apply(calc_lic_nounknown, axis=1)
 
-    projcompmapdf = projcompmapdf.sort_values(by=['projverid', 'compverid'], ascending=False)
+    projcompmapdf = projcompmapdf.sort_values(['projverid', 'compverid'], ascending=False)
 
     print('{} Components and {} Component Versions returned'.format(compdf.compname.nunique(),
                                                                     compdf.compverid.nunique()))
@@ -266,15 +270,15 @@ def proc_pol_data(projdf, compdf, poldf):
 
     polmapdf = poldf
     # Add policies to projects
-        # SELECT
-        # component_policies.project_version_id as projverid,
-        # component.component_version_id as compverid,
-        # policy_id as polid,
-        # policy_name as polname,
-        # policy_status as polstatus,
-        # overridden_by as overrideby,
-        # description as desc,
-        # polseverity
+    # SELECT
+    # component_policies.project_version_id as projverid,
+    # component.component_version_id as compverid,
+    # policy_id as polid,
+    # policy_name as polname,
+    # policy_status as polstatus,
+    # overridden_by as overrideby,
+    # description as desc,
+    # polseverity
 
     tempdf = poldf.drop_duplicates(subset=["projverid"], keep="first", inplace=False)
     projdf = pd.merge(projdf, tempdf, on='projverid', how='outer')
@@ -289,4 +293,3 @@ def proc_pol_data(projdf, compdf, poldf):
     print('{} Policies returned'.format(poldf.polid.nunique()))
 
     return projdf, compdf, poldf, polmapdf
-

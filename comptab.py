@@ -60,7 +60,7 @@ def create_comptab_table_compvers(thisdf):
                                          'textOverflow': 'ellipsis',
                                          'maxWidth': 0
                                      },
-                                     data=df_temp.to_dict('records'),
+                                     data=thisdict,
                                      style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                      row_selectable="single",
                                      page_size=20,

@@ -182,8 +182,20 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
 def create_lictab(licdf):
     return dbc.Row(
         [
-            dbc.Col(create_lictab_table_lics(licdf), width=7),
-            dbc.Col(create_lictab_card_lic(None, None, None, None, None), width=5,
-                    id='col_lictab_lic'),
+            dbc.Col(
+                [
+                    dbc.Row(
+                            dbc.Col(create_lictab_table_lics(licdf)),
+                    ),
+                    dbc.Row(
+                        dbc.Col(
+                                dbc.Button("Select License", id="sel_lic_button", className="mr-2", size='sm'),
+                                width={"size": 2, "offset": 10},
+                                align='center',
+                        ),
+                    ),
+                ], width=8,
+            ),
+            dbc.Col(create_lictab_card_lic(None, None, None, None, None), width=4, id='col_lictab_lic'),
         ]
     )

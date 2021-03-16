@@ -74,6 +74,7 @@ def close_conn(thisconn, thiscur):
 def get_projdata(thisconn):
     thisdf = pd.read_sql('''SELECT project.project_name as projname,
                   project_version.version_name as projvername, 
+                  project_version.project_id as projid,
                   project_version.version_id as projverid,
                   project_version.distribution as projverdist, 
                   project_version.phase as projverphase, 

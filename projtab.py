@@ -224,6 +224,7 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
     # lichighcount  licmedcount  liclowcount  licokcount  secAll
     projname = ''
     projver = ''
+    projlink = ''
     row1 = ''
     row2 = ''
     row3 = ''
@@ -254,10 +255,11 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
     if projdata is not None:
         projname = projdata['projname'].values[0]
         projver = projdata['projvername'].values[0]
+        projlink = projdata['projverurl'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
         comppols = polmapdf[polmapdf.projverid == projdata['projverid'].values[0]].polname.unique()
-        for pols in comppols:
-            poltext.append(html.P(pols))
+        for pol in comppols:
+            poltext.append(html.Li(pol + ' (' + polmapdf[polmapdf.polname == pol].polseverity.values[0] + ')'))
 
         if foundcomps.size > 0:
             projlist = []
@@ -300,10 +302,12 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
                 [
                     html.H4("Project: " + projname, className="card-title"),
                     html.H5("Project Version: " + projver, className="card-subtitle"),
+                    html.A("Project Link", href=projlink, target="_blank"),
+                    html.Br(),
                     thisprojbutton,
                     html.Br(),
                     html.H6("Policies Violated: "),
-                    html.Div(poltext),
+                    html.Ul(poltext),
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),

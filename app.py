@@ -37,6 +37,7 @@ df_compvulnmap = None
 df_vulnactivelist = []
 lic_compverid_dict = None
 compverid_lic_dict = None
+serverurl = "https://poc39.blackduck.synopsys.com"
 
 auth = None
 lastdbreadtime = 0
@@ -144,7 +145,7 @@ if __name__ == '__main__':
         print("Writing data to JSON files ...")
         write_data_files(df_main, df_vuln, df_pol)
 
-    df_proj, df_comp, df_projcompmap = data.proc_comp_data(df_main)
+    df_proj, df_comp, df_projcompmap = data.proc_comp_data(df_main, serverurl)
     df_comp_viz = df_comp
     # df_proj = data.proc_projdata(df_main)
     df_proj_viz = df_proj
@@ -299,7 +300,7 @@ if __name__ == '__main__':
             dcc.Store(id='proj_size', storage_type='local'),
             dbc.NavbarSimple(
                 children=[
-                    dbc.NavItem(dbc.NavLink("Documentation", href="#")),
+                    dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
                 ],
                 brand="Black Duck Dashboard",
                 brand_href="#",
@@ -478,6 +479,31 @@ if __name__ == '__main__':
             ),
         ], fluid=True
     )
+
+
+@app.callback(
+    Output('lictab_card_lic', 'children'),
+    [
+        Input('sel_lic_button', 'n_clicks'),
+        State('lictab_table_lics', 'derived_virtual_data'),
+        State('lictab_table_lics', 'derived_virtual_selected_rows'),
+    ]
+
+)
+def callback_lictab_sellic_button(nclicks, cdata, rows):
+    global df_proj_viz, df_comp_viz, df_pol_viz, lic_compverid_dict, df_projcompmap
+    print('callback_lictab_sellic_button')
+
+    if nclicks is None:
+        print('NO ACTION')
+        raise dash.exceptions.PreventUpdate
+
+    if rows:
+        return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap, lic_compverid_dict,
+                                             df_lic_viz[df_lic_viz['licname'] == cdata[rows[0]][
+                                                    'licname']])
+
+    return lictab.create_lictab_card_lic(None, None, None, None, None)
 
 
 @app.callback(
