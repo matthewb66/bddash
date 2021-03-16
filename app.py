@@ -780,6 +780,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
         if secrisk is not None and len(secrisk) > 0:
             # Filter projects based on security risk selection
             secvals = []
+            temp_df_comp = temp_df_comp[temp_df_comp.seccritcount != '']
             if 'Critical' in secrisk:
                 temp_df_comp = temp_df_comp[temp_df_comp.seccritcount > 0]
                 secvals.append('CRITICAL')
