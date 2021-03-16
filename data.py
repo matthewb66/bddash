@@ -100,8 +100,6 @@ def proc_comp_data(thisdf, serverurl):
     projdf = pd.DataFrame(projdf.eval('seccrithighcountplus1 = seccritcount + sechighcount + 1'))
     projdf = pd.DataFrame(projdf.eval('seccritcountplus1 = seccritcount + 1'))
     projdf = pd.DataFrame(projdf.eval('lichighcountplus1 = lichighcount + 1'))
-    # projdf = projdf.assign(projverurl=lambda x: ("{}/api/projects/{}/versions/{}".format(serverurl, x['projid'],
-    #                                                                                    x['projverid'])))
     projdf['projverurl'] = serverurl + '/api/projects/' + projdf['projid'].astype(str) + '/versions/' \
         + projdf['projverid'] + '/components'
 
@@ -125,6 +123,14 @@ def proc_comp_data(thisdf, serverurl):
 
     print("Found {} projects within {} projects".format(comps_as_projs, comps_as_projs_parents))
 
+    # compdf = tempdf
+    # remove duplicates
+    compdf = newmaindf.drop_duplicates(subset="compverid", keep="first", inplace=False)
+
+    # sort by license risk
+    compdf = compdf.sort_values(by=['lichighcount', 'licmedcount', 'liclowcount'], ascending=False)
+
+    # Calculate license risk value as licrisk
     def calc_license(row):
         if row['lichighcount'] > 0:
             return 'High'
@@ -136,13 +142,6 @@ def proc_comp_data(thisdf, serverurl):
             return 'OK'
         return ''
 
-    # compdf = tempdf
-    # remove duplicates
-    compdf = newmaindf.drop_duplicates(subset="compverid", keep="first", inplace=False)
-
-    # sort by license risk
-    compdf = compdf.sort_values(by=['lichighcount', 'licmedcount', 'liclowcount'], ascending=False)
-    # Calculate license risk value as licrisk
     compdf['licrisk'] = compdf.apply(calc_license, axis=1)
     compdf = compdf.drop(["projname", "projvername", "projverid", "projverdist", "projverphase", "projtier"],
                          axis=1, inplace=False)

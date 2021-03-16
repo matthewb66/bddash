@@ -712,7 +712,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                   secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
     global df_proj, df_proj_viz
     global df_comp, df_projcompmap, df_comp_viz
-    global df_vuln, df_vulnmap, df_vulnmap, df_vulnactivelist, df_vuln_viz
+    global df_vuln, df_vulnmap, df_vulnactivelist, df_vuln_viz
     global df_lic, lic_compverid_dict, compverid_lic_dict, df_lic_viz
     global df_pol, df_pol_viz, df_polmap
     print('callback_main')
