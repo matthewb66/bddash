@@ -232,8 +232,7 @@ def proc_vuln_data(thisdf):
     # - will map projverid to compverid
 
     vulndf = thisdf
-    projvulnmapdf = thisdf
-    compvulnmapdf = thisdf
+    vulnmapdf = thisdf
 
     vuln_active_list = vulndf[vulndf['remstatus'].isin(['NEW', 'NEEDS_REVIEW', 'REMEDIATION_REQUIRED'])].vulnid.unique()
     # vuln_inactive_list = vulndf[~vulndf['remstatus'].isin(['NEW', 'NEEDS_REVIEW',
@@ -245,17 +244,13 @@ def proc_vuln_data(thisdf):
                           "compvername", "remstatus"],
                          axis=1, inplace=False)
 
-    projvulnmapdf = projvulnmapdf.drop(["projname", "projvername", "compname", "compid", "compverid",
-                                        "compvername", "relatedvulnid", "vulnsource", "severity", "score",
-                                        "remstatus", "solution", "workaround", "pubdate", "description"],
-                                       axis=1, inplace=False)
-    compvulnmapdf = compvulnmapdf.drop(["projverid", "projname", "projvername", "compname", "compid",
-                                        "compvername", "relatedvulnid", "vulnsource", "severity", "score",
-                                        "remstatus", "solution", "workaround", "pubdate", "description"],
-                                       axis=1, inplace=False)
+    vulnmapdf = vulnmapdf.drop(["projname", "projvername", "compname", "compid",
+                                "compvername", "relatedvulnid", "vulnsource", "severity", "score",
+                                "remstatus", "solution", "workaround", "pubdate", "description"],
+                               axis=1, inplace=False)
 
     print('{} Vulnerabilities returned'.format(vulndf.vulnid.nunique()))
-    return vulndf, projvulnmapdf, compvulnmapdf, vuln_active_list
+    return vulndf, vulnmapdf, vuln_active_list
 
 
 def proc_pol_data(projdf, compdf, poldf):

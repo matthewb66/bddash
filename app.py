@@ -32,8 +32,7 @@ df_comp_viz = None
 df_lic = None
 df_lic_viz = None
 df_projcompmap = None
-df_projvulnmap = None
-df_compvulnmap = None
+df_vulnmap = None
 df_vulnactivelist = []
 lic_compverid_dict = None
 compverid_lic_dict = None
@@ -150,7 +149,7 @@ if __name__ == '__main__':
     # df_proj = data.proc_projdata(df_main)
     df_proj_viz = df_proj
     # print(df_proj)
-    df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
+    df_vuln, df_vulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
     df_vuln_viz = df_vuln
     df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
     df_lic_viz = df_lic
@@ -568,7 +567,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
     ]
 )
 def callback_vulntab_selvuln_button(nclicks, cdata, rows):
-    global df_vuln_viz, df_proj_viz, df_comp_viz, df_projvulnmap, df_compvulnmap
+    global df_vuln_viz, df_proj_viz, df_comp_viz, df_vulnmap, df_vulnmap
     print('callback_vulntab_selvuln_button')
 
     if nclicks is None:
@@ -577,10 +576,10 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
 
     if rows:
         # print(df_vuln[df_vuln['vulnid'] == cdata[rows[0]]['vulnid']].to_string())
-        return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_projvulnmap, df_compvulnmap,
+        return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
                                                 df_vuln_viz[df_vuln_viz['vulnid'] == cdata[rows[0]]['vulnid']])
 
-    return vulntab.create_vulntab_card_vuln(None, None, None, None, None)
+    return vulntab.create_vulntab_card_vuln(None, None, None, None)
 
 
 @app.callback(
@@ -713,7 +712,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                   secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
     global df_proj, df_proj_viz
     global df_comp, df_projcompmap, df_comp_viz
-    global df_vuln, df_projvulnmap, df_compvulnmap, df_vulnactivelist, df_vuln_viz
+    global df_vuln, df_vulnmap, df_vulnmap, df_vulnactivelist, df_vuln_viz
     global df_lic, lic_compverid_dict, compverid_lic_dict, df_lic_viz
     global df_pol, df_pol_viz, df_polmap
     print('callback_main')
@@ -815,7 +814,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
         if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
-            temp = df_compvulnmap[df_compvulnmap.compverid.isin(temp_df_comp.compverid.unique())].vulnid.unique()
+            temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].vulnid.unique()
             if temp.size > 0:
                 temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
             else:
@@ -842,7 +841,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             else:
                 temp_df_comp = None
 
-            temp = df_projvulnmap[df_projvulnmap.projverid.isin(temp_df_proj.projverid.unique())].vulnid.unique()
+            temp = df_vulnmap[df_vulnmap.projverid.isin(temp_df_proj.projverid.unique())].vulnid.unique()
             if temp.size > 0:
                 temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
             else:

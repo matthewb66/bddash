@@ -109,7 +109,7 @@ def create_vulntab_table_vulns(thisdf):
     return thistable
 
 
-def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vulndata):
+def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
     # from app import df_proj, df_comp, df_projvulnmap, df_compvulnmap
 
     vulnid = ''
@@ -160,13 +160,13 @@ def create_vulntab_card_vuln(projdf, compdf, df_projvulnmap, df_compvulnmap, vul
 
         projlist = []
         projverlist = []
-        for projid in df_projvulnmap[df_projvulnmap.vulnid == vulnid].projverid:
+        for projid in df_vulnmap[df_vulnmap.vulnid == vulnid].projverid:
             projlist.append(projdf[projdf.projverid == projid].projname.values[0])
             projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
 
         complist = []
         compverlist = []
-        for compid in df_compvulnmap[df_compvulnmap.vulnid == vulnid].compverid:
+        for compid in df_vulnmap[df_vulnmap.vulnid == vulnid].compverid:
             complist.append(compdf[compdf.compverid == compid].compname.values[0])
             compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
 
@@ -245,6 +245,6 @@ def create_vulntab(vulndf):
                     ),
                 ], width=8
             ),
-            dbc.Col(create_vulntab_card_vuln(None, None, None, None, None), width=4, id='col_vulntab_vuln'),
+            dbc.Col(create_vulntab_card_vuln(None, None, None, None), width=4, id='col_vulntab_vuln'),
         ]
     )
