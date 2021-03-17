@@ -39,7 +39,7 @@ lic_compverid_dict = None
 compverid_lic_dict = None
 df_projdistpol = None
 df_projdistphase = None
-serverurl = "https://poc81.blackduck.synopsys.com"
+serverurl = "https://poc39.blackduck.synopsys.com"
 
 auth = None
 lastdbreadtime = 0

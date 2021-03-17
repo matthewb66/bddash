@@ -301,13 +301,13 @@ def proc_overviewdata(projdf):
     proj_distpoldf = projdf.groupby(["projverdist", "polseverity"]).sum().reset_index()
     temp_df = projdf.groupby(["projverdist", "polseverity"]).count().reset_index()
     proj_distpoldf['projcount'] = temp_df['projname']
-    # print(proj_distpoldf.head(20).to_string())
+    print(proj_distpoldf.head(20).to_string())
 
     proj_distphasedf = projdf.groupby(["projverdist", "projverphase"]).sum().reset_index()
     temp_df = projdf.groupby(["projverdist", "projverphase"]).count().reset_index()
     proj_distphasedf['projcount'] = temp_df['projname']
+    print(proj_distphasedf.head(20).to_string())
 
-    # print(proj_distphasedf.head(20).to_string())
     return proj_distpoldf, proj_distphasedf
 
 
