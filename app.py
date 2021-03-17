@@ -18,6 +18,7 @@ import comptab
 import projtab
 import projsumm
 import poltab
+import overviewtab
 
 df_main = None
 df_vuln = None
@@ -163,6 +164,11 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, s
     if noprojs:
         return dbc.Tabs(
             [
+                dbc.Tab(  # OVERVIEW TAB
+                    html.H1(children='No Projects Selected by Filters'),
+                    label="OVERVIEW",
+                    tab_id="tab_overview", id="tab_overview"
+                ),
                 dbc.Tab(  # SUMMARY TAB
                     [
                         html.H1(children='No Projects Selected by Filters'),
@@ -253,6 +259,11 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, s
 
     return dbc.Tabs(
         [
+            dbc.Tab(  # OVERVIEW TAB
+                overviewtab.create_overviewtab(projdata, compdata),
+                label="OVERVIEW",
+                tab_id="tab_overview", id="tab_overview",
+            ),
             dbc.Tab(  # SUMMARY TAB
                 projsumm.create_projsummtab(projdata, colorfield, sizefield),
                 label="Projects Summary",
@@ -286,7 +297,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, colorfield, s
             )
         ],
         id="tabs",
-        active_tab="tab_projsummary",
+        active_tab="tab_overview",
     )
 
 
