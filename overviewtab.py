@@ -1,13 +1,9 @@
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-import dash_html_components as html
-import dash_table
-import pandas as pd
 import plotly.express as px
-# import plotly.graph_objects as go
 
 
-def create_overviewfig(projdf, compdf):
+def create_fig_projdistpol(projdistdf):
 
     # fig = go.Figure(go.Sunburst(
     #     labels=["All", "External", "SaaS", "Internal", "Open Source",
@@ -28,13 +24,107 @@ def create_overviewfig(projdf, compdf):
     #             2, 0, 6, 7, 8, ],
     # ))
     # fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
+    if projdistdf is None:
+        return None
+    projdistdf['All'] = 'All'
 
-    return px.sunburst(projdf, path=['All', 'projvername'], values='compcount')
+    fig = px.sunburst(projdistdf, path=['All', 'projverdist', 'polseverity'], values='projcount',
+                      title='Projects by Distribution & Policy Risk')
+    fig.data[0].name = "Critical Security Risk"
+    return fig
 
 
-def create_overviewtab(projdf, compdf):
-    return dbc.Row([
+def create_fig_projdistphase(projdistdf):
+    if projdistdf is None:
+        return None
+    projdistdf['All'] = 'All'
+
+    fig = px.sunburst(projdistdf, path=['All', 'projverdist', 'projverphase'], values='projcount',
+                       title='Projects by Distribution & Phase')
+    return fig
+
+
+def create_fig_compsec(projdistdf):
+    if projdistdf is None:
+        return None
+    projdistdf['All'] = 'All'
+
+    fig = px.bar(projdistdf, x="polseverity",
+                 y=["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"],
+                 labels={
+                     "polseverity": "Policy Severity",
+                     'y': 'Component Count'
+                 },
+                 category_orders={  # replaces default order by column name
+                     "polseverity": ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "TRIVIAL", "UNSPECIFIED"]
+                 },
+                 color_discrete_map={  # replaces default color mapping by value
+                     "seccritcount": 'maroon',
+                     "sechighcount": 'crimson',
+                     "secmedcount": 'coral',
+                     "seclowcount": 'gold',
+                     "secokcount": 'green',
+                 },
+                 title="Components by Policy & Security Risk")
+    fig.data[0].name = "Critical Security Risk"
+    fig.data[1].name = "High Security Risk"
+    fig.data[2].name = "Medium Security Risk"
+    fig.data[3].name = "Low Security Risk"
+    fig.data[4].name = "No Security Risk"
+    return fig
+
+
+def create_fig_complic(projdistdf):
+    if projdistdf is None:
+        return None
+    projdistdf['All'] = 'All'
+
+    fig = px.bar(projdistdf, x="polseverity",
+                 y=["lichighcount", "licmedcount", "liclowcount", "licokcount"],
+                 labels={
+                     "polseverity": "Policy Severity",
+                 },
+                 category_orders={  # replaces default order by column name
+                     "polseverity": ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "TRIVIAL", "UNSPECIFIED"]
+                 },
+                 color_discrete_map={  # replaces default color mapping by value
+                     "lichighcount": 'crimson',
+                     "licmedcount": 'coral',
+                     "liclowcount": 'gold',
+                     "licokcount": 'green',
+                 },
+                 title="Components by Policy & License Risk")
+    fig.data[0].name = "High License Risk"
+    fig.data[1].name = "Medium License Risk"
+    fig.data[2].name = "Low License Risk"
+    fig.data[3].name = "No License Risk"
+    return fig
+
+
+def create_overviewtab(projdistpoldf, projdistphasedf):
+    return dbc.Row(
         dbc.Col(
-            dcc.Graph(figure=create_overviewfig(projdf, compdf)), width=8
-        ),
-    ])
+            [
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dcc.Graph(figure=create_fig_projdistpol(projdistpoldf), ), width=6
+                        ),
+                        dbc.Col(
+                            dcc.Graph(figure=create_fig_projdistphase(projdistphasedf), ), width=6
+                        ),
+                    ]
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            dcc.Graph(figure=create_fig_compsec(projdistpoldf), ), width=6
+                        ),
+                        dbc.Col(
+                            dcc.Graph(figure=create_fig_complic(projdistpoldf), ), width=6
+                        ),
+                    ]
+                ),
+            ]
+        )
+    )

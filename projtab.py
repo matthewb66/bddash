@@ -22,7 +22,7 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'Med'], "id": "licmedcount"},
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
-        {"name": ['Policy', 'Violations'], "id": "polseverity"},
+        {"name": ['Top Policy', 'Violation'], "id": "polseverity"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',
@@ -179,7 +179,7 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'polseverity'},
-                                             'width': '10%'
+                                             'width': '8%'
                                          },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},

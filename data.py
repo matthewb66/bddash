@@ -287,3 +287,27 @@ def proc_pol_data(projdf, compdf, poldf):
     print('{} Policies returned'.format(poldf.polid.nunique()))
 
     return projdf, compdf, poldf, polmapdf
+
+
+def proc_overviewdata(projdf):
+    # Need counts of projects by:
+    # - Distribution & Phase
+    # - Distribution & Policy risk
+    # - Distribution & Security risk
+    # - Phase & Policy Risk
+    # proj_distdf = projdf.groupby("projverdist").sum().reset_index()
+    projdf['polseverity'].mask(projdf['polseverity'] == '', 'NONE', inplace=True)
+
+    proj_distpoldf = projdf.groupby(["projverdist", "polseverity"]).sum().reset_index()
+    temp_df = projdf.groupby(["projverdist", "polseverity"]).count().reset_index()
+    proj_distpoldf['projcount'] = temp_df['projname']
+    # print(proj_distpoldf.head(20).to_string())
+
+    proj_distphasedf = projdf.groupby(["projverdist", "projverphase"]).sum().reset_index()
+    temp_df = projdf.groupby(["projverdist", "projverphase"]).count().reset_index()
+    proj_distphasedf['projcount'] = temp_df['projname']
+
+    # print(proj_distphasedf.head(20).to_string())
+    return proj_distpoldf, proj_distphasedf
+
+

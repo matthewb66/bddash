@@ -44,7 +44,7 @@ def create_comptab_table_compvers(thisdf):
         {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
         {"name": ['License', 'Risk'], "id": "licrisk"},
         {"name": ['License', 'Name'], "id": "licname"},
-        {"name": ['Policy', 'Violations'], "id": "polseverity"},
+        {"name": ['Top Policy', 'Violation'], "id": "polseverity"},
     ]
     df_temp = thisdf
 
@@ -194,7 +194,7 @@ def create_comptab_table_compvers(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'polseverity'},
-                                             'width': '10%',
+                                             'width': '8%',
                                          },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
