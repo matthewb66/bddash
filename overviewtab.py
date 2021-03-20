@@ -1,63 +1,67 @@
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import plotly.express as px
+import plotly.graph_objects as go
+import dash_html_components as html
 
 
-def create_fig_projdistpol(projdistdf):
-    if projdistdf is None:
+def create_fig_projmap(projdf, childdata):
+    if projdf is None:
         return None
-    projdistdf['All'] = 'All'
 
-    fig = px.sunburst(projdistdf, path=['All', 'projverdist', 'polseverity'], values='projcount',
-                      title='Projects by Distribution & Policy Risk')
-    fig.data[0].name = "Critical Security Risk"
+    fig = go.Figure(data=[go.Sankey(
+        node=dict(
+            pad=15,
+            thickness=20,
+            line=dict(color="black", width=0.5),
+            label=childdata['parentlabels'] + childdata['childlabels'],
+            color="blue",
+        ),
+        link=dict(
+            source=childdata['sources'],  # indices correspond to labels, eg A1, A2, A1, B1, ...
+            target=childdata['targets'],
+            value=childdata['values']
+        ))])
+
     return fig
 
 
-def create_fig_projdistphase(projdistdf):
-    if projdistdf is None:
+def create_fig_projphasepol(projphasedf):
+    if projphasedf is None:
         return None
-    projdistdf['All'] = 'All'
+    projphasedf['All'] = 'All'
 
-    fig = px.sunburst(projdistdf, path=['All', 'projverdist', 'projverphase'], values='projcount',
-                       title='Projects by Distribution & Phase')
+    fig = px.sunburst(projphasedf, path=['All', 'projverphase', 'polseverity', "secrisk"],
+                      values='projcount',
+                      color='secAll',
+                      # hover_data=['iso_alpha'],
+                      color_continuous_scale='Reds',
+                      labels={
+                          "polseverity": "Policy Severity",
+                          "projverphase": "Project Phase",
+                          "secrisk": "Top Security Risk Level",
+                          "secAll": "Count of all Vulnerabilities",
+                          "projcount": "Number of Projects",
+
+                      },
+                      # color_continuous_midpoint=np.average(df['secAll'],weights=df['pop']))
+                      title='Projects by Phase, Policy & Security Risk'
+                      )
     return fig
 
 
 def create_fig_projdistsec(projdistdf):
-    # fig = go.Figure(go.Sunburst(
-    #     labels=["All",
-    #             "External", "SaaS", "Internal", "Open Source",
-    #             "Critical", "High", "Medium", "Low", "None",
-    #             "Critical", "High", "Medium", "Low", "None",
-    #             "Critical", "High", "Medium", "Low", "None",
-    #             "Critical", "High", "Medium", "Low", "None",
-    #             ],
-    #     parents=["",
-    #              "All", "All", "All", "All",
-    #              "External", "External", "External", "External", "External",
-    #              "SaaS", "SaaS", "SaaS", "SaaS", "SaaS",
-    #              "Internal", "Internal", "Internal", "Internal", "Internal",
-    #              "Open Source", "Open Source", "Open Source", "Open Source", "Open Source",
-    #              ],
-    #     values=[10, 14, 12, 10, 2,
-    #             6, 6, 4, 4, 3,
-    #             1, 3, 5, 3, 1,
-    #             2, 6, 7, 1, 3,
-    #             2, 0, 6, 7, 8, ],
-    # ))
-    # fig.update_layout(margin=dict(t=0, l=0, r=0, b=0))
 
-    temp_df = projdistdf.groupby(["projverdist"]).sum().reset_index()
+    temp_df = projdistdf.groupby(["projverphase"]).sum().reset_index()
 
-    sorter = ["EXTERNAL", "SAAS", "INTERNAL", "OPENSOURCE", "NONE"]
+    sorter = ["PLANNING", "DEVELOPMENT", "PRERELEASE", "RELEASE", "DEPRECATED", "ARCHIVED"]
     # temp_df.projverdist = temp_df.projverdist.astype("category")
     # temp_df.projverdist.cat.set_categories(sorter, inplace=True)
 
     vals = []
     secvals = []
     for dist in sorter:
-        thisdf = temp_df[temp_df.projverdist == dist]
+        thisdf = temp_df[temp_df.projverphase == dist]
         if thisdf.size > 0:
             # vals += list(thisdf.secAll.values)
             vals += list([0])
@@ -70,43 +74,38 @@ def create_fig_projdistsec(projdistdf):
             secvals += list([0, 0, 0, 0])
 
     data = dict(
-        labels=["All", "External", "SaaS", "Internal", "Open Source",
-                "Critical", "High", "Medium", "Low", "None",
-                "Critical", "High", "Medium", "Low", "None",
-                "Critical", "High", "Medium", "Low", "None",
-                "Critical", "High", "Medium", "Low", "None",
+        labels=["All", "EXTERNAL", "SAAS", "INTERNAL", "OPEN SOURCE",
+                "CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE",
+                "CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE",
+                "CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE",
+                "CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE",
                 ],
         parent=["", "All", "All", "All", "All",
-                 "External", "External", "External", "External", "External",
-                 "SaaS", "SaaS", "SaaS", "SaaS", "SaaS",
-                 "Internal", "Internal", "Internal", "Internal", "Internal",
-                 "Open Source", "Open Source", "Open Source", "Open Source", "Open Source",
-                 ],
+                "EXTERNAL", "EXTERNAL", "EXTERNAL", "EXTERNAL", "EXTERNAL",
+                "SAAS", "SAAS", "SAAS", "SAAS", "SAAS",
+                "INTERNAL", "INTERNAL", "INTERNAL", "INTERNAL", "INTERNAL",
+                "OPEN SOURCE", "OPEN SOURCE", "OPEN SOURCE", "OPEN SOURCE", "OPEN SOURCE",
+                ],
         value=vals + secvals,
     )
-
-    # data = dict(
-    #     character=["Eve", "Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura"],
-    #     parent=["", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve"],
-    #     value=[10, 14, 12, 10, 2, 6, 6, 4, 4])
 
     fig = px.sunburst(
         data,
         names='labels',
         parents='parent',
         values='value',
-        title='Projects by Distribution & Security Risk',
+        title='Projects by Phase & Security Risk',
     )
 
     return fig
 
 
-def create_fig_compsec(projdistdf):
-    if projdistdf is None:
+def create_fig_compsec(comppolsecdf):
+    if comppolsecdf is None:
         return None
-    projdistdf['All'] = 'All'
+    comppolsecdf['All'] = 'All'
 
-    fig = px.bar(projdistdf, x="polseverity",
+    fig = px.bar(comppolsecdf, x="polseverity",
                  y=["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"],
                  labels={
                      "polseverity": "Policy Severity",
@@ -158,31 +157,35 @@ def create_fig_complic(projdistdf):
     return fig
 
 
-def create_overviewtab(projdistpoldf, projdistphasedf):
+def create_overviewtab(projdf, projphasepoldf, comppolsecdf, childdata):
     return dbc.Row(
         dbc.Col(
             [
                 dbc.Row(
                     [
                         dbc.Col(
-                            dcc.Graph(figure=create_fig_projdistphase(projdistphasedf), ), width=4
+                            dcc.Graph(figure=create_fig_projphasepol(projphasepoldf)), width=6
                         ),
-                        dbc.Col(
-                            dcc.Graph(figure=create_fig_projdistpol(projdistpoldf), ), width=4
-                        ),
-                        dbc.Col(
-                            dcc.Graph(figure=create_fig_projdistsec(projdistpoldf), ), width=4
-                        ),
+                        # dbc.Col(
+                        #     dcc.Graph(figure=create_fig_compsec(comppolsecdf), ), width=6
+                        # ),
                     ]
                 ),
                 dbc.Row(
                     [
                         dbc.Col(
-                            dcc.Graph(figure=create_fig_compsec(projdistpoldf), ), width=6
+                            [
+                                html.Br(),
+                                html.H4('Projects within Projects'),
+                                dcc.Graph(figure=create_fig_projmap(projdf, childdata)),
+                            ], width={"size": 10, "offset": 1}
                         ),
-                        dbc.Col(
-                            dcc.Graph(figure=create_fig_complic(projdistpoldf), ), width=6
-                        ),
+                        # dbc.Col(
+                        #     dcc.Graph(figure=create_fig_compsec(projdistpoldf), ), width=6
+                        # ),
+                        # dbc.Col(
+                        #     dcc.Graph(figure=create_fig_complic(projdistpoldf), ), width=6
+                        # ),
                     ]
                 ),
             ]

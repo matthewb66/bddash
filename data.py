@@ -41,48 +41,43 @@ def proc_comp_data(thisdf, serverurl):
 
     newmaindf = thisdf
 
+    projchildmap = {}
+    childprojlist = []
     comps_as_projs = 0
     comps_as_projs_parents = 0
-    for projverid in newmaindf.projverid.unique():
-        if newmaindf[newmaindf.compverid == projverid].size > 0:
-            # compverid is also a project
+    parentlabels = []
+    childlabels = []
+    tuples = []
+    for testid in newmaindf.projverid.unique():
+        projsusingcompdf = newmaindf[newmaindf.compverid == testid]
+        if projsusingcompdf.size > 0:
+            # testid is a project and component
             # Find projs where it is used
-            projsusingcomp = newmaindf[newmaindf.compverid == projverid]
             comps_as_projs += 1
-            usedinprojids = projsusingcomp.projverid.unique()
-            for projid in usedinprojids:
-                # Need to replace component with components from matching sub-project
-                newcomps = newmaindf[newmaindf.projverid == projverid].replace({projverid: projid}, inplace=False)
+            usedinprojids = projsusingcompdf.projverid.unique()
+            for projverid in usedinprojids:
+                parent = newmaindf[newmaindf.projverid == projverid].projname.values[0] + '/' + \
+                    newmaindf[newmaindf.projverid == projverid].projvername.values[0]
+                child = newmaindf[newmaindf.projverid == testid].projname.values[0] + '/' + \
+                    newmaindf[newmaindf.projverid == testid].projvername.values[0]
 
-                # Remove the sub-proj component from projid
-                newmaindf = pd.concat([newmaindf[~((newmaindf.projverid == projid) &
-                                                   (newmaindf.compverid == projverid))], newcomps])
+                # get list of components from matching sub-project
+                newcomps = newmaindf[newmaindf.projverid == testid].replace({testid: projverid}, inplace=False)
+
+                # Remove the component testid from projverid
+                newmaindf = pd.concat([newmaindf[~((newmaindf.compverid == testid) &
+                                                   (newmaindf.projverid == projverid))], newcomps])
                 comps_as_projs_parents += 1
-
-    # OLD
-    # for projname in tempdf.projname.unique():
-    #     for projvername in tempdf[tempdf.projname == projname].projvername.unique():
-    #         projverid = tempdf[(tempdf.projname == projname) &
-    #                            (tempdf.projvername == projvername)].projverid.values[0]
-    #         comps = tempdf[(tempdf.compname == projname) & (tempdf.compvername == projvername)]
-    #         if comps.size > 0:
-    #             # projverid = tempdf[(tempdf.compname == projname) &
-    #             #                    (tempdf.compvername == projvername)].projverid.values[0]
-    #             for compverid in comps.compverid.unique():
-    #                 projs_as_comps_dict[projverid] = compverid
-    #                 #
-    #                 # Need to add components within sub-project to containing projects
-    #                 parentprojverids = tempdf[tempdf.compverid == compverid].projverid.values
-    #                 print("Project {}/{} is component: projid {} parentprojid {} compid {}".format(projname,
-    #                                                 projvername, projverid, parentprojverids, compverid))
-    #                 for parentprojverid in parentprojverids:
-    #                     if projverid != parentprojverid:
-    #                         comps = tempdf[tempdf.projverid == projverid].replace({projverid: parentprojverid},
-    #                                                                               inplace=False)
-    #                         # comps['projverid'] = parentprojverid
-    #                         tempdf = pd.concat([tempdf, comps])
-    #                         # tempdf.drop()
-    #                         parentprojs += 1
+                childprojlist.append(testid)
+                if child not in childlabels:
+                    childlabels.append(child)
+                if projverid in projchildmap.keys():
+                    projchildmap[projverid].append(testid)
+                else:
+                    projchildmap[projverid] = [testid]
+                    parentlabels.append(parent)
+                print('Parent = ' + parent + ' - Child = ' + child)
+                tuples.append((parentlabels.index(parent), childlabels.index(child)))
 
     # Calculate mapping of projvers to compvers
     projcompmapdf = newmaindf
@@ -120,6 +115,13 @@ def proc_comp_data(thisdf, serverurl):
     # Merge sums into df
     projdf = pd.merge(projdf, sums, on='projverid')
     print('{} Projects and {} Versions returned'.format(projdf.projname.nunique(), projdf.projverid.nunique()))
+
+    projdf['parent'] = False
+    projdf['child'] = False
+    for proj in projchildmap.keys():
+        projdf.loc[projdf['projverid'] == proj, 'parent'] = True
+    for child in childprojlist:
+        projdf.loc[projdf['projverid'] == child, 'child'] = True
 
     print("Found {} projects within {} projects".format(comps_as_projs, comps_as_projs_parents))
 
@@ -161,7 +163,25 @@ def proc_comp_data(thisdf, serverurl):
     print('{} Components and {} Component Versions returned'.format(compdf.compname.nunique(),
                                                                     compdf.compverid.nunique()))
 
-    return projdf, compdf, projcompmapdf
+    sources = []
+    targets = []
+    values = []
+
+    for tup in tuples:
+        sources.append(tup[0])
+        targets.append(len(parentlabels) + tup[1])
+        sp = childlabels[tup[1]].split('/')
+        values.append(projdf[(projdf.projname == sp[0]) & (projdf.projvername == sp[1])].compcount.values[0])
+
+    childdata = {
+        'parentlabels': parentlabels,
+        'childlabels': childlabels,
+        'sources': sources,
+        'targets': targets,
+        'values': values
+    }
+
+    return projdf, compdf, projcompmapdf, childdata
 
 
 def proc_licdata(thisdf):
@@ -253,7 +273,6 @@ def proc_vuln_data(thisdf):
 
 
 def proc_pol_data(projdf, compdf, poldf):
-
     def tm_sorter(column):
         """Sort function"""
         severities = ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']
@@ -289,7 +308,7 @@ def proc_pol_data(projdf, compdf, poldf):
     return projdf, compdf, poldf, polmapdf
 
 
-def proc_overviewdata(projdf):
+def proc_overviewdata(projdf, compdf):
     # Need counts of projects by:
     # - Distribution & Phase
     # - Distribution & Policy risk
@@ -298,16 +317,38 @@ def proc_overviewdata(projdf):
     # proj_distdf = projdf.groupby("projverdist").sum().reset_index()
     projdf['polseverity'].mask(projdf['polseverity'] == '', 'NONE', inplace=True)
 
-    proj_distpoldf = projdf.groupby(["projverdist", "polseverity"]).sum().reset_index()
-    temp_df = projdf.groupby(["projverdist", "polseverity"]).count().reset_index()
-    proj_distpoldf['projcount'] = temp_df['projname']
-    print(proj_distpoldf.head(20).to_string())
+    def calc_security(row):
+        if row['seccritcount'] > 0:
+            return 'Critical'
+        elif row['sechighcount'] > 0:
+            return 'High'
+        elif row['secmedcount'] > 0:
+            return 'Medium'
+        elif row['seclowcount'] > 0:
+            return 'Low'
+        elif row['secokcount'] > 0:
+            return 'OK'
+        return ''
 
-    proj_distphasedf = projdf.groupby(["projverdist", "projverphase"]).sum().reset_index()
-    temp_df = projdf.groupby(["projverdist", "projverphase"]).count().reset_index()
-    proj_distphasedf['projcount'] = temp_df['projname']
-    print(proj_distphasedf.head(20).to_string())
+    proj_phasepolsecdf = projdf
+    proj_phasepolsecdf['secrisk'] = proj_phasepolsecdf.apply(calc_security, axis=1)
 
-    return proj_distpoldf, proj_distphasedf
+    proj_phasepolsecdf = proj_phasepolsecdf.groupby(["projverphase", "polseverity", "secrisk"]).sum().reset_index()
+    temp_df = projdf.groupby(["projverphase", "polseverity", "secrisk"]).count().reset_index()
+    proj_phasepolsecdf['projcount'] = temp_df['projname']
 
+    # print(proj_phasepoldf.head(20).to_string())
 
+    # proj_distphasedf = projdf.groupby(["projverdist", "projverphase"]).sum().reset_index()
+    # temp_df = projdf.groupby(["projverdist", "projverphase"]).count().reset_index()
+    # proj_distphasedf['projcount'] = temp_df['projname']
+    # print(proj_distphasedf.head(20).to_string())
+
+    comp_polsecdf = compdf
+    # comp_polsecdf['secrisk'] = comp_polsecdf.apply(calc_security, axis=1)
+    # comp_polsecdf = comp_polsecdf.groupby(["projverdist", "polseverity", "secrisk"]).sum().reset_index()
+    # temp_df = compdf.groupby(["projverdist", "polseverity", "secrisk"]).count().reset_index()
+    # comp_phasepolsecdf['compcount'] = temp_df['projname']
+    # print(proj_distphasedf.head(20).to_string())
+
+    return proj_phasepolsecdf, comp_polsecdf

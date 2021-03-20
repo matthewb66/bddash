@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
+import pandas as pd
 
 
 def create_projsummtab_fig_proj(thisdf, color_column, size_column):
@@ -40,6 +41,14 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
                          # hover_data={'projname': True, 'projvername': True,},
                          # hover_name='projname',
                          color_continuous_scale='Reds',
+                         labels={
+                             "projname": "Project Name",
+                             "projvername": "Project Version Name",
+                             "secrisk": "Top Security Risk Level",
+                             "secAll": "Count of all Vulnerabilities",
+                             "projcount": "Number of Projects",
+
+                         },
                          title='Top 200 Project Versions - Size by ' + sizetext,
                          height=700)
     thisfig.data[0].textinfo = 'label+text+value'

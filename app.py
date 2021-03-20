@@ -37,8 +37,11 @@ df_vulnmap = None
 df_vulnactivelist = []
 lic_compverid_dict = None
 compverid_lic_dict = None
+df_projphasepolsec = None
 df_projdistpol = None
-df_projdistphase = None
+childtuples = []
+parentlabels = []
+childlabels = []
 serverurl = "https://poc39.blackduck.synopsys.com"
 
 auth = None
@@ -147,7 +150,7 @@ if __name__ == '__main__':
         print("Writing data to JSON files ...")
         write_data_files(df_main, df_vuln, df_pol)
 
-    df_proj, df_comp, df_projcompmap = data.proc_comp_data(df_main, serverurl)
+    df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl)
     df_comp_viz = df_comp
     # df_proj = data.proc_projdata(df_main)
     df_proj_viz = df_proj
@@ -159,10 +162,11 @@ if __name__ == '__main__':
     df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
     df_pol_viz = df_pol
     # data.proc_projinproj(df_proj, df_comp)
-    df_projdistpol, df_projdistphase = data.proc_overviewdata(df_proj)
+    df_projphasepolsec, df_comppolsecdf = data.proc_overviewdata(df_proj, df_comp)
 
 
-def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projdistpoldata, projdistphasedata,
+def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
+                   childdata,
                    colorfield, sizefield, noprojs):
 
     if noprojs:
@@ -264,7 +268,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projdistpolda
     return dbc.Tabs(
         [
             dbc.Tab(  # OVERVIEW TAB
-                overviewtab.create_overviewtab(projdistpoldata, projdistphasedata),
+                overviewtab.create_overviewtab(projdata, projphasepoldata, comppolsecdata, childdata),
                 label="Overview",
                 tab_id="tab_overview", id="tab_overview",
             ),
@@ -485,7 +489,8 @@ if __name__ == '__main__':
             dbc.Row(
                 dbc.Col(
                     dbc.Spinner(
-                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projdistpol, df_projdistphase,
+                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsecdf,
+                                       childdata,
                                        'lichighcountplus1', 'seccritcountplus1', False),
                         id='spinner_main',
                     ), width=12,
@@ -730,7 +735,8 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     global df_vuln, df_vulnmap, df_vulnactivelist, df_vuln_viz
     global df_lic, lic_compverid_dict, compverid_lic_dict, df_lic_viz
     global df_pol, df_pol_viz, df_polmap
-    global df_projdistpol, df_projdistphase
+    global df_projdistpol, df_projphasepolsec
+    global parentlabels, childlabels, childtuples
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -908,8 +914,8 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     df_lic_viz = temp_df_lic
     df_pol_viz = temp_df_pol
     return (
-        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol, df_projdistpol,
-                       df_projdistphase,
+        create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
+                       df_projphasepolsec, df_comppolsecdf, childdata,
                        proj_treemap_color, proj_treemap_size, noprojs),
         proj_treemap_color, proj_treemap_size,
     )
