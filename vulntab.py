@@ -21,7 +21,6 @@ def create_vulntab_table_vulns(thisdf):
         {"name": ['Update Date'], "id": "updateddate"},
         {"name": ['Attack Vector'], "id": "attackvector"},
     ]
-    df_temp = thisdf
 
     # projverid,
     # compid,
@@ -41,17 +40,17 @@ def create_vulntab_table_vulns(thisdf):
     # attackvector,
     # updateddate
 
-    if df_temp is None or len(df_temp) == 0:
+    if thisdf is None or len(thisdf) == 0:
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
                                          style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          )
     else:
-        df_temp = df_temp.sort_values(by=["score"], ascending=False)
-
+        # df_temp = df_temp.sort_values(by=["score"], ascending=False)
+        temp = thisdf.to_dict('records')
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
-                                         data=df_temp.to_dict('records'),
+                                         data=thisdf.to_dict('records'),
                                          style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                          page_size=20,
                                          sort_action='native',
@@ -62,7 +61,7 @@ def create_vulntab_table_vulns(thisdf):
                                              {
                                                  column: {'value': str(value), 'type': 'markdown'}
                                                  for column, value in row.items()
-                                             } for row in df_temp.to_dict('records')
+                                             } for row in thisdf.to_dict('records')
                                          ],
                                          tooltip_duration=None,
                                          style_data_conditional=[
@@ -152,7 +151,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
                    size='sm'),
     )
     if vulndata is not None:
-        vulnid = vulndata['vulnid'].values[0]
+        vulnid = vulndata.index.values[0]
         vulnrelated = vulndata['relatedvulnid'].values[0]
         if vulnrelated == '':
             vulnrelated = 'None'
@@ -160,15 +159,16 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
 
         projlist = []
         projverlist = []
-        for projid in df_vulnmap[df_vulnmap.vulnid == vulnid].projverid:
-            projlist.append(projdf[projdf.projverid == projid].projname.values[0])
-            projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
+        for projid in df_vulnmap.at(vulnid, 'projverid'):
+            projlist.append(projdf.at(projid, 'projname'))
+            projlist.append(projdf.at(projid, 'projname'))
+            projverlist.append(projdf.at(projid, 'projvername'))
 
         complist = []
         compverlist = []
-        for compid in df_vulnmap[df_vulnmap.vulnid == vulnid].compverid:
-            complist.append(compdf[compdf.compverid == compid].compname.values[0])
-            compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
+        for compid in df_vulnmap.at(vulnid, 'compverid'):
+            complist.append(compdf.at(compid, 'compname'))
+            compverlist.append(compdf.at(compid, 'compvername'))
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -223,9 +223,9 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
 
 
 def create_vulntab(vulndf):
-    if vulndf is not None:
-        vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
-        vulndf = vulndf.sort_values(by=['score'], ascending=False)
+    # if vulndf is not None:
+    #     vulndf = vulndf.drop_duplicates(subset=["vulnid"], keep="first", inplace=False)
+    #     vulndf = vulndf.sort_values(by=['score'], ascending=False)
 
     return dbc.Row(
         [

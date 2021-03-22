@@ -39,9 +39,8 @@ lic_compverid_dict = None
 compverid_lic_dict = None
 df_projphasepolsec = None
 df_projdistpol = None
-childtuples = []
-parentlabels = []
-childlabels = []
+childdata = None
+df_comppolsec = None
 serverurl = "https://poc39.blackduck.synopsys.com"
 
 auth = None
@@ -142,7 +141,7 @@ if __name__ == '__main__':
         print('\nWill read data from json files')
         df_main, df_vuln, df_pol = read_data_files()
 
-    if df_main is None or df_main.size == 0 or df_vuln is None or df_vuln.size == 0 or df_pol is None:
+    if df_main is None or len(df_main) == 0 or df_vuln is None or len(df_vuln) == 0 or df_pol is None:
         print("No data obtained from DB or files")
         sys.exit(2)
 
@@ -151,6 +150,7 @@ if __name__ == '__main__':
         write_data_files(df_main, df_vuln, df_pol)
 
     df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl)
+    df_main = None
     df_comp_viz = df_comp
     # df_proj = data.proc_projdata(df_main)
     df_proj_viz = df_proj
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
     df_pol_viz = df_pol
     # data.proc_projinproj(df_proj, df_comp)
-    df_projphasepolsec, df_comppolsecdf = data.proc_overviewdata(df_proj, df_comp)
+    df_projphasepolsec, df_comppolsec = data.proc_overviewdata(df_proj, df_comp)
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
@@ -251,7 +251,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
         comptext = "Components(0)"
 
     if vulndata is not None:
-        vulntext = "Vulnerabilties (" + str(vulndata.vulnid.nunique()) + ")"
+        vulntext = "Vulnerabilties (" + str(len(vulndata)) + ")"
     else:
         vulntext = "Vulnerabilities (0)"
 
@@ -489,7 +489,7 @@ if __name__ == '__main__':
             dbc.Row(
                 dbc.Col(
                     dbc.Spinner(
-                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsecdf,
+                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
                                        childdata,
                                        'lichighcountplus1', 'seccritcountplus1', False),
                         id='spinner_main',
@@ -572,8 +572,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
 
     if rows:
         return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
-                                                df_comp_viz[df_comp_viz['compverid'] == cdata[rows[0]][
-                                                    'compverid']]), 'tab_comp_subdetail'
+                                                df_comp_viz.at(cdata[rows[0]], 'compverid')), 'tab_comp_subdetail'
 
     return comptab.create_comptab_card_comp(None, None, None, None), 'tab_comp_subsummary'
 
@@ -597,7 +596,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
     if rows:
         # print(df_vuln[df_vuln['vulnid'] == cdata[rows[0]]['vulnid']].to_string())
         return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
-                                                df_vuln_viz[df_vuln_viz['vulnid'] == cdata[rows[0]]['vulnid']])
+                                                df_vuln_viz.at(cdata[rows[0]], 'vulnid'))
 
     return vulntab.create_vulntab_card_vuln(None, None, None, None)
 
@@ -695,8 +694,7 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
 
     if rows:
         return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_projcompmap, df_polmap,
-                                                df_proj_viz[df_proj_viz['projverid'] == cdata[rows[0]][
-                                                    'projverid']]), 'tab_proj_subdetail'
+                                                df_proj_viz.iloc([cdata[rows[0]]])), 'tab_proj_subdetail'
 
     return projtab.create_projtab_card_proj(None, None, None, None, None), 'tab_proj_subsummary'
 
@@ -794,9 +792,9 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
         if remstatus is not None and len(remstatus) > 0:
             # tempvulnidlist = []
             if 'UNREMEDIATED' in remstatus:
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(df_vulnactivelist)]
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist)]
             if 'REMEDIATED' in remstatus:
-                temp_df_vuln = temp_df_vuln[~temp_df_vuln.vulnid.isin(df_vulnactivelist)]
+                temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist)]
             # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
         if secrisk is not None and len(secrisk) > 0:
@@ -819,6 +817,8 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
 
         if licrisk is not None and len(licrisk) > 0:
             # Filter projects based on security risk selection
+            temp_df_comp = temp_df_comp[temp_df_comp.lichighcount != '']
+
             if 'High' in licrisk:
                 temp_df_comp = temp_df_comp[temp_df_comp.lichighcount > 0]
 
@@ -833,52 +833,52 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
             for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
                 if sev in polsev:
                     temp_df_pol = temp_df_pol[temp_df_pol.polseverity == sev]
-            comps = df_polmap[df_polmap.polid.isin(temp_df_pol.polid.unique())].compverid.unique()
+            comps = df_polmap[df_polmap.polid.isin(temp_df_pol.index.values)].compverid.unique()
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
-        if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
-            temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].vulnid.unique()
-            if temp.size > 0:
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+        if temp_df_comp is not None and len(temp_df_comp) > 0 and len(temp_df_comp) < len(df_comp):
+            temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
+            if len(temp) > 0:
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
             else:
                 temp_df_vuln = None
 
-            temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.compverid.unique())].projverid.unique()
-            if temp_df_proj.size > 0 and temp.size > 0:
-                temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(temp)]
+            temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.index.values)].index.values
+            if len(temp_df_proj) > 0 and len(temp) > 0:
+                temp_df_proj = temp_df_proj[temp_df_proj.index.isin(temp)]
             else:
                 temp_df_proj = None
 
             temp = df_polmap[df_polmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
-            if temp_df_pol.size > 0 and temp.size > 0:
+            if len(temp_df_pol) > 0 and len(temp) > 0:
                 temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
             else:
                 temp_df_pol = None
 
             # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
 
-        elif temp_df_proj.size > 0 and temp_df_proj.size < df_proj.size:
-            temp = df_projcompmap[df_projcompmap.projverid.isin(temp_df_proj.projverid.unique())].compverid.unique()
-            if temp.size > 0:
+        elif temp_df_proj is not None and len(temp_df_proj) > 0 and len(temp_df_proj) < len(df_proj):
+            temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
+            if len(temp) > 0:
                 temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
             else:
                 temp_df_comp = None
 
-            temp = df_vulnmap[df_vulnmap.projverid.isin(temp_df_proj.projverid.unique())].vulnid.unique()
-            if temp.size > 0:
-                temp_df_vuln = temp_df_vuln[temp_df_vuln.vulnid.isin(temp)]
+            temp = df_vulnmap[df_vulnmap.projverid.isin(temp_df_proj.index.values)].index.values
+            if len(temp) > 0:
+                temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
             else:
                 temp_df_vuln = None
 
-            temp = df_polmap[df_polmap.projverid.isin(temp_df_proj.projverid.unique())].polid.unique()
-            if temp_df_pol.size > 0 and temp.size > 0:
+            temp = df_polmap[df_polmap.projverid.isin(temp_df_proj.index.values)].polid.unique()
+            if len(temp_df_pol) > 0 and len(temp) > 0:
                 temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
             else:
                 temp_df_pol = None
 
             # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
 
-        if temp_df_comp.size > 0 and temp_df_comp.size < df_comp.size:
+        if temp_df_comp is not None and len(temp_df_comp) > 0 and len(temp_df_comp) < len(df_comp):
             licnames = []
             for cid in temp_df_comp.compverid.unique():
                 if cid in compverid_lic_dict.keys():
@@ -915,7 +915,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     df_pol_viz = temp_df_pol
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
-                       df_projphasepolsec, df_comppolsecdf, childdata,
+                       df_projphasepolsec, df_comppolsec, childdata,
                        proj_treemap_color, proj_treemap_size, noprojs),
         proj_treemap_color, proj_treemap_size,
     )

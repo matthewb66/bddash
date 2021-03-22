@@ -255,20 +255,19 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
     if projdata is not None:
         projname = projdata['projname'].values[0]
         projver = projdata['projvername'].values[0]
-        projlink = projdata['projverurl'].values[0]
+        # projlink = projdata['projverurl'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
         comppols = polmapdf[polmapdf.projverid == projdata['projverid'].values[0]].polname.unique()
         for pol in comppols:
             poltext.append(html.Li(pol + ' (' + polmapdf[polmapdf.polname == pol].polseverity.values[0] + ')'))
 
-        if foundcomps.size > 0:
+        if len(foundcomps) > 0:
             projlist = []
             projverlist = []
             for projids in projcompmapdf[projcompmapdf['compverid'] == foundcomps.
                                          compverid.values[0]].projverid.unique():
-                projs = projdf[projdf['projverid'] == projids]
-                projlist.append(projs.projname.values[0])
-                projverlist.append(projs.projvername.values[0])
+                projlist.append(projdf.at(projids, 'projname'))
+                projverlist.append(projdf.at(projids, 'projvername'))
 
             projs_data = pd.DataFrame({
                 "projname": projlist,

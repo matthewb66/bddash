@@ -250,9 +250,9 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
         #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
 
         for projid in projdf.projverid:
-            if projcompmapdf[(projcompmapdf['compverid'] == compverid)].size > 0:
-                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
-                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
+            if len(projcompmapdf[(projcompmapdf['compverid'] == compverid)]) > 0:
+                projlist.append(projdf.at(projid, 'projname'))
+                projverlist.append(projdf.at(projid, 'projvername'))
 
         projs_data = pd.DataFrame({
             "projname": projlist,
