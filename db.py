@@ -5,7 +5,7 @@ import psycopg2.extensions
 from configparser import ConfigParser
 
 
-def config(filename='database.ini', section='postgresql'):
+def config(filename='database.poc39', section='postgresql'):
     # create a parser
     parser = ConfigParser()
     # read config file

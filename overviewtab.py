@@ -9,19 +9,26 @@ def create_fig_projmap(projdf, childdata):
     if projdf is None:
         return None
 
-    fig = go.Figure(data=[go.Sankey(
-        node=dict(
-            pad=15,
-            thickness=20,
-            line=dict(color="black", width=0.5),
-            label=childdata['parentlabels'] + childdata['childlabels'],
-            color="blue",
-        ),
-        link=dict(
-            source=childdata['sources'],  # indices correspond to labels, eg A1, A2, A1, B1, ...
-            target=childdata['targets'],
-            value=childdata['values']
-        ))])
+    fig = go.Figure(
+        data=[
+            go.Sankey(
+                node=dict(
+                    pad=15,
+                    thickness=20,
+                    line=dict(color="black", width=0.5),
+                    label=childdata['parentlabels'] + childdata['childlabels'],
+                    # color="blue",
+                ),
+                link=dict(
+                    source=childdata['sources'],  # indices correspond to labels, eg A1, A2, A1, B1, ...
+                    target=childdata['targets'],
+                    value=childdata['values']
+                )
+            )
+        ],
+    )
+
+    fig.update_layout(height=800)
 
     return fig
 
@@ -103,47 +110,53 @@ def create_fig_projphasepol(projphasedf):
 def create_fig_compsec(comppolsecdf):
     if comppolsecdf is None:
         return None
-    comppolsecdf['All'] = 'All'
+    # comppolsecdf['All'] = 'All'
 
-    # fig = px.bar(comppolsecdf, x="polseverity",
-    #              y=["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"],
-    #              labels={
-    #                  "polseverity": "Policy Severity",
-    #                  'y': 'Component Count'
-    #              },
-    #              category_orders={  # replaces default order by column name
-    #                  "polseverity": ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "TRIVIAL", "UNSPECIFIED"]
-    #              },
-    #              color_discrete_map={  # replaces default color mapping by value
-    #                  "seccritcount": 'maroon',
-    #                  "sechighcount": 'crimson',
-    #                  "secmedcount": 'coral',
-    #                  "seclowcount": 'gold',
-    #                  "secokcount": 'green',
-    #              },
-    #              title="Components by Policy & Security Risk")
-    # fig.data[0].name = "Critical Security Risk"
-    # fig.data[1].name = "High Security Risk"
-    # fig.data[2].name = "Medium Security Risk"
-    # fig.data[3].name = "Low Security Risk"
-    # fig.data[4].name = "No Security Risk"
-    # projphasedf['All'] = 'All'
+    # comppolsecdf.drop(['licriskNoUnk', 'compcount', 'secmedcount', 'seclowcount', 'secokcount'],
+    #                   axis=1, inplace=True)
 
-    fig = px.sunburst(comppolsecdf, path=['All', 'polseverity', "secrisk"],
-                      values='compcount',
-                      color='secrisk',
-                      # hover_data=['iso_alpha'],
-                      color_continuous_scale='Reds',
-                      # labels={
-                      #     "polseverity": "Policy Severity",
-                      #     "projverphase": "Project Phase",
-                      #     "secrisk": "Top Security Risk Level",
-                      #     "secAll": "Count of all Vulnerabilities",
-                      #     "projcount": "Number of Projects",
-                      # },
-                      # color_continuous_midpoint=np.average(df['secAll'],weights=df['pop']))
-                      title='Components by Policy & Security Risk'
-                      )
+    print(comppolsecdf.to_string())
+    fig = px.bar(
+        comppolsecdf,
+        x="polseverity",
+        y=["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"],
+        labels={
+         "polseverity": "Policy Severity",
+         'y': 'Component Count'
+        },
+        category_orders={  # replaces default order by column name
+         "polseverity": ["BLOCKER", "CRITICAL", "MAJOR", "MINOR", "TRIVIAL", "UNSPECIFIED", "NONE"]
+        },
+        color_discrete_map={  # replaces default color mapping by value
+         "seccritcount": 'maroon',
+         "sechighcount": 'crimson',
+         "secmedcount": 'coral',
+         "seclowcount": 'gold',
+         "secokcount": 'green',
+        },
+        title="Components by Policy & Security Risk"
+    )
+    fig.data[0].name = "Critical Security Risk"
+    fig.data[1].name = "High Security Risk"
+    fig.data[2].name = "Medium Security Risk"
+    fig.data[3].name = "Low Security Risk"
+    fig.data[4].name = "No Security Risk"
+
+    # fig = px.sunburst(comppolsecdf, path=['All', 'polseverity', "secrisk"],
+    #                   values='compcount',
+    #                   color='secrisk',
+    #                   # hover_data=['iso_alpha'],
+    #                   color_continuous_scale='Reds',
+    #                   # labels={
+    #                   #     "polseverity": "Policy Severity",
+    #                   #     "projverphase": "Project Phase",
+    #                   #     "secrisk": "Top Security Risk Level",
+    #                   #     "secAll": "Count of all Vulnerabilities",
+    #                   #     "projcount": "Number of Projects",
+    #                   # },
+    #                   # color_continuous_midpoint=np.average(df['secAll'],weights=df['pop']))
+    #                   title='Components by Policy & Security Risk'
+    #                   )
     return fig
 
 

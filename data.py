@@ -204,7 +204,8 @@ def proc_comp_data(thisdf, serverurl):
         sources.append(tup[0])
         targets.append(len(parentlabels) + tup[1])
         sp = childlabels[tup[1]].split('/')
-        values.append(projdf[(projdf.projname == sp[0]) & (projdf.projvername == sp[1])].compcount.values[0])
+        val = projdf[(projdf.projname == sp[0]) & (projdf.projvername == sp[1])].compcount.values[0]
+        values.append(val)
 
     projdf['parent'] = False
     projdf['child'] = False
@@ -220,7 +221,7 @@ def proc_comp_data(thisdf, serverurl):
         'childlabels': childlabels,
         'sources': sources,
         'targets': targets,
-        'values': values
+        'values': values,
     }
 
     return projdf, compdf, projcompmapdf, childdata
@@ -404,10 +405,8 @@ def proc_overviewdata(projdf, compdf):
     # - Policy severity risk
     # - Security risk
 
-    # proj_distdf = projdf.groupby("projverdist").sum().reset_index()
     tempdf = projdf[['polseverity']].mask(projdf['polseverity'] == '', 'NONE', inplace=False)
-    # projdf[['polseverity']].mask(projdf['polseverity'] == '', 'NONE', inplace=True)
-    projdf = pd.merge(projdf, tempdf)
+    projdf['polseverity'] = tempdf['polseverity']
 
     def calc_security(row):
         if row['seccritcount'] > 0:
@@ -436,6 +435,9 @@ def proc_overviewdata(projdf, compdf):
     # proj_phasepolsecdf['projcount'] = temp_df['projname']
 
     comp_polsecdf = compdf
+    tempdf = comp_polsecdf[['polseverity']].mask(comp_polsecdf['polseverity'] == '', 'NONE', inplace=False)
+    comp_polsecdf['polseverity'] = tempdf['polseverity']
+
     testdf = comp_polsecdf.apply(calc_security, axis=1, result_type='expand')
     comp_polsecdf.insert(5, 'secrisk', testdf)
     tempdf = comp_polsecdf.groupby(["polseverity", "secrisk"]).count().reset_index()

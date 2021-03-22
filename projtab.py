@@ -253,11 +253,11 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
 
     poltext = []
     if projdata is not None:
-        projname = projdata['projname'].values[0]
-        projver = projdata['projvername'].values[0]
+        projname = projdata['projname']
+        projver = projdata['projvername']
         # projlink = projdata['projverurl'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
-        comppols = polmapdf[polmapdf.projverid == projdata['projverid'].values[0]].polname.unique()
+        comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polname.unique()
         for pol in comppols:
             poltext.append(html.Li(pol + ' (' + polmapdf[polmapdf.polname == pol].polseverity.values[0] + ')'))
 

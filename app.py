@@ -693,8 +693,10 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        projid = cdata[rows[0]]['projverid']
+        mydata = df_proj_viz.loc[projid]
         return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_projcompmap, df_polmap,
-                                                df_proj_viz.iloc([cdata[rows[0]]])), 'tab_proj_subdetail'
+                                                mydata), 'tab_proj_subdetail'
 
     return projtab.create_projtab_card_proj(None, None, None, None, None), 'tab_proj_subsummary'
 
