@@ -151,24 +151,23 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
                    size='sm'),
     )
     if vulndata is not None:
-        vulnid = vulndata.index.values[0]
-        vulnrelated = vulndata['relatedvulnid'].values[0]
+        vulnid = vulndata['vulnid']
+        vulnrelated = vulndata['relatedvulnid']
         if vulnrelated == '':
             vulnrelated = 'None'
-        desc = vulndata.description.values[0]
+        desc = vulndata['description']
 
         projlist = []
         projverlist = []
-        for projid in df_vulnmap.at(vulnid, 'projverid'):
-            projlist.append(projdf.at(projid, 'projname'))
-            projlist.append(projdf.at(projid, 'projname'))
-            projverlist.append(projdf.at(projid, 'projvername'))
+        for projid in df_vulnmap.loc[vulnid]['projverid']:
+            projlist.append(projdf.loc[projid]['projname'])
+            projverlist.append(projdf.loc[projid]['projvername'])
 
         complist = []
         compverlist = []
-        for compid in df_vulnmap.at(vulnid, 'compverid'):
-            complist.append(compdf.at(compid, 'compname'))
-            compverlist.append(compdf.at(compid, 'compvername'))
+        for compid in df_vulnmap.loc[vulnid]['compverid']:
+            complist.append(compdf.loc[compid]['compname'])
+            compverlist.append(compdf.loc[compid]['compvername'])
 
         projs_data = pd.DataFrame({
             "projname": projlist,

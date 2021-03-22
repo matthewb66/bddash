@@ -518,9 +518,11 @@ def callback_lictab_sellic_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        # return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap, lic_compverid_dict,
+        #                                      df_lic_viz[df_lic_viz['licname'] == cdata[rows[0]][
+        #                                             'licname']])
         return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap, lic_compverid_dict,
-                                             df_lic_viz[df_lic_viz['licname'] == cdata[rows[0]][
-                                                    'licname']])
+                                             cdata[rows[0]])
 
     return lictab.create_lictab_card_lic(None, None, None, None, None)
 
@@ -543,9 +545,10 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        # return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
+        #                                      df_pol_viz.loc[cdata[rows[0]]])
         return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
-                                             df_pol_viz[df_pol_viz['polid'] == cdata[rows[0]][
-                                                    'polid']])
+                                             cdata[rows[0]])
 
     return poltab.create_poltab_card_pol(None, None, None, None)
 
@@ -563,7 +566,7 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
 
 )
 def callback_comptab_selcomp_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap
+    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol
     print('callback_comptab_selcomp_button')
 
     if nclicks is None:
@@ -571,10 +574,13 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
         raise dash.exceptions.PreventUpdate
 
     if rows:
-        return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
-                                                df_comp_viz.at(cdata[rows[0]], 'compverid')), 'tab_comp_subdetail'
+        # return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
+        #                                         df_comp_viz.loc[cdata[rows[0]]['projverid']]), \
+        #        'tab_comp_subdetail'
+        return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_pol, df_polmap,
+                                                cdata[rows[0]]), 'tab_comp_subdetail'
 
-    return comptab.create_comptab_card_comp(None, None, None, None), 'tab_comp_subsummary'
+    return comptab.create_comptab_card_comp(None, None, None, None, None), 'tab_comp_subsummary'
 
 
 @app.callback(
@@ -595,8 +601,10 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
 
     if rows:
         # print(df_vuln[df_vuln['vulnid'] == cdata[rows[0]]['vulnid']].to_string())
+        # return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
+        #                                         df_vuln_viz.loc[cdata[rows[0]]['vulnid']])
         return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
-                                                df_vuln_viz.at(cdata[rows[0]], 'vulnid'))
+                                                cdata[rows[0]])
 
     return vulntab.create_vulntab_card_vuln(None, None, None, None)
 
@@ -657,7 +665,6 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
         State('vulntab_card_comptable', 'derived_virtual_data'),
         State('vulntab_card_comptable', 'derived_virtual_selected_rows'),
     ]
-
 )
 def callback_filtercomp_buttons(nclicks, cdata, rows):
     print('callback_filtercomp_buttons')
@@ -685,7 +692,7 @@ def callback_filtercomp_buttons(nclicks, cdata, rows):
     ]
 )
 def callback_projtab_selproj_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap
+    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol
     print('callback_projtab_selproj_button')
 
     if nclicks is None:
@@ -695,10 +702,10 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
     if rows:
         projid = cdata[rows[0]]['projverid']
         mydata = df_proj_viz.loc[projid]
-        return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_projcompmap, df_polmap,
+        return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_pol, df_projcompmap, df_polmap,
                                                 mydata), 'tab_proj_subdetail'
 
-    return projtab.create_projtab_card_proj(None, None, None, None, None), 'tab_proj_subsummary'
+    return projtab.create_projtab_card_proj(None, None, None, None, None, None), 'tab_proj_subsummary'
 
 
 # Update graphs and select options based on selection inputs

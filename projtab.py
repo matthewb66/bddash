@@ -217,7 +217,7 @@ def create_projtab_fig_subdetails(thisdf):
     return thisfig
 
 
-def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
+def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, projdata):
 
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
@@ -257,9 +257,9 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
         projver = projdata['projvername']
         # projlink = projdata['projverurl'].values[0]
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
-        comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polname.unique()
-        for pol in comppols:
-            poltext.append(html.Li(pol + ' (' + polmapdf[polmapdf.polname == pol].polseverity.values[0] + ')'))
+        comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polid.unique()
+        for polid in comppols:
+            poltext.append(html.Li(polid + ' (' + poldf.loc[polid].polseverity + ')'))
 
         if len(foundcomps) > 0:
             projlist = []
@@ -346,7 +346,7 @@ def create_projtab(projdf):
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
                     dbc.Tab(
-                        create_projtab_card_proj(None, None, None, None, None),
+                        create_projtab_card_proj(None, None, None, None, None, None),
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )

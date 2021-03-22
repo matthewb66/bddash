@@ -206,7 +206,7 @@ def create_comptab_table_compvers(thisdf):
     return thistable
 
 
-def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
+def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
     # from app import df_proj, df_projcompmap
 
     compname = ''
@@ -235,15 +235,15 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
     poltext = []
 
     if compdata is not None:
-        compname = compdata['compname'].values[0]
-        compver = compdata['compvername'].values[0]
-        compverid = compdata['compverid'].values[0]
-        complic = compdata['licname'].values[0]
-        comppols = polmapdf[polmapdf.compverid == compverid].polname.unique()
+        compname = compdata['compname']
+        compver = compdata['compvername']
+        compverid = compdata['compverid']
+        complic = compdata['licname']
+        comppols = polmapdf[polmapdf.compverid == compverid].polid.unique()
         projlist = []
         projverlist = []
-        for pols in comppols:
-            poltext.append(html.P(pols))
+        for polid in comppols:
+            poltext.append(html.P(poldf.loc[polid]['polname']))
 
         # for projid in projcompmapdf[projcompmapdf['compverid'] == compverid].projverid.unique():
         #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
@@ -251,8 +251,8 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
 
         for projid in projdf.projverid:
             if len(projcompmapdf[(projcompmapdf['compverid'] == compverid)]) > 0:
-                projlist.append(projdf.at(projid, 'projname'))
-                projverlist.append(projdf.at(projid, 'projvername'))
+                projlist.append(projdf.loc[projid]['projname'])
+                projverlist.append(projdf.loc[projid]['projvername'])
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -327,7 +327,7 @@ def create_comptab(compdf):
                             tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
                         ),
                         dbc.Tab(
-                            create_comptab_card_comp(None, None, None, None),
+                            create_comptab_card_comp(None, None, None, None, None),
                             label='Selected Component',
                             tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
                         ),
