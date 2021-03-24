@@ -41,28 +41,31 @@ df_projphasepolsec = None
 df_projdistpol = None
 childdata = None
 df_comppolsec = None
-serverurl = "https://poc39.blackduck.synopsys.com"
+serverurl = "https://poc11.blackduck.synopsys.com"
+dbconfig = 'conf/database.poc11'
+
+expand_child_projects = False
 
 auth = None
 lastdbreadtime = 0
 
 
 def read_data_files():
-    if not os.path.isfile('db_projs.json') or not os.path.isfile('db_vulns.json') or \
-            not os.path.isfile('db_pols.json'):
+    if not os.path.isfile('data/db_projs.json') or not os.path.isfile('data/db_vulns.json') or \
+            not os.path.isfile('data/db_pols.json'):
         sys.exit(3)
 
-    with open('db_projs.json') as jsonproj_file:
+    with open('data/db_projs.json') as jsonproj_file:
         dbprojdata = json.load(jsonproj_file)
     jsonproj_file.close()
     thisdfprojs = pd.read_json(dbprojdata, orient='split')
 
-    with open('db_vulns.json') as jsonvuln_file:
+    with open('data/db_vulns.json') as jsonvuln_file:
         dbvulndata = json.load(jsonvuln_file)
     jsonvuln_file.close()
     thisdfvulns = pd.read_json(dbvulndata, orient='split')
 
-    with open('db_pols.json') as jsonpol_file:
+    with open('data/db_pols.json') as jsonpol_file:
         dbpoldata = json.load(jsonpol_file)
     jsonpol_file.close()
     thisdfpols = pd.read_json(dbpoldata, orient='split')
@@ -73,17 +76,17 @@ def read_data_files():
 def write_data_files(maindf, vulndf, poldf):
     # from app import df_main, df_vuln
     jsonout = maindf.to_json(orient="split")
-    o = open("db_projs.json", "w")
+    o = open("data/db_projs.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
 
     jsonout = vulndf.to_json(orient="split")
-    o = open("db_vulns.json", "w")
+    o = open("data/db_vulns.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
 
     jsonout = poldf.to_json(orient="split")
-    o = open("db_pols.json", "w")
+    o = open("data/db_pols.json", "w")
     o.write(json.dumps(jsonout, indent=4))
     o.close()
     print("Done\n")
@@ -95,11 +98,11 @@ if __name__ == '__main__':
 
     server = app.server
 
-    if not os.path.isfile('users.txt'):
+    if not os.path.isfile('conf/users.txt'):
         print('No users.txt file - exiting')
         sys.exit(3)
 
-    with open('users.txt') as f:
+    with open('conf/users.txt') as f:
         fdata = f.read()
         VALID_USERNAME_PASSWORD_PAIRS = json.loads(fdata)
         f.close()
@@ -111,7 +114,7 @@ if __name__ == '__main__':
     )
 
     app.lastdbreadtime = 0
-    if os.path.isfile('database.ini'):
+    if os.path.isfile(dbconfig):
         if app.lastdbreadtime:
             if (time() - app.lastdbreadtime) > 3600:
                 # Read from DB
@@ -121,15 +124,16 @@ if __name__ == '__main__':
         else:
             readfrom = 'db'
             app.lastdbreadtime = time()
-    elif os.path.isfile('db_projs.json') and os.path.isfile('db_vulns.json'):
+    elif os.path.isfile('data/db_projs.json') and os.path.isfile('data/db_vulns.json'):
         readfrom = 'file'
     else:
-        print('\nNo database.ini or data files - exiting')
+        print('\nNo conf/database.ini or data files - exiting')
         sys.exit(3)
 
+    readfrom = 'file' #DEBUG
     if readfrom == 'db':
         print('\nWill read data from DB connection')
-        conn, cur = db.connect()
+        conn, cur = db.connect(dbconfig)
         print("Getting component data ...")
         df_main = db.get_projdata(conn)
         print("Getting vulnerability data ...")
@@ -149,7 +153,7 @@ if __name__ == '__main__':
         print("Writing data to JSON files ...")
         write_data_files(df_main, df_vuln, df_pol)
 
-    df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl)
+    df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl, expand_child_projects)
     df_main = None
     df_comp_viz = df_comp
     # df_proj = data.proc_projdata(df_main)
@@ -166,7 +170,7 @@ if __name__ == '__main__':
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
-                   childdata,
+                   child_data,
                    colorfield, sizefield, noprojs):
 
     if noprojs:
@@ -268,7 +272,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
     return dbc.Tabs(
         [
             dbc.Tab(  # OVERVIEW TAB
-                overviewtab.create_overviewtab(projdata, projphasepoldata, comppolsecdata, childdata),
+                overviewtab.create_overviewtab(projdata, projphasepoldata, comppolsecdata, child_data),
                 label="Overview",
                 tab_id="tab_overview", id="tab_overview",
             ),
@@ -316,11 +320,12 @@ if __name__ == '__main__':
             # 		dcc.Store(id='lic_values', storage_type='local'),
             dcc.Store(id='proj_color', storage_type='local'),
             dcc.Store(id='proj_size', storage_type='local'),
+            dcc.Store(id='sankey_state', storage_type='local'),
             dbc.NavbarSimple(
                 children=[
                     dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
                 ],
-                brand="Black Duck Dashboard",
+                brand="Black Duck Analysis Console",
                 brand_href="#",
                 color="primary",
                 dark=True,
@@ -592,7 +597,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
     ]
 )
 def callback_vulntab_selvuln_button(nclicks, cdata, rows):
-    global df_vuln_viz, df_proj_viz, df_comp_viz, df_vulnmap, df_vulnmap
+    global df_vuln_viz, df_proj_viz, df_comp_viz, df_vulnmap, df_vulnmap, serverurl
     print('callback_vulntab_selvuln_button')
 
     if nclicks is None:
@@ -604,9 +609,9 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
         # return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
         #                                         df_vuln_viz.loc[cdata[rows[0]]['vulnid']])
         return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
-                                                cdata[rows[0]])
+                                                cdata[rows[0]], serverurl)
 
-    return vulntab.create_vulntab_card_vuln(None, None, None, None)
+    return vulntab.create_vulntab_card_vuln(None, None, None, None, None)
 
 
 @app.callback(
@@ -692,7 +697,7 @@ def callback_filtercomp_buttons(nclicks, cdata, rows):
     ]
 )
 def callback_projtab_selproj_button(nclicks, cdata, rows):
-    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol
+    global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol, serverurl
     print('callback_projtab_selproj_button')
 
     if nclicks is None:
@@ -703,9 +708,9 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         projid = cdata[rows[0]]['projverid']
         mydata = df_proj_viz.loc[projid]
         return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_pol, df_projcompmap, df_polmap,
-                                                mydata), 'tab_proj_subdetail'
+                                                mydata, serverurl), 'tab_proj_subdetail'
 
-    return projtab.create_projtab_card_proj(None, None, None, None, None, None), 'tab_proj_subsummary'
+    return projtab.create_projtab_card_proj(None, None, None, None, None, None, None), 'tab_proj_subsummary'
 
 
 # Update graphs and select options based on selection inputs
@@ -743,7 +748,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
     global df_lic, lic_compverid_dict, compverid_lic_dict, df_lic_viz
     global df_pol, df_pol_viz, df_polmap
     global df_projdistpol, df_projphasepolsec
-    global parentlabels, childlabels, childtuples
+    global childdata
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -928,6 +933,72 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
                        proj_treemap_color, proj_treemap_size, noprojs),
         proj_treemap_color, proj_treemap_size,
     )
+
+
+@app.callback(
+    [
+        Output('summarytab_sankey', 'figure'),
+        Output('sankey_state', 'data'),
+    ],
+    [
+        Input('summarytab_sankey', 'clickData'),
+        State('sankey_state', 'data'),
+    ]
+)
+def callback_summarytab_sankey(clickData, state):
+    global childdata, df_proj
+
+    print('callback_summarytab_sankey')
+
+    if clickData is None:
+        print('NO ACTION')
+        raise dash.exceptions.PreventUpdate
+
+    if state:
+        newchilddata = childdata
+        newstate = False
+    else:
+        thisproj = clickData['points'][0]['label']
+
+        newsources = []
+        newtargets = []
+
+        def walktree(srcnum, sources, targets):
+            start = 0
+            wsources = []
+            wtargets = []
+            if srcnum in sources[start:]:
+                srcidx = sources.index(srcnum, start)
+            else:
+                srcidx = -1
+            while srcidx >= 0:
+                tgt = targets[srcidx]
+                if tgt in sources:
+                    nsrc, ntgt = walktree(tgt, sources, targets)
+                    wsources = wsources + nsrc
+                    wtargets = wtargets + ntgt
+                wsources.append(srcnum)
+                wtargets.append(tgt)
+                start = srcidx + 1
+                if srcnum in sources[start:]:
+                    srcidx = sources.index(srcnum, start)
+                else:
+                    srcidx = -1
+            return wsources, wtargets
+
+        if thisproj in childdata['labels']:
+            src = childdata['labels'].index(thisproj)
+            newsources, newtargets = walktree(src, childdata['sources'], childdata['targets'])
+
+        newchilddata = {
+            'labels': childdata['labels'],
+            'sources': newsources,
+            'targets': newtargets,
+            'values': childdata['values'],
+        }
+        newstate = True
+
+    return overviewtab.create_fig_projmap(df_proj, newchilddata), newstate
 
 
 if __name__ == '__main__':

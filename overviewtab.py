@@ -16,19 +16,22 @@ def create_fig_projmap(projdf, childdata):
                     pad=15,
                     thickness=20,
                     line=dict(color="black", width=0.5),
-                    label=childdata['parentlabels'] + childdata['childlabels'],
+                    label=childdata['labels'],
                     # color="blue",
                 ),
                 link=dict(
                     source=childdata['sources'],  # indices correspond to labels, eg A1, A2, A1, B1, ...
                     target=childdata['targets'],
                     value=childdata['values']
-                )
+                ),
+                arrangement='fixed',
             )
         ],
     )
 
-    fig.update_layout(height=800)
+    height = max(400, len(childdata['sources']) * 18)
+    print(len(childdata['sources']))
+    fig.update_layout(height=height)
 
     return fig
 
@@ -115,7 +118,7 @@ def create_fig_compsec(comppolsecdf):
     # comppolsecdf.drop(['licriskNoUnk', 'compcount', 'secmedcount', 'seclowcount', 'secokcount'],
     #                   axis=1, inplace=True)
 
-    print(comppolsecdf.to_string())
+    # print(comppolsecdf.to_string()) #DEBUG
     fig = px.bar(
         comppolsecdf,
         x="polseverity",
@@ -214,7 +217,8 @@ def create_overviewtab(projdf, projphasepoldf, comppolsecdf, childdata):
                             [
                                 html.Br(),
                                 html.H4('Projects within Projects'),
-                                dcc.Graph(figure=create_fig_projmap(projdf, childdata)),
+                                dcc.Graph(figure=create_fig_projmap(projdf, childdata),
+                                          id='summarytab_sankey'),
                             ], width={"size": 10, "offset": 1}
                         ),
                         # dbc.Col(

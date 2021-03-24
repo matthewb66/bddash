@@ -5,7 +5,7 @@ import psycopg2.extensions
 from configparser import ConfigParser
 
 
-def config(filename='database.poc39', section='postgresql'):
+def config(filename, section):
     # create a parser
     parser = ConfigParser()
     # read config file
@@ -23,11 +23,11 @@ def config(filename='database.poc39', section='postgresql'):
     return db
 
 
-def connect():
+def connect(filename):
     """ Connect to the PostgreSQL database server """
     try:
         # read connection parameters
-        params = config()
+        params = config(filename, 'postgresql')
 
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')

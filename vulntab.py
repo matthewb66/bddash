@@ -47,7 +47,7 @@ def create_vulntab_table_vulns(thisdf):
                                          )
     else:
         # df_temp = df_temp.sort_values(by=["score"], ascending=False)
-        temp = thisdf.to_dict('records')
+        # temp = thisdf.to_dict('records')
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
                                          data=thisdf.to_dict('records'),
@@ -108,10 +108,11 @@ def create_vulntab_table_vulns(thisdf):
     return thistable
 
 
-def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
+def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
     # from app import df_proj, df_comp, df_projvulnmap, df_compvulnmap
 
     vulnid = ''
+    vulnlink = ''
     vulnrelated = ''
     desc = ''
     projusedin_cols = [
@@ -156,7 +157,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
         if vulnrelated == '':
             vulnrelated = 'None'
         desc = vulndata['description']
-
+        vulnlink = '/'.join((serverurl, 'api/vulnerabilities', vulndata['vulnid'], 'overview'))
         projlist = []
         projverlist = []
         for projid in df_vulnmap.loc[vulnid]['projverid']:
@@ -209,6 +210,8 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata):
                     html.H4("Vulnerability: " + vulnid, className="card-title"),
                     html.H6("Related to: " + vulnrelated, className="card-subtitle"),
                     # html.H6("Description: " , className="card-subtitle"),
+                    html.A("Vulnerability Link", href=vulnlink, target="_blank"),
+                    html.Br(),
 
                     html.P(desc),
                 ],
@@ -244,6 +247,6 @@ def create_vulntab(vulndf):
                     ),
                 ], width=8
             ),
-            dbc.Col(create_vulntab_card_vuln(None, None, None, None), width=4, id='col_vulntab_vuln'),
+            dbc.Col(create_vulntab_card_vuln(None, None, None, None, None), width=4, id='col_vulntab_vuln'),
         ]
     )

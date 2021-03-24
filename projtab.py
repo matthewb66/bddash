@@ -14,6 +14,8 @@ def create_projtab_table_projs(thisdf):
         {"name": ['', 'Project'], "id": "projname"},
         {"name": ['', 'Project Version'], "id": "projvername"},
         {"name": ['', 'Comps'], "id": "compcount"},
+        {"name": ['', 'Parent'], "id": "parent"},
+        {"name": ['', 'Child'], "id": "child"},
         {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
         {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
         {"name": ['Vulnerabilities', 'Med'], "id": "secmedcount"},
@@ -181,6 +183,14 @@ def create_projtab_table_projs(thisdf):
                                              'if': {'column_id': 'polseverity'},
                                              'width': '8%'
                                          },
+                                         {
+                                             'if': {'column_id': 'child'},
+                                             'width': '4%'
+                                         },
+                                         {
+                                             'if': {'column_id': 'parent'},
+                                             'width': '4%'
+                                         },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
                                               {'column_id': 'sechighcount', 'direction': 'desc'},
@@ -217,7 +227,7 @@ def create_projtab_fig_subdetails(thisdf):
     return thisfig
 
 
-def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, projdata):
+def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, projdata, serverurl):
 
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
@@ -255,7 +265,8 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
     if projdata is not None:
         projname = projdata['projname']
         projver = projdata['projvername']
-        # projlink = projdata['projverurl'].values[0]
+        projlink = '/'.join((serverurl, 'api/projects', projdata['projid'], 'versions', projdata['projverid'],
+                             'components'))
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
         comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polid.unique()
         for polid in comppols:
@@ -346,7 +357,7 @@ def create_projtab(projdf):
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
                     dbc.Tab(
-                        create_projtab_card_proj(None, None, None, None, None, None),
+                        create_projtab_card_proj(None, None, None, None, None, None, None),
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )
