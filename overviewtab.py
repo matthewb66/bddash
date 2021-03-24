@@ -197,10 +197,12 @@ def create_overviewtab(projdf, projphasepoldf, comppolsecdf, childdata):
                 dbc.Row(
                     [
                         dbc.Col(
-                            dcc.Graph(figure=create_fig_projphasepol(projphasepoldf)), width=6
+                            dcc.Graph(figure=create_fig_projphasepol(projphasepoldf),
+                                      id='overviewtab_projphasepol'), width=6
                         ),
                         dbc.Col(
-                            dcc.Graph(figure=create_fig_compsec(comppolsecdf), ), width=6
+                            dcc.Graph(figure=create_fig_compsec(comppolsecdf),
+                                      id='overviewtab_comppolsec'), width=6
                         ),
                         # dbc.Col(
                         #     [
@@ -218,7 +220,7 @@ def create_overviewtab(projdf, projphasepoldf, comppolsecdf, childdata):
                                 html.Br(),
                                 html.H4('Projects within Projects'),
                                 dcc.Graph(figure=create_fig_projmap(projdf, childdata),
-                                          id='summarytab_sankey'),
+                                          id='overviewtab_sankey'),
                             ], width={"size": 10, "offset": 1}
                         ),
                         # dbc.Col(

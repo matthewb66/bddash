@@ -130,7 +130,7 @@ if __name__ == '__main__':
         print('\nNo conf/database.ini or data files - exiting')
         sys.exit(3)
 
-    readfrom = 'file' #DEBUG
+    readfrom = 'file'  # DEBUG
     if readfrom == 'db':
         print('\nWill read data from DB connection')
         conn, cur = db.connect(dbconfig)
@@ -240,7 +240,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                 )
             ],
             id="tabs",
-            active_tab="tab_projsummary",
+            active_tab="tab_overview",
         )
 
     if projdata is not None:
@@ -321,6 +321,7 @@ if __name__ == '__main__':
             dcc.Store(id='proj_color', storage_type='local'),
             dcc.Store(id='proj_size', storage_type='local'),
             dcc.Store(id='sankey_state', storage_type='local'),
+            dcc.Store(id='active_tab', storage_type='local'),
             dbc.NavbarSimple(
                 children=[
                     dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
@@ -426,12 +427,12 @@ if __name__ == '__main__':
                         dcc.Dropdown(
                             id="sel_polsev",
                             options=[
-                                {'label': 'Blocker', 'value': 'BLOCKER'},
-                                {'label': 'Critical', 'value': 'CRITICAL'},
-                                {'label': 'Major', 'value': 'MAJOR'},
-                                {'label': 'Minor', 'value': 'MINOR'},
-                                {'label': 'Trivial', 'value': 'TRIVIAL'},
-                                {'label': 'Unspec', 'value': 'UNSPECIFIED'},
+                                {'label': 'BLOCKER', 'value': 'BLOCKER'},
+                                {'label': 'CRITICAL', 'value': 'CRITICAL'},
+                                {'label': 'MAJOR', 'value': 'MAJOR'},
+                                {'label': 'MINOR', 'value': 'MINOR'},
+                                {'label': 'TRIVIAL', 'value': 'TRIVIAL'},
+                                {'label': 'UNSPECIFIED', 'value': 'UNSPECIFIED'},
                             ],
                             multi=True
                         ), width=2,
@@ -635,7 +636,6 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
         State('projtab_table_projs', 'derived_virtual_selected_rows'),
         State('projtab_detail_projtable', 'derived_virtual_data'),
         State('projtab_detail_projtable', 'derived_virtual_selected_rows'),
-
     ]
 )
 def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, projclicks, usedprojclicks,
@@ -719,11 +719,13 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         Output('spinner_main', 'children'),
         Output('proj_color', 'data'),
         Output('proj_size', 'data'),
+        Output('active_tab', 'data'),
+        Output('tabs', 'active_tab'),
     ], [
         Input("sel-button", "n_clicks"),
         Input('summtab_color_radio', 'value'),
         Input('summtab_size_radio', 'value'),
-        # State("tabs", "active_tab"),
+        State("tabs", "active_tab"),
         State('sel_projects', 'value'),
         State('sel_versions', 'value'),
         State('sel_remstatus', 'value'),
@@ -737,11 +739,12 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         State('sel_comps', 'value'),
         State('proj_color', 'data'),
         State('proj_size', 'data'),
+        State('active_tab', 'data'),
     ]
 )
-def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, remstatus,
+def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, vers, remstatus,
                   tiers, dists, phases,
-                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
+                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev, activetab):
     global df_proj, df_proj_viz
     global df_comp, df_projcompmap, df_comp_viz
     global df_vuln, df_vulnmap, df_vulnactivelist, df_vuln_viz
@@ -931,21 +934,21 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, projs, vers, r
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
                        df_projphasepolsec, df_comppolsec, childdata,
                        proj_treemap_color, proj_treemap_size, noprojs),
-        proj_treemap_color, proj_treemap_size,
+        proj_treemap_color, proj_treemap_size, activetab, activetab
     )
 
 
 @app.callback(
     [
-        Output('summarytab_sankey', 'figure'),
+        Output('overviewtab_sankey', 'figure'),
         Output('sankey_state', 'data'),
     ],
     [
-        Input('summarytab_sankey', 'clickData'),
+        Input('overviewtab_sankey', 'clickData'),
         State('sankey_state', 'data'),
     ]
 )
-def callback_summarytab_sankey(clickData, state):
+def callback_overviewtab_sankey(clickData, state):
     global childdata, df_proj
 
     print('callback_summarytab_sankey')
@@ -988,6 +991,9 @@ def callback_summarytab_sankey(clickData, state):
 
         if thisproj in childdata['labels']:
             src = childdata['labels'].index(thisproj)
+            if src not in childdata['sources']:
+                return overviewtab.create_fig_projmap(df_proj, childdata), False
+
             newsources, newtargets = walktree(src, childdata['sources'], childdata['targets'])
 
         newchilddata = {
@@ -999,6 +1005,57 @@ def callback_summarytab_sankey(clickData, state):
         newstate = True
 
     return overviewtab.create_fig_projmap(df_proj, newchilddata), newstate
+
+
+@app.callback(
+    [
+        Output('sel_secrisk', 'value'),
+        Output('sel_polsev', 'value'),
+        Output('sel_phases', 'value'),
+    ],
+    [
+        Input('overviewtab_comppolsec', 'clickData'),
+        Input('overviewtab_projphasepol', 'clickData'),
+    ]
+)
+def callback_overviewtab_compbar(compclick, projclick):
+    global childdata, df_proj
+
+    print('callback_summarytab_sankey')
+
+    if compclick is None and projclick is None:
+        print('NO ACTION')
+        raise dash.exceptions.PreventUpdate
+
+    print(compclick)
+    print(projclick)
+    pol = ''
+    sec = ''
+    phase = ''
+
+    if compclick is not None:
+        secs = ['Crit', 'High', 'Med', 'Low', '']
+
+        pol = compclick['points'][0]['x']
+        sec = secs[compclick['points'][0]['curveNumber']]
+
+    if projclick is not None:
+        path = projclick['points'][0]['id']
+        arr = path.split('/')
+        if len(arr) > 1:
+            phase = arr[1]
+        if len(arr) > 2:
+            pol = arr[2]
+        if len(arr) > 3:
+            secvals = {
+                'CRITICAL': 'Crit',
+                'HIGH': 'High',
+                'MEDIUM': 'Med',
+                'LOW': 'Low'
+            }
+            sec = secvals[arr[3]]
+
+    return sec, pol, phase
 
 
 if __name__ == '__main__':
