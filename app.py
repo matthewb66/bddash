@@ -94,79 +94,94 @@ def write_data_files(maindf, vulndf, poldf):
 
 app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
 
-if __name__ == '__main__':
+server = app.server
 
-    server = app.server
 
-    if not os.path.isfile('conf/users.txt'):
-        print('No users.txt file - exiting')
-        sys.exit(3)
+if not os.path.isfile('conf/users.txt'):
+    print('No users.txt file - exiting')
+    sys.exit(3)
 
-    with open('conf/users.txt') as f:
-        fdata = f.read()
-        VALID_USERNAME_PASSWORD_PAIRS = json.loads(fdata)
-        f.close()
+with open('conf/users.txt') as f:
+    fdata = f.read()
+    VALID_USERNAME_PASSWORD_PAIRS = json.loads(fdata)
+    f.close()
 
-    # app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
-    app.auth = dash_auth.BasicAuth(
-        app,
-        VALID_USERNAME_PASSWORD_PAIRS
-    )
+# app = dash.Dash(external_stylesheets=[dbc.themes.COSMO])
+app.auth = dash_auth.BasicAuth(
+    app,
+    VALID_USERNAME_PASSWORD_PAIRS
+)
 
-    app.lastdbreadtime = 0
-    if os.path.isfile(dbconfig):
-        if app.lastdbreadtime:
-            if (time() - app.lastdbreadtime) > 3600:
-                # Read from DB
-                readfrom = 'db'
-            else:
-                readfrom = 'file'
-        else:
+app.lastdbreadtime = 0
+if os.path.isfile(dbconfig):
+    if app.lastdbreadtime:
+        if (time() - app.lastdbreadtime) > 3600:
+            # Read from DB
             readfrom = 'db'
-            app.lastdbreadtime = time()
-    elif os.path.isfile('data/db_projs.json') and os.path.isfile('data/db_vulns.json'):
-        readfrom = 'file'
+        else:
+            readfrom = 'file'
     else:
-        print('\nNo conf/database.ini or data files - exiting')
-        sys.exit(3)
+        readfrom = 'db'
+        app.lastdbreadtime = time()
+elif os.path.isfile('data/db_projs.json') and os.path.isfile('data/db_vulns.json'):
+    readfrom = 'file'
+else:
+    print('\nNo conf/database.ini or data files - exiting')
+    sys.exit(3)
 
-    # readfrom = 'file'  # DEBUG
-    if readfrom == 'db':
-        print('\nWill read data from DB connection')
-        conn, cur = db.connect(dbconfig)
-        print("Getting component data ...")
-        df_main = db.get_projdata(conn)
-        print("Getting vulnerability data ...")
-        df_vuln = db.get_vulndata(conn)
-        print("Getting policy data ...")
-        df_pol = db.get_poldata(conn)
-        db.close_conn(conn, cur)
-    elif readfrom == 'file':
-        print('\nWill read data from json files')
-        df_main, df_vuln, df_pol = read_data_files()
+# readfrom = 'file'  # DEBUG
+if readfrom == 'db':
+    print('\nWill read data from DB connection')
+    conn, cur = db.connect(dbconfig)
+    print("Getting component data ...")
+    df_main = db.get_projdata(conn)
+    print("Getting vulnerability data ...")
+    df_vuln = db.get_vulndata(conn)
+    print("Getting policy data ...")
+    df_pol = db.get_poldata(conn)
+    db.close_conn(conn, cur)
+elif readfrom == 'file':
+    print('\nWill read data from json files')
+    df_main, df_vuln, df_pol = read_data_files()
 
-    if df_main is None or len(df_main) == 0 or df_vuln is None or len(df_vuln) == 0 or df_pol is None:
-        print("No data obtained from DB or files")
-        sys.exit(2)
+if df_main is None or len(df_main) == 0 or df_vuln is None or len(df_vuln) == 0 or df_pol is None:
+    print("No data obtained from DB or files")
+    sys.exit(2)
 
-    if readfrom == 'db':
-        print("Writing data to JSON files ...")
-        write_data_files(df_main, df_vuln, df_pol)
+if readfrom == 'db':
+    print("Writing data to JSON files ...")
+    write_data_files(df_main, df_vuln, df_pol)
 
-    df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl, expand_child_projects)
-    df_main = None
-    df_comp_viz = df_comp
-    # df_proj = data.proc_projdata(df_main)
-    df_proj_viz = df_proj
-    # print(df_proj)
-    df_vuln, df_vulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
-    df_vuln_viz = df_vuln
-    df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
-    df_lic_viz = df_lic
-    df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
-    df_pol_viz = df_pol
-    # data.proc_projinproj(df_proj, df_comp)
-    df_projphasepolsec, df_comppolsec = data.proc_overviewdata(df_proj, df_comp)
+df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, serverurl, expand_child_projects)
+df_main = None
+df_comp_viz = df_comp
+# df_proj = data.proc_projdata(df_main)
+df_proj_viz = df_proj
+# print(df_proj)
+df_vuln, df_vulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
+df_vuln_viz = df_vuln
+df_lic, lic_compverid_dict, compverid_lic_dict = data.proc_licdata(df_comp)
+df_lic_viz = df_lic
+df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
+df_pol_viz = df_pol
+# data.proc_projinproj(df_proj, df_comp)
+df_projphasepolsec, df_comppolsec = data.proc_overviewdata(df_proj, df_comp)
+
+
+projlist = [
+        {'label': i, 'value': i} for i in
+        df_proj.sort_values(by=['projname'], ascending=True).projname.unique()
+    ]
+
+verlist = [
+        {'label': i, 'value': i} for i in
+        df_proj.sort_values(by=['projvername'], ascending=True).projvername.unique()
+    ]
+
+complist = [
+        {'label': i, 'value': i} for i in
+        df_comp.sort_values(by=['compname'], ascending=True).compname.unique()
+    ]
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
@@ -312,198 +327,187 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
         active_tab="tab_overview",
     )
 
-
-if __name__ == '__main__':
-    app.layout = dbc.Container(
-        [
-            # 		dcc.Store(id='sec_values', storage_type='local'),
-            # 		dcc.Store(id='lic_values', storage_type='local'),
-            dcc.Store(id='proj_color', storage_type='local'),
-            dcc.Store(id='proj_size', storage_type='local'),
-            dcc.Store(id='sankey_state', storage_type='local'),
-            dcc.Store(id='active_tab', storage_type='local'),
-            dbc.NavbarSimple(
-                children=[
-                    dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
-                ],
-                brand="Black Duck Analysis Console",
-                brand_href="#",
-                color="primary",
-                dark=True,
-                fluid=True,
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(html.Div(children="Projects"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_projects",
-                            options=[
-                                {'label': i, 'value': i} for i in
-                                df_proj.sort_values(by=['projname'], ascending=True).projname.unique()
-                            ], multi=True, placeholder='Select Projects ...'
-                        ), width=3,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Versions"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_versions",
-                            options=[
-                                {'label': i, 'value': i} for i in
-                                df_proj.sort_values(by=['projvername'], ascending=True).projvername.unique()
-                            ], multi=True, placeholder='Select Versions ...'
-                        ), width=3,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Components"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_comps",
-                            options=[
-                                {'label': i, 'value': i} for i in
-                                df_comp.sort_values(by=['compname'], ascending=True).compname.unique()
-                            ],
-                            multi=True
-                        ), width=3,
-                        align='center',
-                    ),
-                ]
-            ),
-            dbc.Row(
-                [
-                    dbc.Col(html.Div(children="Vuln Status"), width=1, align='center',
-                            # style={'font-size': '14px'},
-                            ),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_remstatus",
-                            options=[
-                                {'label': 'UNREMEDIATED', 'value': 'UNREMEDIATED'},
-                                {'label': 'REMEDIATED', 'value': 'REMEDIATED'},
-                                # {'label': 'New', 'value': 'NEW'},
-                                # {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
-                                # {'label': 'Patched', 'value': 'PATCHED'},
-                                # {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
-                                # {'label': 'Remdtd', 'value': 'REMEDIATED'},
-                                # {'label': 'Ignored', 'value': 'IGNORED'},
-                            ],
-                            value=['UNREMEDIATED'],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Security Risk"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_secrisk",
-                            options=[
-                                {'label': 'Crit', 'value': 'Critical'},
-                                {'label': 'High', 'value': 'High'},
-                                {'label': 'Med', 'value': 'Medium'},
-                                {'label': 'Low', 'value': 'Low'},
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="License Risk"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_licrisk",
-                            options=[
-                                {'label': 'High', 'value': 'High'},
-                                {'label': 'Medium', 'value': 'Medium'},
-                                {'label': 'Low', 'value': 'Low'},
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Policy Severity"), width=1, align='center',
-                            style={'font-size': '14px'},
-                            ),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_polsev",
-                            options=[
-                                {'label': 'BLOCKER', 'value': 'BLOCKER'},
-                                {'label': 'CRITICAL', 'value': 'CRITICAL'},
-                                {'label': 'MAJOR', 'value': 'MAJOR'},
-                                {'label': 'MINOR', 'value': 'MINOR'},
-                                {'label': 'TRIVIAL', 'value': 'TRIVIAL'},
-                                {'label': 'UNSPECIFIED', 'value': 'UNSPECIFIED'},
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Tiers"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_tiers",
-                            options=[
-                                {'label': i, 'value': i} for i in df_proj.projtier.unique()
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Distribution"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_dists",
-                            options=[
-                                {'label': i, 'value': i} for i in df_proj.projverdist.unique()
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(html.Div(children="Phase"), width=1, align='center'),
-                    dbc.Col(
-                        dcc.Dropdown(
-                            id="sel_phases",
-                            options=[
-                                {'label': i, 'value': i} for i in df_proj.projverphase.unique()
-                            ],
-                            multi=True
-                        ), width=2,
-                        align='center',
-                    ),
-                    dbc.Col(
-                        dbc.Button("Apply Filters", id="sel-button", className="mr-2", size='md'),
-                        width={"size": 2, "offset": 1},
-                        # width=2,
-                        align='center',
-                    ),
-                    # dbc.Col(
-                    #     dbc.Checklist(
-                    #         options=[
-                    #             {"label": "Ignore Unk Lics", "value": 1},
-                    #         ],
-                    #         value=[],
-                    #         id="sel_ignore_unklic",
-                    #         switch=True,
-                    #         style={'font-size': '12px'},
-                    #     ), width=1,
-                    #     align='center',
-                    # ),
-                ]
-            ),
-            dbc.Row(html.Hr()),
-            dbc.Row(
+app.layout = dbc.Container(
+    [
+        # 		dcc.Store(id='sec_values', storage_type='local'),
+        # 		dcc.Store(id='lic_values', storage_type='local'),
+        dcc.Store(id='proj_color', storage_type='local'),
+        dcc.Store(id='proj_size', storage_type='local'),
+        dcc.Store(id='sankey_state', storage_type='local'),
+        dcc.Store(id='active_tab', storage_type='local'),
+        dbc.NavbarSimple(
+            children=[
+                dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
+            ],
+            brand="Black Duck Analysis Console",
+            brand_href="#",
+            color="primary",
+            dark=True,
+            fluid=True,
+        ),
+        dbc.Row(
+            [
+                dbc.Col(html.Div(children="Projects"), width=1, align='center'),
                 dbc.Col(
-                    dbc.Spinner(
-                        create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
-                                       childdata,
-                                       'lichighcountplus1', 'seccritcountplus1', False),
-                        id='spinner_main',
-                    ), width=12,
-                )
-            ),
-        ], fluid=True
-    )
+                    dcc.Dropdown(
+                        id="sel_projects",
+                        options=projlist, multi=True, placeholder='Select Projects ...'
+                    ), width=3,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Versions"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_versions",
+                        options=verlist, multi=True, placeholder='Select Versions ...'
+                    ), width=3,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Components"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_comps",
+                        options=complist,
+                        multi=True
+                    ), width=3,
+                    align='center',
+                ),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col(html.Div(children="Vuln Status"), width=1, align='center',
+                        # style={'font-size': '14px'},
+                        ),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_remstatus",
+                        options=[
+                            {'label': 'UNREMEDIATED', 'value': 'UNREMEDIATED'},
+                            {'label': 'REMEDIATED', 'value': 'REMEDIATED'},
+                            # {'label': 'New', 'value': 'NEW'},
+                            # {'label': 'NeedsRev', 'value': 'NEEDS_REVIEW'},
+                            # {'label': 'Patched', 'value': 'PATCHED'},
+                            # {'label': 'RemReq', 'value': 'REMEDIATION_REQUIRED'},
+                            # {'label': 'Remdtd', 'value': 'REMEDIATED'},
+                            # {'label': 'Ignored', 'value': 'IGNORED'},
+                        ],
+                        value=['UNREMEDIATED'],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Security Risk"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_secrisk",
+                        options=[
+                            {'label': 'Crit', 'value': 'Critical'},
+                            {'label': 'High', 'value': 'High'},
+                            {'label': 'Med', 'value': 'Medium'},
+                            {'label': 'Low', 'value': 'Low'},
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="License Risk"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_licrisk",
+                        options=[
+                            {'label': 'High', 'value': 'High'},
+                            {'label': 'Medium', 'value': 'Medium'},
+                            {'label': 'Low', 'value': 'Low'},
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Policy Severity"), width=1, align='center',
+                        style={'font-size': '14px'},
+                        ),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_polsev",
+                        options=[
+                            {'label': 'BLOCKER', 'value': 'BLOCKER'},
+                            {'label': 'CRITICAL', 'value': 'CRITICAL'},
+                            {'label': 'MAJOR', 'value': 'MAJOR'},
+                            {'label': 'MINOR', 'value': 'MINOR'},
+                            {'label': 'TRIVIAL', 'value': 'TRIVIAL'},
+                            {'label': 'UNSPECIFIED', 'value': 'UNSPECIFIED'},
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Tiers"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_tiers",
+                        options=[
+                            {'label': i, 'value': i} for i in df_proj.projtier.unique()
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Distribution"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_dists",
+                        options=[
+                            {'label': i, 'value': i} for i in df_proj.projverdist.unique()
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(html.Div(children="Phase"), width=1, align='center'),
+                dbc.Col(
+                    dcc.Dropdown(
+                        id="sel_phases",
+                        options=[
+                            {'label': i, 'value': i} for i in df_proj.projverphase.unique()
+                        ],
+                        multi=True
+                    ), width=2,
+                    align='center',
+                ),
+                dbc.Col(
+                    dbc.Button("Apply Filters", id="sel-button", className="mr-2", size='md'),
+                    width={"size": 2, "offset": 1},
+                    # width=2,
+                    align='center',
+                ),
+                # dbc.Col(
+                #     dbc.Checklist(
+                #         options=[
+                #             {"label": "Ignore Unk Lics", "value": 1},
+                #         ],
+                #         value=[],
+                #         id="sel_ignore_unklic",
+                #         switch=True,
+                #         style={'font-size': '12px'},
+                #     ), width=1,
+                #     align='center',
+                # ),
+            ]
+        ),
+        dbc.Row(html.Hr()),
+        dbc.Row(
+            dbc.Col(
+                dbc.Spinner(
+                    create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
+                                   childdata,
+                                   'lichighcountplus1', 'seccritcountplus1', False),
+                    id='spinner_main',
+                ), width=12,
+            )
+        ),
+    ], fluid=True
+)
 
 
 @app.callback(
@@ -1078,5 +1082,8 @@ def callback_overviewtab_compbar(compclick, projclick):
     return sec, pol, phase
 
 
+# if __name__ == '__main__':
+#    app.run_server(debug=True)
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='127.0.0.1', port=8888, debug=True)
