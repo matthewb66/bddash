@@ -105,7 +105,7 @@ def create_projsummtab(projdf, color_col, size_col):
             ),
             dbc.Row([
                 dbc.Col(
-                    html.Div(children="Box Sizing"), width=3,
+                    html.Div(children="Box Sizing", style={'font-size': '18px'},), width=2,
                 ),
                 dbc.Col(
                     dbc.RadioItems(
@@ -124,7 +124,7 @@ def create_projsummtab(projdf, color_col, size_col):
             ),
             dbc.Row([
                 dbc.Col(
-                    html.Div(children="Colour Scheme"), width=3,
+                    html.Div(children="Colour Scheme", style={'font-size': '18px'},), width=2,
                 ),
                 dbc.Col(
                     dbc.RadioItems(

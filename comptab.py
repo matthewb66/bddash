@@ -217,6 +217,10 @@ def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
         dbc.Button("Filter on Used In Project", color="primary", className="mr-1",
                    id="filter_compcard_proj_button", size='sm'),
     )
+    compselbutton = html.Div(
+        dbc.Button("Filter on Component", color="primary", className="mr-1",
+                   id="filter_compcard_comp_button", size='sm'),
+    )
     projusedin_cols = [
         {"name": ['Project'], "id": "projname"},
         {"name": ['Project Version'], "id": "projvername"},
@@ -286,6 +290,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
                     html.Br(),
                     html.H6("Policies Violated: "),
                     html.Div(poltext),
+                    compselbutton,
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),

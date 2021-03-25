@@ -41,8 +41,8 @@ df_projphasepolsec = None
 df_projdistpol = None
 childdata = None
 df_comppolsec = None
-serverurl = "https://poc11.blackduck.synopsys.com"
-dbconfig = 'conf/database.poc11'
+serverurl = "https://poc39.blackduck.synopsys.com"
+dbconfig = 'conf/database.poc39'
 
 expand_child_projects = False
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         print('\nNo conf/database.ini or data files - exiting')
         sys.exit(3)
 
-    readfrom = 'file'  # DEBUG
+    # readfrom = 'file'  # DEBUG
     if readfrom == 'db':
         print('\nWill read data from DB connection')
         conn, cur = db.connect(dbconfig)
@@ -626,6 +626,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
         Input('filter_polcard_proj_button', 'n_clicks'),
         Input('filter_thisproj_button', 'n_clicks'),
         Input('filter_usedproj_button', 'n_clicks'),
+        Input('projsummtab_graph_proj', 'clickData'),
         State('comptab_card_projtable', 'derived_virtual_data'),
         State('comptab_card_projtable', 'derived_virtual_selected_rows'),
         State('vulntab_card_projtable', 'derived_virtual_data'),
@@ -639,6 +640,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
     ]
 )
 def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, projclicks, usedprojclicks,
+                                treemapprojclick,
                                 compprojdata, compprojrows, vulnprojdata, vulnprojrows, polprojdata, polprojrows,
                                 projdata, projrows, projuseddata, projusedrows):
     print('callback_filterproj_buttons')
@@ -646,6 +648,7 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
 
+    val = ''
     if compprojdata is not None and 'filter_compcard_proj_button' in changed_id and len(compprojrows) > 0:
         val = compprojdata[compprojrows[0]]['projname']
     elif vulnprojdata is not None and 'filter_vulncard_proj_button' in changed_id and len(vulnprojrows) > 0:
@@ -656,6 +659,13 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
         val = projdata[projrows[0]]['projname']
     elif projuseddata is not None and 'filter_usedproj_button' in changed_id and len(projusedrows) > 0:
         val = projuseddata[projusedrows[0]]['projname']
+    elif treemapprojclick is not None:
+        parent = treemapprojclick['points'][0]['parent']
+        label = treemapprojclick['points'][0]['label']
+        if parent == 'All':
+            val = label
+        else:
+            val = parent
     else:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
@@ -667,20 +677,26 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
     Output('sel_comps', 'value'),
     [
         Input('filter_vulncard_comp_button', 'n_clicks'),
+        Input('filter_compcard_comp_button', 'n_clicks'),
         State('vulntab_card_comptable', 'derived_virtual_data'),
         State('vulntab_card_comptable', 'derived_virtual_selected_rows'),
+        State('comptab_table_compvers', 'derived_virtual_data'),
+        State('comptab_table_compvers', 'derived_virtual_selected_rows'),
     ]
 )
-def callback_filtercomp_buttons(nclicks, cdata, rows):
+def callback_filtercomp_buttons(vulnclicks, compclicks, vulncdata, vulncrows, compcdata, compcrows,):
     print('callback_filtercomp_buttons')
 
-    if nclicks is None:
+    val = ''
+    if vulnclicks is None and compclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
-
-    val = ''
-    if rows:
-        val = cdata[rows[0]]['compname']
+    elif vulnclicks is not None:
+        if vulncrows:
+            val = vulncdata[vulncrows[0]]['compname']
+    elif compclicks is not None:
+        if compcrows:
+            val = compcdata[compcrows[0]]['compname']
 
     return [val]
 
@@ -930,6 +946,10 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     df_vuln_viz = temp_df_vuln
     df_lic_viz = temp_df_lic
     df_pol_viz = temp_df_pol
+
+    if activetab == None:
+        activetab = 'tab_overview'
+
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
                        df_projphasepolsec, df_comppolsec, childdata,

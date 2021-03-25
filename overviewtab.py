@@ -30,7 +30,7 @@ def create_fig_projmap(projdf, childdata):
     )
 
     height = max(400, len(childdata['sources']) * 18)
-    print(len(childdata['sources']))
+    # print(len(childdata['sources']))
     fig.update_layout(height=height)
 
     return fig

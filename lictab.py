@@ -107,11 +107,13 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
         projlist = []
         projverlist = []
         for compid in lic_compverid_dict[licname]:
-            complist.append(compdf.loc[compid]['compname'])
-            compverlist.append(compdf.loc[compid]['compvername'])
-            for projverid in projcompmapdf[projcompmapdf.compverid == compid].index.unique():
-                projlist.append(projdf.loc[projverid]['projname'])
-                projverlist.append(projdf.loc[projverid]['projvername'])
+            if len(compdf.loc[compid]):
+                complist.append(compdf.loc[compid]['compname'])
+                compverlist.append(compdf.loc[compid]['compvername'])
+                for projverid in projcompmapdf[projcompmapdf.compverid == compid].index.unique():
+                    if len(projdf.loc[projverid]):
+                        projlist.append(projdf.loc[projverid]['projname'])
+                        projverlist.append(projdf.loc[projverid]['projvername'])
 
         usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
 

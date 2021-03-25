@@ -155,11 +155,11 @@ def proc_comp_data(thisdf, serverurl, expand):
     tuples = []
     projdf['parent'] = False
     projdf['child'] = False
-    count = 0
+    count = 1
     print("Processing projects within projects:")
     for testid in projdf.index.unique():
         if count % 100 == 0:
-            print(count)
+            print("- Projects = {}".format(count))
         count += 1
         projsusingcompdf = projcompmapdf[projcompmapdf.compverid == testid]
         if len(projsusingcompdf) > 0:

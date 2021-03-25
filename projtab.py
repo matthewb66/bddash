@@ -257,8 +257,7 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
         dbc.Button("Filter on Used in Project", id="filter_usedproj_button", className="mr-2", size='sm'),
     )
     thisprojbutton = html.Div(
-        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2",
-                   size='sm')
+        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2", size='sm')
     )
 
     poltext = []
@@ -270,15 +269,15 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
         comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polid.unique()
         for polid in comppols:
-            poltext.append(html.Li(polid + ' (' + poldf.loc[polid].polseverity + ')'))
+            poltext.append(html.Li(poldf.loc[polid, 'polname'] + ' (' + poldf.loc[polid].polseverity + ')'))
 
         if len(foundcomps) > 0:
             projlist = []
             projverlist = []
             for projids in projcompmapdf[projcompmapdf['compverid'] == foundcomps.
-                                         compverid.values[0]].projverid.unique():
-                projlist.append(projdf.at(projids, 'projname'))
-                projverlist.append(projdf.at(projids, 'projvername'))
+                                         compverid.values[0]].index.unique():
+                projlist.append(projdf.loc[projids, 'projname'])
+                projverlist.append(projdf.loc[projids, 'projvername'])
 
             projs_data = pd.DataFrame({
                 "projname": projlist,
