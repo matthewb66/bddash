@@ -229,8 +229,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                 ),
                 dbc.Tab(  # PROJECTS TAB
                     html.H1(children='No Projects Selected by Filters'),
-                    label="Projects (0) & Versions (" +
-                          str(projdata.projverid.nunique()) + ")",
+                    label="Projects (0) & Versions (0)",
                     tab_id="tab_projects", id="tab_projects"
                 ),
                 dbc.Tab(  # COMPONENTS TAB
