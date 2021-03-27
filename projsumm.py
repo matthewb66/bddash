@@ -2,7 +2,6 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
-import pandas as pd
 
 
 def create_projsummtab_fig_proj(thisdf, color_column, size_column):
@@ -47,7 +46,10 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
                              "secrisk": "Top Security Risk Level",
                              "secAll": "Count of all Vulnerabilities",
                              "projcount": "Number of Projects",
-
+                             'compcount': 'Component Count',
+                             'seccritcountplus1': 'Critical Vulns',
+                             'seccrithighcountplus1': 'Crit & High Vulns',
+                             'lichighcountplus1': 'High Licenses',
                          },
                          title='Top 200 Project Versions - Size by ' + sizetext,
                          height=700)
@@ -98,8 +100,9 @@ def create_projsummtab(projdf, color_col, size_col):
         dbc.Col([
             dbc.Row(
                 dbc.Col(
-                    dcc.Graph(id='projsummtab_graph_proj',
-                              figure=create_projsummtab_fig_proj(projdf, color_col, size_col,),
+                    dcc.Graph(
+                        id='projsummtab_graph_proj',
+                        figure=create_projsummtab_fig_proj(projdf, color_col, size_col,),
                     ),
                 ),
             ),

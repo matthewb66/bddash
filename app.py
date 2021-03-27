@@ -140,9 +140,11 @@ if readfrom == 'db':
     print("Getting policy data ...")
     df_pol = db.get_poldata(conn)
     db.close_conn(conn, cur)
+    statusitem = dbc.NavItem(dbc.NavLink("Status: Data from DB", href='#', disabled=True))
 elif readfrom == 'file':
     print('\nWill read data from json files')
     df_main, df_vuln, df_pol = read_data_files()
+    statusitem = dbc.NavItem(dbc.NavLink("Status: Data from Files", href='#', disabled=True))
 
 if df_main is None or len(df_main) == 0 or df_vuln is None or len(df_vuln) == 0 or df_pol is None:
     print("No data obtained from DB or files")
@@ -206,7 +208,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                                 # {'label': 'High Licenses', 'value': 'lichighcount'},
                             ],
                             id='summtab_color_radio',
-                            value='seccritcount',
+                            value=colorfield,
                             inline=True,
                             # labelStyle={'display': 'inline-block'}
                         ),
@@ -217,7 +219,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                                 # {'label': 'High Licenses', 'value': 'lichighcount'},
                             ],
                             id='summtab_size_radio',
-                            value='seccritcount',
+                            value=sizefield,
                             inline=True,
                             # labelStyle={'display': 'inline-block'}
                         ),
@@ -327,6 +329,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
         active_tab="tab_overview",
     )
 
+
 app.layout = dbc.Container(
     [
         # 		dcc.Store(id='sec_values', storage_type='local'),
@@ -337,10 +340,11 @@ app.layout = dbc.Container(
         dcc.Store(id='active_tab', storage_type='local'),
         dbc.NavbarSimple(
             children=[
+                statusitem,
                 dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
             ],
             brand="Black Duck Analysis Console",
-            brand_href="#",
+            brand_href=serverurl,
             color="primary",
             dark=True,
             fluid=True,
@@ -652,7 +656,6 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
 
     changed_id = [p['prop_id'] for p in dash.callback_context.triggered][0]
 
-    val = ''
     if compprojdata is not None and 'filter_compcard_proj_button' in changed_id and len(compprojrows) > 0:
         val = compprojdata[compprojrows[0]]['projname']
     elif vulnprojdata is not None and 'filter_vulncard_proj_button' in changed_id and len(vulnprojrows) > 0:
@@ -799,27 +802,27 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             else:
                 temp_df_proj = temp_df_proj[temp_df_proj['projname'] == projs]
 
-        if vers is not None and len(vers) > 0:
+        if vers is not None and len(vers) > 0 and len(temp_df_proj) > 0:
             if isinstance(vers, list):
                 temp_df_proj = temp_df_proj[temp_df_proj.projvername.isin(vers)]
             else:
                 temp_df_proj = temp_df_proj[temp_df_proj['projname'] == vers]
 
-        if comps is not None and len(comps) > 0:
+        if comps is not None and len(comps) > 0 and len(temp_df_comp) > 0:
             # Filter projects based on phase selection
             if isinstance(comps, list):
                 temp_df_comp = temp_df_comp[temp_df_comp.compname.isin(comps)]
             else:
                 temp_df_comp = temp_df_comp[temp_df_comp['compname'] == comps]
 
-        if dists is not None and len(dists) > 0:
+        if dists is not None and len(dists) > 0 and len(temp_df_proj) > 0:
             # Filter projects based on distribution selection
             if isinstance(dists, list):
                 temp_df_proj = temp_df_proj[temp_df_proj.projverdist.isin(dists)]
             else:
                 temp_df_proj = temp_df_proj[temp_df_proj.projverdist == dists]
 
-        if phases is not None and len(phases) > 0:
+        if phases is not None and len(phases) > 0 and len(temp_df_proj) > 0:
             # Filter projects based on phase selection
             if isinstance(phases, list):
                 temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
@@ -834,7 +837,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
                 temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist)]
             # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
-        if secrisk is not None and len(secrisk) > 0:
+        if secrisk is not None and len(secrisk) > 0 and len(temp_df_comp) > 0:
             # Filter projects based on security risk selection
             secvals = []
             temp_df_comp = temp_df_comp[temp_df_comp.seccritcount != '']
@@ -852,7 +855,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
                 secvals.append('LOW')
             temp_df_vuln = temp_df_vuln[temp_df_vuln.severity.isin(secvals)]
 
-        if licrisk is not None and len(licrisk) > 0:
+        if licrisk is not None and len(licrisk) > 0 and len(temp_df_comp) > 0:
             # Filter projects based on security risk selection
             temp_df_comp = temp_df_comp[temp_df_comp.lichighcount != '']
 
@@ -865,7 +868,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             if 'Low' in licrisk:
                 temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
 
-        if polsev is not None and len(polsev) > 0:
+        if polsev is not None and len(polsev) > 0 and len(temp_df_comp) > 0:
             # Filter projects based on security risk selection
             for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
                 if sev in polsev:
@@ -873,7 +876,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             comps = df_polmap[df_polmap.polid.isin(temp_df_pol.index.values)].compverid.unique()
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
-        if temp_df_comp is not None and len(temp_df_comp) > 0 and len(temp_df_comp) < len(df_comp):
+        if temp_df_comp is not None and 0 < len(temp_df_comp) < len(df_comp):
             temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
             if len(temp) > 0:
                 temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
@@ -894,7 +897,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
 
             # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
 
-        elif temp_df_proj is not None and len(temp_df_proj) > 0 and len(temp_df_proj) < len(df_proj):
+        elif temp_df_proj is not None and 0 < len(temp_df_proj) < len(df_proj):
             temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
             if len(temp) > 0:
                 temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
@@ -915,7 +918,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
 
             # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
 
-        if temp_df_comp is not None and len(temp_df_comp) > 0 and len(temp_df_comp) < len(df_comp):
+        if temp_df_comp is not None and 0 < len(temp_df_comp) < len(df_comp):
             licnames = []
             for cid in temp_df_comp.compverid.unique():
                 if cid in compverid_lic_dict.keys():
@@ -945,13 +948,16 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     #                                 (temp_df_proj.projvername == click_proj['points'][0]['label'])]
     #
 
+    if proj_treemap_size != proj_color_prev or proj_treemap_size != proj_size_prev:
+        activetab = 'tab_projsummary'
+
     df_proj_viz = temp_df_proj
     df_comp_viz = temp_df_comp
     df_vuln_viz = temp_df_vuln
     df_lic_viz = temp_df_lic
     df_pol_viz = temp_df_pol
 
-    if activetab == None:
+    if activetab is not None:
         activetab = 'tab_overview'
 
     return (
@@ -972,12 +978,12 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         State('sankey_state', 'data'),
     ]
 )
-def callback_overviewtab_sankey(clickData, state):
+def callback_overviewtab_sankey(clickdata, state):
     global childdata, df_proj
 
     print('callback_summarytab_sankey')
 
-    if clickData is None:
+    if clickdata is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
@@ -985,7 +991,7 @@ def callback_overviewtab_sankey(clickData, state):
         newchilddata = childdata
         newstate = False
     else:
-        thisproj = clickData['points'][0]['label']
+        thisproj = clickdata['points'][0]['label']
 
         newsources = []
         newtargets = []
