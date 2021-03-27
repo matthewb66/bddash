@@ -125,9 +125,9 @@ def create_poltab_card_pol(projdf, compdf, poldf, poldata):
                    size='sm'),
     )
     if poldata is not None:
-        polid = poldata['polid'].values[0]
-        polname = poldata['polname'].values[0]
-        desc = poldata['desc'].values[0]
+        polid = poldata['polid']
+        polname = poldata['polname']
+        desc = poldata['desc']
 
         # projlist = []
         # projverlist = []
@@ -143,17 +143,17 @@ def create_poltab_card_pol(projdf, compdf, poldf, poldata):
         #
         projlist = []
         projverlist = []
-        for projid in projdf.projverid:
-            if poldf[(poldf['polid'] == polid)].size > 0:
-                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
-                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
+        for projid, row in projdf.iterrows():
+            if len(poldf[(poldf['polid'] == polid)]) > 0:
+                projlist.append(row['projname'])
+                projverlist.append(row['projvername'])
 
         complist = []
         compverlist = []
-        for compid in compdf.compverid:
-            if poldf[(poldf['polid'] == polid)].size > 0:
-                complist.append(compdf[compdf.compverid == compid].compname.values[0])
-                compverlist.append(compdf[compdf.compverid == compid].compvername.values[0])
+        for compid in compdf.index.values:
+            if len(poldf[(poldf['polid'] == polid)]) > 0:
+                complist.append(compdf.loc[compid]['compname'])
+                compverlist.append(compdf.loc[compid]['compvername'])
 
         projs_data = pd.DataFrame({
             "projname": projlist,

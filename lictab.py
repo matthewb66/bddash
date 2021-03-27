@@ -100,18 +100,20 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
     projstable = ''
     compstable = ''
     if licdata is not None:
-        licname = licdata['licname'].values[0]
+        licname = licdata['licname']
 
         complist = []
         compverlist = []
         projlist = []
         projverlist = []
-        for compid in lic_compverid_dict[licdata.licname.values[0]]:
-            complist.append(compdf[compdf['compverid'] == compid].compname.values[0])
-            compverlist.append(compdf[compdf['compverid'] == compid].compvername.values[0])
-            for projverid in projcompmapdf[projcompmapdf['compverid'] == compid].projverid.values:
-                projlist.append(projdf[projdf['projverid'] == projverid].projname.values[0])
-                projverlist.append(projdf[projdf['projverid'] == projverid].projvername.values[0])
+        for compid in lic_compverid_dict[licname]:
+            if len(compdf.loc[compid]):
+                complist.append(compdf.loc[compid]['compname'])
+                compverlist.append(compdf.loc[compid]['compvername'])
+                for projverid in projcompmapdf[projcompmapdf.compverid == compid].index.unique():
+                    if len(projdf.loc[projverid]):
+                        projlist.append(projdf.loc[projverid]['projname'])
+                        projverlist.append(projdf.loc[projverid]['projvername'])
 
         usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
 

@@ -7,3 +7,5 @@ users.txt
 database.*
 prd-*
 db_*
+conf/*
+data/*

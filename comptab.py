@@ -44,7 +44,7 @@ def create_comptab_table_compvers(thisdf):
         {"name": ['Vulnerabilities', 'Low'], "id": "seclowcount"},
         {"name": ['License', 'Risk'], "id": "licrisk"},
         {"name": ['License', 'Name'], "id": "licname"},
-        {"name": ['Policy', 'Violations'], "id": "polseverity"},
+        {"name": ['Top Policy', 'Violation'], "id": "polseverity"},
     ]
     df_temp = thisdf
 
@@ -194,7 +194,7 @@ def create_comptab_table_compvers(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'polseverity'},
-                                             'width': '10%',
+                                             'width': '8%',
                                          },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
@@ -206,7 +206,7 @@ def create_comptab_table_compvers(thisdf):
     return thistable
 
 
-def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
+def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
     # from app import df_proj, df_projcompmap
 
     compname = ''
@@ -216,6 +216,10 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
     projselbutton = html.Div(
         dbc.Button("Filter on Used In Project", color="primary", className="mr-1",
                    id="filter_compcard_proj_button", size='sm'),
+    )
+    compselbutton = html.Div(
+        dbc.Button("Filter on Component", color="primary", className="mr-1",
+                   id="filter_compcard_comp_button", size='sm'),
     )
     projusedin_cols = [
         {"name": ['Project'], "id": "projname"},
@@ -235,24 +239,24 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
     poltext = []
 
     if compdata is not None:
-        compname = compdata['compname'].values[0]
-        compver = compdata['compvername'].values[0]
-        compverid = compdata['compverid'].values[0]
-        complic = compdata['licname'].values[0]
-        comppols = polmapdf[polmapdf.compverid == compverid].polname.unique()
+        compname = compdata['compname']
+        compver = compdata['compvername']
+        compverid = compdata['compverid']
+        complic = compdata['licname']
+        comppols = polmapdf[polmapdf.compverid == compverid].polid.unique()
         projlist = []
         projverlist = []
-        for pols in comppols:
-            poltext.append(html.P(pols))
+        for polid in comppols:
+            poltext.append(html.P(poldf.loc[polid]['polname']))
 
         # for projid in projcompmapdf[projcompmapdf['compverid'] == compverid].projverid.unique():
         #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
         #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
 
         for projid in projdf.projverid:
-            if projcompmapdf[(projcompmapdf['compverid'] == compverid)].size > 0:
-                projlist.append(projdf[projdf.projverid == projid].projname.values[0])
-                projverlist.append(projdf[projdf.projverid == projid].projvername.values[0])
+            if len(projcompmapdf[(projcompmapdf['compverid'] == compverid)]) > 0:
+                projlist.append(projdf.loc[projid]['projname'])
+                projverlist.append(projdf.loc[projid]['projvername'])
 
         projs_data = pd.DataFrame({
             "projname": projlist,
@@ -286,6 +290,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, polmapdf, compdata):
                     html.Br(),
                     html.H6("Policies Violated: "),
                     html.Div(poltext),
+                    compselbutton,
                 ],
             ),
             dbc.Table(table_header + table_body, bordered=True),
@@ -327,7 +332,7 @@ def create_comptab(compdf):
                             tab_id="tab_comp_subsummary", id="tab_comp_subsummary",
                         ),
                         dbc.Tab(
-                            create_comptab_card_comp(None, None, None, None),
+                            create_comptab_card_comp(None, None, None, None, None),
                             label='Selected Component',
                             tab_id="tab_comp_subdetail", id="tab_comp_subdetail",
                         ),

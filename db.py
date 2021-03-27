@@ -5,7 +5,7 @@ import psycopg2.extensions
 from configparser import ConfigParser
 
 
-def config(filename='database.ini', section='postgresql'):
+def config(filename, section):
     # create a parser
     parser = ConfigParser()
     # read config file
@@ -23,11 +23,11 @@ def config(filename='database.ini', section='postgresql'):
     return db
 
 
-def connect():
+def connect(filename):
     """ Connect to the PostgreSQL database server """
     try:
         # read connection parameters
-        params = config()
+        params = config(filename, 'postgresql')
 
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
@@ -97,7 +97,7 @@ def get_projdata(thisconn):
                   Inner join project_version on component.project_version_id = project_version.version_id
                   Inner join component_license on component.id = component_license.component_table_id
                   Inner join project on project_version.project_id = project.project_id;''', con=thisconn)
-    print('{} component rows returned'.format(thisdf.size))
+    print('{} component rows returned'.format(len(thisdf)))
     thisdf.fillna(value='', inplace=True)
 
     return thisdf
@@ -130,7 +130,7 @@ def get_vulndata(thisconn):
                   Inner join component on component.id = component_vulnerability.component_table_id 
                   Inner join project_version on component.project_version_id = project_version.version_id 
                   Inner join project on project_version.project_id = project.project_id;''', con=thisconn)
-    print('{} vulnerability rows returned'.format(thisdf.size))
+    print('{} vulnerability rows returned'.format(len(thisdf)))
 
     thisdf.fillna(value='', inplace=True)
     return thisdf
@@ -147,6 +147,6 @@ def get_poldata(thisconn):
                  severity as polseverity
                  from component_policies
                  Inner join component on component.id = component_policies.component_table_id;''', con=thisconn)
-    print('{} policy rows returned'.format(thisdf.size))
+    print('{} policy rows returned'.format(len(thisdf)))
     thisdf.fillna(value='', inplace=True)
     return thisdf

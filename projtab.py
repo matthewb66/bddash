@@ -14,6 +14,8 @@ def create_projtab_table_projs(thisdf):
         {"name": ['', 'Project'], "id": "projname"},
         {"name": ['', 'Project Version'], "id": "projvername"},
         {"name": ['', 'Comps'], "id": "compcount"},
+        {"name": ['', 'Parent'], "id": "parent"},
+        {"name": ['', 'Child'], "id": "child"},
         {"name": ['Vulnerabilities', 'Crit'], "id": "seccritcount"},
         {"name": ['Vulnerabilities', 'High'], "id": "sechighcount"},
         {"name": ['Vulnerabilities', 'Med'], "id": "secmedcount"},
@@ -22,7 +24,7 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'Med'], "id": "licmedcount"},
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
-        {"name": ['Policy', 'Violations'], "id": "polseverity"},
+        {"name": ['Top Policy', 'Violation'], "id": "polseverity"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',
@@ -179,7 +181,15 @@ def create_projtab_table_projs(thisdf):
                                          },
                                          {
                                              'if': {'column_id': 'polseverity'},
-                                             'width': '10%'
+                                             'width': '8%'
+                                         },
+                                         {
+                                             'if': {'column_id': 'child'},
+                                             'width': '4%'
+                                         },
+                                         {
+                                             'if': {'column_id': 'parent'},
+                                             'width': '4%'
                                          },
                                      ],
                                      sort_by=[{'column_id': 'seccritcount', 'direction': 'desc'},
@@ -217,7 +227,7 @@ def create_projtab_fig_subdetails(thisdf):
     return thisfig
 
 
-def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
+def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, projdata, serverurl):
 
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
@@ -247,28 +257,27 @@ def create_projtab_card_proj(projdf, compdf, projcompmapdf, polmapdf, projdata):
         dbc.Button("Filter on Used in Project", id="filter_usedproj_button", className="mr-2", size='sm'),
     )
     thisprojbutton = html.Div(
-        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2",
-                   size='sm')
+        dbc.Button("Filter on Selected Project", id="filter_thisproj_button", className="mr-2", size='sm')
     )
 
     poltext = []
     if projdata is not None:
-        projname = projdata['projname'].values[0]
-        projver = projdata['projvername'].values[0]
-        projlink = projdata['projverurl'].values[0]
+        projname = projdata['projname']
+        projver = projdata['projvername']
+        projlink = '/'.join((serverurl, 'api/projects', projdata['projid'], 'versions', projdata['projverid'],
+                             'components'))
         foundcomps = compdf.loc[(compdf['compname'] == projname) & (compdf['compvername'] == projver)]
-        comppols = polmapdf[polmapdf.projverid == projdata['projverid'].values[0]].polname.unique()
-        for pol in comppols:
-            poltext.append(html.Li(pol + ' (' + polmapdf[polmapdf.polname == pol].polseverity.values[0] + ')'))
+        comppols = polmapdf[polmapdf.projverid == projdata['projverid']].polid.unique()
+        for polid in comppols:
+            poltext.append(html.Li(poldf.loc[polid, 'polname'] + ' (' + poldf.loc[polid].polseverity + ')'))
 
-        if foundcomps.size > 0:
+        if len(foundcomps) > 0:
             projlist = []
             projverlist = []
             for projids in projcompmapdf[projcompmapdf['compverid'] == foundcomps.
-                                         compverid.values[0]].projverid.unique():
-                projs = projdf[projdf['projverid'] == projids]
-                projlist.append(projs.projname.values[0])
-                projverlist.append(projs.projvername.values[0])
+                                         compverid.values[0]].index.unique():
+                projlist.append(projdf.loc[projids, 'projname'])
+                projverlist.append(projdf.loc[projids, 'projvername'])
 
             projs_data = pd.DataFrame({
                 "projname": projlist,
@@ -347,7 +356,7 @@ def create_projtab(projdf):
                         tab_id="tab_proj_subsummary", id="tab_proj_subsummary",
                     ),
                     dbc.Tab(
-                        create_projtab_card_proj(None, None, None, None, None),
+                        create_projtab_card_proj(None, None, None, None, None, None, None),
                         label='Selected Project',
                         tab_id="tab_proj_subdetail", id="tab_proj_subdetail",
                     )

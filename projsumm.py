@@ -40,6 +40,17 @@ def create_projsummtab_fig_proj(thisdf, color_column, size_column):
                          # hover_data={'projname': True, 'projvername': True,},
                          # hover_name='projname',
                          color_continuous_scale='Reds',
+                         labels={
+                             "projname": "Project Name",
+                             "projvername": "Project Version Name",
+                             "secrisk": "Top Security Risk Level",
+                             "secAll": "Count of all Vulnerabilities",
+                             "projcount": "Number of Projects",
+                             'compcount': 'Component Count',
+                             'seccritcountplus1': 'Critical Vulns',
+                             'seccrithighcountplus1': 'Crit & High Vulns',
+                             'lichighcountplus1': 'High Licenses',
+                         },
                          title='Top 200 Project Versions - Size by ' + sizetext,
                          height=700)
     thisfig.data[0].textinfo = 'label+text+value'
@@ -89,14 +100,15 @@ def create_projsummtab(projdf, color_col, size_col):
         dbc.Col([
             dbc.Row(
                 dbc.Col(
-                    dcc.Graph(id='projsummtab_graph_proj',
-                              figure=create_projsummtab_fig_proj(projdf, color_col, size_col,),
+                    dcc.Graph(
+                        id='projsummtab_graph_proj',
+                        figure=create_projsummtab_fig_proj(projdf, color_col, size_col,),
                     ),
                 ),
             ),
             dbc.Row([
                 dbc.Col(
-                    html.Div(children="Box Sizing"), width=3,
+                    html.Div(children="Box Sizing", style={'font-size': '18px'},), width=2,
                 ),
                 dbc.Col(
                     dbc.RadioItems(
@@ -115,7 +127,7 @@ def create_projsummtab(projdf, color_col, size_col):
             ),
             dbc.Row([
                 dbc.Col(
-                    html.Div(children="Colour Scheme"), width=3,
+                    html.Div(children="Colour Scheme", style={'font-size': '18px'},), width=2,
                 ),
                 dbc.Col(
                     dbc.RadioItems(
