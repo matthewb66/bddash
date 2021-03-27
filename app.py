@@ -188,7 +188,7 @@ complist = [
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
                    child_data,
-                   colorfield, sizefield, noprojs):
+                   colorfield, sizefield, noprojs, activetab):
 
     if noprojs:
         return dbc.Tabs(
@@ -256,7 +256,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                 )
             ],
             id="tabs",
-            active_tab="tab_overview",
+            active_tab=activetab,
         )
 
     if projdata is not None:
@@ -325,7 +325,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
             )
         ],
         id="tabs",
-        active_tab="tab_overview",
+        active_tab=activetab,
     )
 
 
@@ -504,7 +504,7 @@ app.layout = dbc.Container(
                 dbc.Spinner(
                     create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
                                    childdata,
-                                   'lichighcountplus1', 'seccritcountplus1', False),
+                                   'lichighcountplus1', 'seccritcountplus1', False, 'tab_overview'),
                     id='spinner_main',
                 ), width=12,
             )
@@ -830,9 +830,9 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
 
         if remstatus is not None and len(remstatus) > 0:
             # tempvulnidlist = []
-            if 'UNREMEDIATED' in remstatus:
+            if set(['UNREMEDIATED']).intersection(set(remstatus)) == {'UNREMEDIATED'}:
                 temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist)]
-            if 'REMEDIATED' in remstatus:
+            if set(['REMEDIATED']).intersection(set(remstatus)) == {'REMEDIATED'}:
                 temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist)]
             # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
@@ -947,22 +947,21 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     #                                 (temp_df_proj.projvername == click_proj['points'][0]['label'])]
     #
 
-    if proj_treemap_size != proj_color_prev or proj_treemap_size != proj_size_prev:
-        activetab = 'tab_projsummary'
-
     df_proj_viz = temp_df_proj
     df_comp_viz = temp_df_comp
     df_vuln_viz = temp_df_vuln
     df_lic_viz = temp_df_lic
     df_pol_viz = temp_df_pol
 
-    if activetab is not None:
+    if proj_treemap_size != proj_color_prev or proj_treemap_size != proj_size_prev:
+        activetab = 'tab_projsummary'
+    elif activetab is None:
         activetab = 'tab_overview'
 
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
                        df_projphasepolsec, df_comppolsec, childdata,
-                       proj_treemap_color, proj_treemap_size, noprojs),
+                       proj_treemap_color, proj_treemap_size, noprojs, activetab),
         proj_treemap_color, proj_treemap_size, activetab, activetab
     )
 
