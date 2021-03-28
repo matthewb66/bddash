@@ -127,12 +127,12 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, licdata):
         usedinprojslist = projcompmapdf[projcompmapdf.compverid.isin(usedincompsdf.index.unique())].index.unique()
         usedinprojsdf = projdf[projdf.index.isin(usedinprojslist)]
 
-        usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
+        usedbycompstitle = html.P('Used in Components (Current Filter):', className="card-text", )
 
         # for projid in df_projvulnmap[df_projvulnmap['vulnid'] == vulnid].projverid.unique():
         #     projlist.append(df_proj[df_proj['projverid'] == projid].projname.values[0])
         #     projverlist.append(df_proj[df_proj['projverid'] == projid].projvername.values[0])
-        usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
+        usedbyprojstitle = html.P('Used in Projects (Current Filter):', className="card-text", )
 
         projs_data = pd.DataFrame({
             "projname": usedinprojsdf.projname.values,

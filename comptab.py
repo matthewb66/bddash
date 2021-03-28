@@ -212,7 +212,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
     compname = 'No Component Selected'
     compver = ''
     complic = ''
-    projusedbytitle = html.P('Used in Projects:', className="card-text", )
+    projusedbytitle = html.P('Used in Projects (Current Filter):', className="card-text", )
     projselbutton = html.Div(
         dbc.Button("Filter on Used In Project", color="primary", className="mr-1",
                    id="filter_compcard_proj_button", size='sm'),

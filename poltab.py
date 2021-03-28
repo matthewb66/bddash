@@ -100,8 +100,8 @@ def create_poltab_card_pol(projdf, compdf, poldf, poldata):
         {"name": ['Component'], "id": "compname"},
         {"name": ['Component Version'], "id": "compvername"},
     ]
-    usedbyprojstitle = html.P('Projects with Violations:', className="card-text", )
-    usedbycompstitle = html.P('Components with Violations:', className="card-text", )
+    usedbyprojstitle = html.P('Projects with Violations (Current Filter):', className="card-text", )
+    usedbycompstitle = html.P('Components with Violations (Current Filter):', className="card-text", )
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},

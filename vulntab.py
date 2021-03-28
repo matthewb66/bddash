@@ -123,8 +123,8 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
         {"name": ['Component'], "id": "compname"},
         {"name": ['Component Version'], "id": "compvername"},
     ]
-    usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
-    usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
+    usedbyprojstitle = html.P('Exposed in Projects (Current Filter):', className="card-text", )
+    usedbycompstitle = html.P('Exposed in Components (Current Filter):', className="card-text", )
     projstable = dash_table.DataTable(
         columns=projusedin_cols,
         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
@@ -158,17 +158,14 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
             vulnrelated = 'None'
         desc = vulndata['description']
         vulnlink = '/'.join((serverurl, 'api/vulnerabilities', vulndata['vulnid'], 'overview'))
-        projlist = []
-        projverlist = []
-        for projid in df_vulnmap.loc[vulnid].projverid.unique():
-            projlist.append(projdf.loc[projid]['projname'])
-            projverlist.append(projdf.loc[projid]['projvername'])
 
-        complist = []
-        compverlist = []
-        for compid in df_vulnmap.loc[vulnid, 'compverid']:
-            complist.append(compdf.loc[compid]['compname'])
-            compverlist.append(compdf.loc[compid]['compvername'])
+        temp = projdf[projdf.index.isin(df_vulnmap.loc[vulnid, 'projverid'])]
+        projlist = temp.projname.values
+        projverlist = temp.projvername.values
+
+        temp = compdf[compdf.index.isin(df_vulnmap.loc[vulnid, 'compverid'])]
+        complist = temp.compname.values
+        compverlist = temp.compvername.values
 
         projs_data = pd.DataFrame({
             "projname": projlist,
