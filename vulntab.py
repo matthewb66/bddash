@@ -160,13 +160,13 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
         vulnlink = '/'.join((serverurl, 'api/vulnerabilities', vulndata['vulnid'], 'overview'))
         projlist = []
         projverlist = []
-        for projid in df_vulnmap.loc[vulnid]['projverid'].unique():
+        for projid in df_vulnmap.loc[vulnid].projverid.unique():
             projlist.append(projdf.loc[projid]['projname'])
             projverlist.append(projdf.loc[projid]['projvername'])
 
         complist = []
         compverlist = []
-        for compid in df_vulnmap.loc[vulnid]['compverid'].unique():
+        for compid in df_vulnmap.loc[vulnid, 'compverid']:
             complist.append(compdf.loc[compid]['compname'])
             compverlist.append(compdf.loc[compid]['compvername'])
 

@@ -41,6 +41,7 @@ df_projphasepolsec = None
 df_projdistpol = None
 childdata = None
 df_comppolsec = None
+init = True
 serverurl = "https://poc39.blackduck.synopsys.com"
 dbconfig = 'conf/database.poc39'
 
@@ -169,7 +170,6 @@ df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_po
 df_pol_viz = df_pol
 # data.proc_projinproj(df_proj, df_comp)
 df_projphasepolsec, df_comppolsec = data.proc_overviewdata(df_proj, df_comp)
-activetab = 'tab_overview'
 
 
 projlist = [
@@ -190,7 +190,7 @@ complist = [
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
                    child_data,
-                   colorfield, sizefield, noprojs, activetab):
+                   colorfield, sizefield, noprojs):
 
     if noprojs:
         return dbc.Tabs(
@@ -258,7 +258,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
                 )
             ],
             id="tabs",
-            active_tab=activetab,
+            active_tab='tab_overview',
         )
 
     if projdata is not None:
@@ -327,7 +327,7 @@ def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepold
             )
         ],
         id="tabs",
-        active_tab=activetab,
+        # active_tab=activetab,
     )
 
 
@@ -338,7 +338,7 @@ app.layout = dbc.Container(
         dcc.Store(id='proj_color', storage_type='session'),
         dcc.Store(id='proj_size', storage_type='session'),
         dcc.Store(id='sankey_state', storage_type='session'),
-        dcc.Store(id='active_tab', storage_type='session'),
+        # dcc.Store(id='active_tab', storage_type='session'),
         dbc.NavbarSimple(
             children=[
                 statusitem,
@@ -506,7 +506,7 @@ app.layout = dbc.Container(
                 dbc.Spinner(
                     create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
                                    childdata,
-                                   'lichighcountplus1', 'seccritcountplus1', False, 'tab_overview'),
+                                   'lichighcountplus1', 'seccritcountplus1', False),
                     id='spinner_main',
                 ), width=12,
             )
@@ -743,7 +743,6 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         Output('spinner_main', 'children'),
         Output('proj_color', 'data'),
         Output('proj_size', 'data'),
-        Output('active_tab', 'data'),
         Output('tabs', 'active_tab'),
     ], [
         Input("sel-button", "n_clicks"),
@@ -763,12 +762,12 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         State('sel_comps', 'value'),
         State('proj_color', 'data'),
         State('proj_size', 'data'),
-        State('active_tab', 'data'),
+        # State('active_tab', 'data'),
     ]
 )
 def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, vers, remstatus,
                   tiers, dists, phases,
-                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev, activetab):
+                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
     global df_proj, df_proj_viz
     global df_comp, df_projcompmap, df_comp_viz
     global df_vuln, df_vulnmap, df_vulnactivelist, df_vuln_viz
@@ -776,6 +775,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     global df_pol, df_pol_viz, df_polmap
     global df_projdistpol, df_projphasepolsec
     global childdata
+    global init
     print('callback_main')
 
     # ctx = dash.callback_context
@@ -794,27 +794,30 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     temp_df_pol = df_pol
     noprojs = False
 
+    def isnotempty(df):
+        return df is not None and len(df) > 0
+
     # Process existing select dropdowns
-    if projs is not None and len(projs) > 0:
+    if isnotempty(projs):
         if isinstance(projs, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projname.isin(projs)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj['projname'] == projs]
 
-    if vers is not None and len(vers) > 0 and len(temp_df_proj) > 0:
+    if isnotempty(vers) and isnotempty(temp_df_proj):
         if isinstance(vers, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projvername.isin(vers)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj['projname'] == vers]
 
-    if dists is not None and len(dists) > 0 and len(temp_df_proj) > 0:
+    if isnotempty(dists) and isnotempty(temp_df_proj):
         # Filter projects based on distribution selection
         if isinstance(dists, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projverdist.isin(dists)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj.projverdist == dists]
 
-    if phases is not None and len(phases) > 0 and len(temp_df_proj) > 0:
+    if isnotempty(phases) and isnotempty(temp_df_proj):
         # Filter projects based on phase selection
         if isinstance(phases, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
@@ -822,21 +825,21 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase == phases]
 
     # Process comps from reduced list of projs
-    if temp_df_proj is not None and len(temp_df_proj) < len(df_proj):
+    if isnotempty(temp_df_proj) and len(temp_df_proj) < len(df_proj):
         temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.unique())].compverid.values
         if len(temp) > 0:
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
         else:
             temp_df_comp = None
 
-    if comps is not None and len(comps) > 0 and len(temp_df_comp) > 0:
+    if isnotempty(comps) and isnotempty(temp_df_comp):
         # Filter projects based on phase selection
         if isinstance(comps, list):
             temp_df_comp = temp_df_comp[temp_df_comp.compname.isin(comps)]
         else:
             temp_df_comp = temp_df_comp[temp_df_comp['compname'] == comps]
 
-    if secrisk is not None and len(secrisk) > 0 and len(temp_df_comp) > 0 and len(temp_df_proj) > 0:
+    if isnotempty(secrisk) and isnotempty(temp_df_comp) and isnotempty(temp_df_proj):
         # Filter projects based on security risk selection
         secvals = []
         temp_df_comp = temp_df_comp[temp_df_comp.seccritcount != '']
@@ -854,7 +857,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             secvals.append('LOW')
         temp_df_vuln = temp_df_vuln[temp_df_vuln.severity.isin(secvals)]
 
-    if licrisk is not None and len(licrisk) > 0 and len(temp_df_comp) > 0 and len(temp_df_proj) > 0:
+    if isnotempty(licrisk) and isnotempty(temp_df_comp) and isnotempty(temp_df_proj):
         # Filter projects based on security risk selection
         temp_df_comp = temp_df_comp[temp_df_comp.lichighcount != '']
 
@@ -867,7 +870,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         if 'Low' in licrisk:
             temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
 
-    if polsev is not None and len(polsev) > 0 and len(temp_df_comp) > 0:
+    if isnotempty(polsev) and isnotempty(temp_df_comp):
         # Filter projects based on security risk selection
         for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
             if sev in polsev:
@@ -875,49 +878,49 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         comps = df_polmap[df_polmap.polid.isin(temp_df_pol.index.values)].compverid.unique()
         temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
-    if temp_df_comp is not None and 0 < len(temp_df_comp) < len(df_comp):
+    if isnotempty(temp_df_comp) and 0 < len(temp_df_comp) < len(df_comp):
         temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
-        if len(temp) > 0:
+        if isnotempty(temp):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
 
         temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.index.values)].index.values
-        if len(temp_df_proj) > 0 and len(temp) > 0:
+        if isnotempty(temp_df_proj) and isnotempty(temp):
             temp_df_proj = temp_df_proj[temp_df_proj.index.isin(temp)]
         else:
             temp_df_proj = None
 
         temp = df_polmap[df_polmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
-        if len(temp_df_pol) > 0 and len(temp) > 0:
+        if isnotempty(temp_df_pol) and isnotempty(temp):
             temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
         else:
             temp_df_pol = None
 
         # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
 
-    elif temp_df_proj is not None and 0 < len(temp_df_proj) < len(df_proj):
+    elif isnotempty(temp_df_proj) and 0 < len(temp_df_proj) < len(df_proj):
         temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
-        if len(temp) > 0:
+        if isnotempty(temp):
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
         else:
             temp_df_comp = None
 
         temp = df_vulnmap[df_vulnmap.projverid.isin(temp_df_proj.index.values)].index.values
-        if len(temp) > 0:
+        if isnotempty(temp):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
 
         temp = df_polmap[df_polmap.projverid.isin(temp_df_proj.index.values)].polid.unique()
-        if len(temp_df_pol) > 0 and len(temp) > 0:
+        if isnotempty(temp_df_pol) and isnotempty(temp):
             temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
         else:
             temp_df_pol = None
 
         # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
 
-    if temp_df_comp is not None and 0 < len(temp_df_comp) < len(df_comp):
+    if isnotempty(temp_df_comp) and 0 < len(temp_df_comp) < len(df_comp):
         licnames = temp_df_comp.licname.unique()
         # for cid in temp_df_comp.compverid.unique():
         #     if cid in compverid_lic_dict.keys():
@@ -928,7 +931,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         licnames.sort()
         temp_df_lic = temp_df_lic[temp_df_lic.licname.isin(licnames)]
 
-    if remstatus is not None and len(remstatus) > 0:
+    if isnotempty(remstatus):
         # tempvulnidlist = []
         if {'UNREMEDIATED'}.intersection(set(remstatus)) == {'UNREMEDIATED'}:
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist)]
@@ -936,8 +939,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist)]
         # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
-    if temp_df_proj is None or len(temp_df_proj) == 0 or \
-            temp_df_comp is None or len(temp_df_comp) == 0:
+    if (not isnotempty(temp_df_proj)) or (not isnotempty(temp_df_comp)):
         noprojs = True
 
     # # Click on projtab_treemap
@@ -959,16 +961,21 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     df_lic_viz = temp_df_lic
     df_pol_viz = temp_df_pol
 
-    if not (proj_treemap_size == proj_size_prev and proj_treemap_color == proj_color_prev):
-        activetab = 'tab_projsummary'
-    elif activetab is None or activetab == '':
+    # if not (proj_treemap_size == proj_size_prev and proj_treemap_color == proj_color_prev):
+    #     activetab = 'tab_projsummary'
+    # elif activetab is None or activetab == '':
+    #     activetab = 'tab_overview'
+    if init:
         activetab = 'tab_overview'
+        init = False
+    else:
+        activetab = tab
 
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
                        df_projphasepolsec, df_comppolsec, childdata,
-                       proj_treemap_color, proj_treemap_size, noprojs, activetab),
-        proj_treemap_color, proj_treemap_size, activetab, activetab
+                       proj_treemap_color, proj_treemap_size, noprojs),
+        proj_treemap_color, proj_treemap_size, activetab
     )
 
 

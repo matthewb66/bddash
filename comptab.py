@@ -253,7 +253,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
         #     projlist.append(projdf[projdf['projverid'] == projid].projname.values[0])
         #     projverlist.append(projdf[projdf['projverid'] == projid].projvername.values[0])
 
-        for projid in projdf.projverid:
+        for projid in projdf.index.unique():
             if len(projcompmapdf[(projcompmapdf['compverid'] == compverid)]) > 0:
                 projlist.append(projdf.loc[projid]['projname'])
                 projverlist.append(projdf.loc[projid]['projvername'])
