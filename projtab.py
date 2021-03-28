@@ -232,7 +232,7 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
     # lichighcount  licmedcount  liclowcount  licokcount  secAll
-    projname = ''
+    projname = 'No Project Selected'
     projver = ''
     projlink = ''
     row1 = ''
@@ -310,8 +310,10 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
             dbc.CardBody(
                 [
                     html.H4("Project: " + projname, className="card-title"),
-                    html.H5("Project Version: " + projver, className="card-subtitle"),
-                    html.A("Project Link", href=projlink, target="_blank"),
+                    html.Div([
+                        "Project Version: ",
+                        html.A(projver, href=projlink, target="_blank", style={'margin-left': '10px'}),
+                    ], style={'display': 'flex', 'classname': 'card-subtitle'}),
                     html.Br(),
                     thisprojbutton,
                     html.Br(),

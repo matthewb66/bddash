@@ -90,7 +90,7 @@ def create_poltab_table_pols(thisdf):
 
 
 def create_poltab_card_pol(projdf, compdf, poldf, poldata):
-    polname = ''
+    polname = 'No Policy Selected'
     desc = ''
     projusedin_cols = [
         {"name": ['Project'], "id": "projname"},

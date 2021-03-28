@@ -111,7 +111,7 @@ def create_vulntab_table_vulns(thisdf):
 def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
     # from app import df_proj, df_comp, df_projvulnmap, df_compvulnmap
 
-    vulnid = ''
+    vulnid = 'No Vulnerability Selected'
     vulnlink = ''
     vulnrelated = ''
     desc = ''
@@ -160,13 +160,13 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
         vulnlink = '/'.join((serverurl, 'api/vulnerabilities', vulndata['vulnid'], 'overview'))
         projlist = []
         projverlist = []
-        for projid in df_vulnmap.loc[vulnid]['projverid']:
+        for projid in df_vulnmap.loc[vulnid]['projverid'].unique():
             projlist.append(projdf.loc[projid]['projname'])
             projverlist.append(projdf.loc[projid]['projvername'])
 
         complist = []
         compverlist = []
-        for compid in df_vulnmap.loc[vulnid]['compverid']:
+        for compid in df_vulnmap.loc[vulnid]['compverid'].unique():
             complist.append(compdf.loc[compid]['compname'])
             compverlist.append(compdf.loc[compid]['compvername'])
 
@@ -207,12 +207,16 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
             dbc.CardHeader("Vulnerability Details"),
             dbc.CardBody(
                 [
-                    html.H4("Vulnerability: " + vulnid, className="card-title"),
+                    # html.H4("Vulnerability: " + vulnid, className="card-title"),
+                    html.Div([
+                        "Vulnerability: ",
+                        html.A(vulnid, href=vulnlink, target="_blank", style={'margin-left': '10px'}),
+                    ], style={'display': 'flex', 'classname': 'card-title'}),
+                    html.Br(),
                     html.H6("Related to: " + vulnrelated, className="card-subtitle"),
                     # html.H6("Description: " , className="card-subtitle"),
-                    html.A("Vulnerability Link", href=vulnlink, target="_blank"),
+                    # html.A("Vulnerability Link", href=vulnlink, target="_blank"),
                     html.Br(),
-
                     html.P(desc),
                 ],
             ),

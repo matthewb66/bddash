@@ -209,7 +209,7 @@ def create_comptab_table_compvers(thisdf):
 def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
     # from app import df_proj, df_projcompmap
 
-    compname = ''
+    compname = 'No Component Selected'
     compver = ''
     complic = ''
     projusedbytitle = html.P('Used in Projects:', className="card-text", )

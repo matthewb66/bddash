@@ -32,6 +32,11 @@ def create_lictab_table_lics(licdict):
                                          filter_action='native',
                                          row_selectable="single",
                                          cell_selectable=False,
+                                         style_cell={
+                                             'overflow': 'hidden',
+                                             'textOverflow': 'ellipsis',
+                                             'maxWidth': 0
+                                         },
                                          tooltip_data=[
                                              {
                                                  column: {'value': str(value), 'type': 'markdown'}
@@ -65,6 +70,10 @@ def create_lictab_table_lics(licdict):
                                                  'color': 'black'
                                              },
                                              {
+                                                 'if': {'column_id': 'licname'},
+                                                 'width': '52%'
+                                             },
+                                             {
                                                  'if': {'column_id': 'lichighcount'},
                                                  'width': '12%'
                                              },
@@ -90,7 +99,7 @@ def create_lictab_table_lics(licdict):
     return thistable
 
 
-def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, licdata):
+def create_lictab_card_lic(projdf, compdf, projcompmapdf, licdata):
     # from app import df_proj, df_comp, df_projcompmap, lic_compverid_dict
 
     licname = ''
@@ -102,18 +111,21 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
     if licdata is not None:
         licname = licdata['licname']
 
-        complist = []
-        compverlist = []
-        projlist = []
-        projverlist = []
-        for compid in lic_compverid_dict[licname]:
-            if len(compdf.loc[compid]):
-                complist.append(compdf.loc[compid]['compname'])
-                compverlist.append(compdf.loc[compid]['compvername'])
-                for projverid in projcompmapdf[projcompmapdf.compverid == compid].index.unique():
-                    if len(projdf.loc[projverid]):
-                        projlist.append(projdf.loc[projverid]['projname'])
-                        projverlist.append(projdf.loc[projverid]['projvername'])
+        # complist = []
+        # compverlist = []
+        # projlist = []
+        # projverlist = []
+        # for compid in lic_compverid_dict[licname]:
+        #     if len(compdf.loc[compid]):
+        #         complist.append(compdf.loc[compid]['compname'])
+        #         compverlist.append(compdf.loc[compid]['compvername'])
+        #         for projverid in projcompmapdf[projcompmapdf.compverid == compid].index.unique():
+        #             if len(projdf.loc[projverid]):
+        #                 projlist.append(projdf.loc[projverid]['projname'])
+        #                 projverlist.append(projdf.loc[projverid]['projvername'])
+        usedincompsdf = compdf[compdf.licname == licname]
+        usedinprojslist = projcompmapdf[projcompmapdf.compverid.isin(usedincompsdf.index.unique())].index.unique()
+        usedinprojsdf = projdf[projdf.index.isin(usedinprojslist)]
 
         usedbycompstitle = html.P('Exposed in Components:', className="card-text", )
 
@@ -123,8 +135,8 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
         usedbyprojstitle = html.P('Exposed in Projects:', className="card-text", )
 
         projs_data = pd.DataFrame({
-            "projname": projlist,
-            "projvername": projverlist
+            "projname": usedinprojsdf.projname.values,
+            "projvername": usedinprojsdf.projvername.values,
         })
 
         projusedin_cols = [
@@ -138,12 +150,13 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
             page_size=5, sort_action='native',
             filter_action='native',
             # row_selectable="single",
-            merge_duplicate_headers=False
+            merge_duplicate_headers=False,
+            cell_selectable = False,
         )
 
         comps_data = pd.DataFrame({
-            "compname": complist,
-            "compvername": compverlist
+            "compname": usedincompsdf.compname.values,
+            "compvername": usedincompsdf.compvername.values,
         })
 
         compusedin_cols = [
@@ -158,19 +171,18 @@ def create_lictab_card_lic(projdf, compdf, projcompmapdf, lic_compverid_dict, li
             filter_action='native',
             # row_selectable="single",
             # sort_by=[{'column_id': 'score', 'direction': 'desc'}],
-            merge_duplicate_headers=False
+            merge_duplicate_headers=False,
+            cell_selectable=False,
         )
+    else:
+        licname = 'No License Selected'
 
     return dbc.Card(
         [
             dbc.CardHeader("License Details"),
             dbc.CardBody(
                 [
-                    html.H4("License Name: " + licname, className="card-title"),
-                    # html.H6("Related to: " + vulnrelated, className="card-subtitle"),
-                    # html.H6("Description: " , className="card-subtitle"),
-
-                    # html.P(desc),
+                    html.H4(licname, className="card-title"),
                 ],
             ),
             usedbyprojstitle, projstable,
@@ -198,6 +210,6 @@ def create_lictab(licdf):
                     ),
                 ], width=8,
             ),
-            dbc.Col(create_lictab_card_lic(None, None, None, None, None), width=4, id='col_lictab_lic'),
+            dbc.Col(create_lictab_card_lic(None, None, None, None), width=4, id='col_lictab_lic'),
         ]
     )

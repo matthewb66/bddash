@@ -1,5 +1,4 @@
 import pandas as pd
-import re
 
 
 # def proc_projdata(projdf):
@@ -33,7 +32,7 @@ import re
 #     return newdf
 
 
-def proc_comp_data(thisdf, serverurl, expand):
+def proc_comp_data(thisdf, expand):
     # compdf will have 1 row per compver across all projvers
     # -  license risk will be the most severe across all projvers
     # projcompdf will have 1 row for each compver within each projver
@@ -242,55 +241,58 @@ def proc_comp_data(thisdf, serverurl, expand):
 
 
 def proc_licdata(thisdf):
-    licnames = thisdf.licname.values
-    compids = thisdf.index.values
+    # licnames = thisdf.licname.values
+    # compids = thisdf.index.unique()
     # licrisks = thisdf.licrisk.values
 
-    thislic_compverid_dict = {}  # Map of license names to compverids (dict of lists of compverids)
-    thiscompverid_lic_dict = {}  # Map of compverids to licnames (dict of lists of licnames)
+    # thislic_compverid_dict = {}  # Map of license names to compverids (dict of lists of compverids)
+    # thiscompverid_lic_dict = {}  # Map of compverids to licnames (dict of lists of licnames)
     # licrisk_dict = {}
-    licname_list = []
+    # licname_list = []
 
     tempdf = thisdf
-    sums = tempdf[~tempdf['licname'].str.startswith('(') &
-                  ~tempdf['licname'].str.endswith(')')].groupby("licname").sum().reset_index()
+    # sums = tempdf[~tempdf['licname'].str.startswith('(') &
+    #               ~tempdf['licname'].str.endswith(')')].groupby("licname").sum().reset_index()
+    sums = tempdf.groupby("licname").sum().reset_index()
     # print(sums.head(100).to_string())
 
-    compindex = 0
+    # compindex = 0
 
     # def get_maxlicrisk(riskarray):
     #     for risk in ['High', 'Medium', 'Low', 'OK']:
     #         if risk in riskarray:
     #             return risk
 
-    for lic in licnames:
-        if lic not in licname_list:
-            licname_list.append(lic)
-        splits = [lic]
+    # for lic in sums.licname.unique():
+    #     if lic not in licname_list:
+    #         licname_list.append(lic)
+    #
+    #
+    # splits = [lic]
+    #
+    # if lic[0] == '(' and lic[-1] == ')':
+    #     lic = lic[1:-1]
+    #     if ' AND ' in lic or ' OR ' in lic:
+    #         splits = re.split(' OR | AND ', lic)
+    #
+    # for item in splits:
+    #     # lics = thisdf[thisdf['licname'] == item].licrisk.unique()
+    #     # maxrisk = get_maxlicrisk(lics)
+    #     compverid = compids[compindex]
+    #     if item not in thislic_compverid_dict.keys():
+    #         thislic_compverid_dict[item] = [compverid]
+    #     elif compverid not in thislic_compverid_dict[item]:
+    #         thislic_compverid_dict[item].append(compverid)
+    #
+    #     if compverid not in thiscompverid_lic_dict.keys():
+    #         thiscompverid_lic_dict[compverid] = [item]
+    #     elif item not in thiscompverid_lic_dict[compverid]:
+    #         thiscompverid_lic_dict[compverid].append(item)
 
-        if lic[0] == '(' and lic[-1] == ')':
-            lic = lic[1:-1]
-            if ' AND ' in lic or ' OR ' in lic:
-                splits = re.split(' OR | AND ', lic)
+    # licrisk_dict[item] = maxrisk
+    # print(item, ' - ', maxrisk, ' - ', lic)
 
-        for item in splits:
-            # lics = thisdf[thisdf['licname'] == item].licrisk.unique()
-            # maxrisk = get_maxlicrisk(lics)
-            compverid = compids[compindex]
-            if item not in thislic_compverid_dict.keys():
-                thislic_compverid_dict[item] = [compverid]
-            elif compverid not in thislic_compverid_dict[item]:
-                thislic_compverid_dict[item].append(compverid)
-
-            if compverid not in thiscompverid_lic_dict.keys():
-                thiscompverid_lic_dict[compverid] = [item]
-            elif item not in thiscompverid_lic_dict[compverid]:
-                thiscompverid_lic_dict[compverid].append(item)
-
-                # licrisk_dict[item] = maxrisk
-            # print(item, ' - ', maxrisk, ' - ', lic)
-
-        compindex += 1
+    # compindex += 1
 
     # print(list(zip(licmap_dict.keys(), licrisk_dict.values())))
     print("{} Licenses returned".format(len(sums)))
@@ -299,7 +301,7 @@ def proc_licdata(thisdf):
     # sorter = ['OK', 'Low', 'Medium', 'High']
     # temp_df.licrisk = temp_df.licrisk.astype("category")
     # temp_df.licrisk.cat.set_categories(sorter, inplace=True)
-    return sums, thislic_compverid_dict, thiscompverid_lic_dict
+    return sums
 
 
 def proc_vuln_data(thisdf):
@@ -459,6 +461,6 @@ def proc_overviewdata(projdf, compdf):
     comp_polsecdf.insert(5, 'compcount', tempdf['compverid'])
 
     comp_polsecdf.drop(['licriskNoUnk',
-           'lichighcount', 'compcount', 'licmedcount', 'liclowcount', 'licokcount'], axis=1, inplace=True)
+                        'lichighcount', 'compcount', 'licmedcount', 'liclowcount', 'licokcount'], axis=1, inplace=True)
 
     return proj_phasepolsecdf, comp_polsecdf
