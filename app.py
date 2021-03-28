@@ -824,6 +824,13 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         else:
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase == phases]
 
+    if isnotempty(tiers) and isnotempty(temp_df_proj):
+        # Filter projects based on phase selection
+        if isinstance(tiers, list):
+            temp_df_proj = temp_df_proj[temp_df_proj.projtier.isin(tiers)]
+        else:
+            temp_df_proj = temp_df_proj[temp_df_proj.projtier == tiers]
+
     # Process comps from reduced list of projs
     if isnotempty(temp_df_proj) and len(temp_df_proj) < len(df_proj):
         temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.unique())].compverid.values
@@ -931,7 +938,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         licnames.sort()
         temp_df_lic = temp_df_lic[temp_df_lic.licname.isin(licnames)]
 
-    if isnotempty(remstatus):
+    if isnotempty(remstatus) and isnotempty(temp_df_vuln):
         # tempvulnidlist = []
         if {'UNREMEDIATED'}.intersection(set(remstatus)) == {'UNREMEDIATED'}:
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist)]
