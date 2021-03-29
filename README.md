@@ -27,17 +27,27 @@ The dashboard program can connect to the Black Duck Reporting DB to access data 
 
 ## Reporting DB connection - conf/database.ini
 
-The Black Duck Reporting DB is a PostgreSQL view accessed on port 54321 (on-premises deployments) or port 5432 (hosted servers).
+The Black Duck Reporting DB is a PostgreSQL view accessed on specific ports - please refer to the Black Duck administration guide for instructions on how to access the Reporting DB.
 
 An SQL connection config file `conf/database.ini` is required as follows:
 
-    [database]
-    server=
-    user=
+    [postgresql]
+    host=blackduck.server.com
+    database=bds_hub
+    user=blackduck_user
+    password=XXXXXX
+    port=XXXX
+    sslcert=conf/user.crt
+    sslkey=conf/user.key
+    sslrootcert=conf/lan_root.crt
+    sslmode=verify-ca
+    options=-c search_path=reporting
 
 SSL certificates may be required to connect to the server, and these should be defined within the database.ini file.
 
 For Synopsys-hosted Black Duck servers, you will also need to contact Support to open the Reporting DB ports and whitelist IP addresses which require connectivity, as well as obtain the certificates which must be configured in the database.ini file.
+
+For self-hosted Black Duck servers, you will need to set the reporting DB password following the instructions in the Administration Guide.
 
 ## Data from JSON files
 
