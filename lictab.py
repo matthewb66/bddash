@@ -4,6 +4,14 @@ import dash_table
 import pandas as pd
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_lictab_table_lics(licdict):
     lic_cols = [
         {"name": ['', 'License Name'], "id": "licname"},
@@ -17,98 +25,98 @@ def create_lictab_table_lics(licdict):
     # [{'column-1': 4.5, 'column-2': 'montreal', 'column-3': 'canada'},
     #  {'column-1': 8, 'column-2': 'boston', 'column-3': 'america'}]
 
-    if len(licdict) == 0:
-        thistable = dash_table.DataTable(id='lictab_table_lics',
-                                         columns=lic_cols,
-                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
-                                         filter_action='native',
-                                         )
+    if isempty(licdict):
+        thistable = dash_table.DataTable(
+            id='lictab_table_lics',
+            columns=lic_cols,
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
+            filter_action='native',
+        )
     else:
-        thistable = dash_table.DataTable(id='lictab_table_lics',
-                                         columns=lic_cols,
-                                         style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
-                                         data=licdict.to_dict('records'),
-                                         page_size=20, sort_action='native',
-                                         filter_action='native',
-                                         row_selectable="single",
-                                         cell_selectable=False,
-                                         style_cell={
-                                             'overflow': 'hidden',
-                                             'textOverflow': 'ellipsis',
-                                             'maxWidth': 0
-                                         },
-                                         tooltip_data=[
-                                             {
-                                                 column: {'value': str(value), 'type': 'markdown'}
-                                                 for column, value in row.items()
-                                             } for row in licdict.to_dict('records')
-                                         ],
-                                         tooltip_duration=None,
-                                         style_data_conditional=[
-                                             {
-                                                 'if': {
-                                                     'filter_query': '{lichighcount} > 0',
-                                                     'column_id': 'lichighcount'
-                                                 },
-                                                 'backgroundColor': 'crimson',
-                                                 'color': 'black'
-                                             },
-                                             {
-                                                 'if': {
-                                                     'filter_query': '{licmedcount} > 0',
-                                                     'column_id': 'licmedcount'
-                                                 },
-                                                 'backgroundColor': 'coral',
-                                                 'color': 'black'
-                                             },
-                                             {
-                                                 'if': {
-                                                     'filter_query': '{liclowcount} > 0',
-                                                     'column_id': 'liclowcount'
-                                                 },
-                                                 'backgroundColor': 'gold',
-                                                 'color': 'black'
-                                             },
-                                             {
-                                                 'if': {'column_id': 'licname'},
-                                                 'width': '52%'
-                                             },
-                                             {
-                                                 'if': {'column_id': 'lichighcount'},
-                                                 'width': '12%'
-                                             },
-                                             {
-                                                 'if': {'column_id': 'licmedcount'},
-                                                 'width': '12%'
-                                             },
-                                             {
-                                                 'if': {'column_id': 'liclowcount'},
-                                                 'width': '12%'
-                                             },
-                                             {
-                                                 'if': {'column_id': 'licokcount'},
-                                                 'width': '12%'
-                                             },
-                                         ],
-                                         sort_by=[{'column_id': 'lichighcount', 'direction': 'desc'},
-                                                  {'column_id': 'licmedcount', 'direction': 'desc'},
-                                                  {'column_id': 'liclowcount', 'direction': 'desc'},
-                                                  {'column_id': 'licokcount', 'direction': 'asc'}],
-                                         merge_duplicate_headers=True,
-                                         )
+        thistable = dash_table.DataTable(
+            id='lictab_table_lics',
+            columns=lic_cols,
+            style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
+            data=licdict.to_dict('records'),
+            page_size=20, sort_action='native',
+            filter_action='native',
+            row_selectable="single",
+            cell_selectable=False,
+            style_cell={
+             'overflow': 'hidden',
+             'textOverflow': 'ellipsis',
+             'maxWidth': 0
+            },
+            tooltip_data=[
+             {
+                 column: {'value': str(value), 'type': 'markdown'}
+                 for column, value in row.items()
+             } for row in licdict.to_dict('records')
+            ],
+            tooltip_duration=None,
+            style_data_conditional=[
+             {
+                 'if': {
+                     'filter_query': '{lichighcount} > 0',
+                     'column_id': 'lichighcount'
+                 },
+                 'backgroundColor': 'crimson',
+                 'color': 'black'
+             },
+             {
+                 'if': {
+                     'filter_query': '{licmedcount} > 0',
+                     'column_id': 'licmedcount'
+                 },
+                 'backgroundColor': 'coral',
+                 'color': 'black'
+             },
+             {
+                 'if': {
+                     'filter_query': '{liclowcount} > 0',
+                     'column_id': 'liclowcount'
+                 },
+                 'backgroundColor': 'gold',
+                 'color': 'black'
+             },
+             {
+                 'if': {'column_id': 'licname'},
+                 'width': '52%'
+             },
+             {
+                 'if': {'column_id': 'lichighcount'},
+                 'width': '12%'
+             },
+             {
+                 'if': {'column_id': 'licmedcount'},
+                 'width': '12%'
+             },
+             {
+                 'if': {'column_id': 'liclowcount'},
+                 'width': '12%'
+             },
+             {
+                 'if': {'column_id': 'licokcount'},
+                 'width': '12%'
+             },
+            ],
+            sort_by=[{'column_id': 'lichighcount', 'direction': 'desc'},
+                  {'column_id': 'licmedcount', 'direction': 'desc'},
+                  {'column_id': 'liclowcount', 'direction': 'desc'},
+                  {'column_id': 'licokcount', 'direction': 'asc'}],
+            merge_duplicate_headers=True,
+        )
     return thistable
 
 
 def create_lictab_card_lic(projdf, compdf, projcompmapdf, licdata):
     # from app import df_proj, df_comp, df_projcompmap, lic_compverid_dict
 
-    licname = ''
-
     usedbyprojstitle = ''
     usedbycompstitle = ''
     projstable = ''
     compstable = ''
-    if licdata is not None:
+    if (not isempty(licdata)):
         licname = licdata['licname']
 
         # complist = []

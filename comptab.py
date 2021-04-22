@@ -6,6 +6,14 @@ import pandas as pd
 import plotly.express as px
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_comptab_fig_compsec(thisdf):
     # df_temp = thisdf[["seccritcount", "sechighcount", "secmedcount", "seclowcount", "secokcount"]].sum()
     sec_labels = ['Critical', 'High', 'Medium', 'Low']
@@ -48,7 +56,7 @@ def create_comptab_table_compvers(thisdf):
     ]
     df_temp = thisdf
 
-    if len(df_temp) == 0:
+    if isempty(thisdf):
         thisdict = {}
     else:
         thisdict = df_temp.to_dict('records')
@@ -238,7 +246,7 @@ def create_comptab_card_comp(projdf, projcompmapdf, poldf, polmapdf, compdata):
 
     poltext = []
 
-    if compdata is not None:
+    if (not isempty(compdata)):
         compname = compdata['compname']
         compver = compdata['compvername']
         compverid = compdata['compverid']

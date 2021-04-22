@@ -4,6 +4,14 @@ import dash_table
 import pandas as pd
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_poltab_table_pols(thisdf):
     # SELECT
     # component_policies.project_version_id as projverid,
@@ -22,7 +30,7 @@ def create_poltab_table_pols(thisdf):
     ]
     df_temp = thisdf
 
-    if df_temp is None or len(df_temp) == 0:
+    if isempty(df_temp):
         thistable = dash_table.DataTable(id='poltab_table_pols',
                                          columns=pol_cols,
                                          )
@@ -124,7 +132,7 @@ def create_poltab_card_pol(projdf, compdf, poldf, poldata):
         dbc.Button("Filter on Component", color="primary", className="mr-1", id="filter_polcard_comp_button",
                    size='sm'),
     )
-    if poldata is not None:
+    if (not isempty(poldata)):
         polid = poldata['polid']
         polname = poldata['polname']
         desc = poldata['desc']
@@ -207,7 +215,7 @@ def create_poltab_card_pol(projdf, compdf, poldf, poldata):
 
 
 def create_poltab(poldf):
-    if poldf is not None:
+    if (not isempty(poldf)):
         poldf = poldf.drop_duplicates(subset=["polid"], keep="first", inplace=False)
         poldf = poldf.sort_values(by=['polname'], ascending=True)
 

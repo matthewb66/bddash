@@ -6,6 +6,14 @@ import pandas as pd
 import plotly.express as px
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_projtab_table_projs(thisdf):
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
@@ -228,7 +236,6 @@ def create_projtab_fig_subdetails(thisdf):
 
 
 def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, projdata, serverurl):
-
     # projname projvername projverid projverdist projverphase projtier  All  compcount
     # seccritcount  sechighcount  secmedcount  seclowcount  secokcount
     # lichighcount  licmedcount  liclowcount  licokcount  secAll
@@ -261,7 +268,7 @@ def create_projtab_card_proj(projdf, compdf, poldf, projcompmapdf, polmapdf, pro
     )
 
     poltext = []
-    if projdata is not None:
+    if (not isempty(projdata)):
         projname = projdata['projname']
         projver = projdata['projvername']
         projlink = '/'.join((serverurl, 'api/projects', projdata['projid'], 'versions', projdata['projverid'],

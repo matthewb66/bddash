@@ -1,7 +1,7 @@
 import json
 import sys
 import os
-from time import time
+# from time import time
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
@@ -20,35 +20,49 @@ import projsumm
 import poltab
 import overviewtab
 
-df_main = None
-df_vuln = None
-df_vuln_viz = None
-df_pol = None
-df_pol_viz = None
-df_pol_map = None
-df_proj = None
-df_proj_viz = None
-df_comp = None
-df_comp_viz = None
-df_lic = None
-df_lic_viz = None
-df_projcompmap = None
-df_vulnmap = None
-df_vulnactivelist = []
+df_main = {}
+df_vuln = {}
+df_vuln_viz = {}
+df_pol = {}
+df_pol_viz = {}
+df_polmap = {}
+df_proj = {}
+df_proj_viz = {}
+df_comp = {}
+df_comp_viz = {}
+df_lic = {}
+df_lic_viz = {}
+df_projcompmap = {}
+df_vulnmap = {}
+df_vulnactivelist = {}
 # lic_compverid_dict = None
 # compverid_lic_dict = None
-df_projphasepolsec = None
-df_projdistpol = None
-childdata = None
-df_comppolsec = None
-init = True
-serverurl = "https://poc39.blackduck.synopsys.com"
-dbconfig = 'conf/database.poc39'
+df_projphasepolsec = {}
+df_projdistpol = {}
+childdata = {}
+df_comppolsec = {}
+
+init = {}
+
+serverlist = []
+serverurl = {}
+
+projlist = {}
+verlist = {}
+complist = {}
 
 expand_child_projects = False
 
 auth = None
 lastdbreadtime = 0
+
+
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
 
 
 def read_data_files():
@@ -113,176 +127,211 @@ app.auth = dash_auth.BasicAuth(
     VALID_USERNAME_PASSWORD_PAIRS
 )
 
-app.lastdbreadtime = 0
-if os.path.isfile(dbconfig):
-    if app.lastdbreadtime:
-        if (time() - app.lastdbreadtime) > 3600:
-            # Read from DB
-            readfrom = 'db'
-        else:
-            readfrom = 'file'
-    else:
+
+def get_server_data(pocserver):
+    global df_main
+    global df_vuln
+    global df_vuln_viz
+    global df_pol
+    global df_pol_viz
+    global df_polmap
+    global df_proj
+    global df_proj_viz
+    global df_comp
+    global df_comp_viz
+    global df_lic
+    global df_lic_viz
+    global df_projcompmap
+    global df_vulnmap
+    global df_vulnactivelist
+    global df_projphasepolsec
+    global df_projdistpol
+    global childdata
+    global df_comppolsec
+    global init
+    global serverlist
+
+    serverurl[pocserver] = 'https://' + pocserver + '.blackduck.synopsys.com'
+    dbconfig = 'conf/database.' + pocserver
+    
+    serverlist.append(pocserver)
+    
+    app.lastdbreadtime = 0
+    if os.path.isfile(dbconfig):
+        # if app.lastdbreadtime:
+        #     if (time() - app.lastdbreadtime) > 3600:
+        #         # Read from DB
+        #         readfrom = 'db'
+        #     # else:
+        #     #     readfrom = 'file'
+        # else:
         readfrom = 'db'
-        app.lastdbreadtime = time()
-elif os.path.isfile('data/db_projs.json') and os.path.isfile('data/db_vulns.json'):
-    readfrom = 'file'
-else:
-    print('\nNo conf/database.ini or data files - exiting')
-    sys.exit(3)
+        # app.lastdbreadtime = time()
+    # elif os.path.isfile('data/db_projs.json') and os.path.isfile('data/db_vulns.json'):
+    #     readfrom = 'file'
+    else:
+        print('\nNo conf/database.ini or data files - exiting')
+        sys.exit(3)
+    
+    # readfrom = 'file'  # DEBUG
+    statusitem = ''
+    if readfrom == 'db':
+        print('\nWill read data from DB connection')
+        conn, cur = db.connect(dbconfig)
+        print("Getting component data ...")
+        df_main[pocserver] = db.get_projdata(conn)
+        print("Getting vulnerability data ...")
+        df_vuln[pocserver] = db.get_vulndata(conn)
+        print("Getting policy data ...")
+        df_pol[pocserver] = db.get_poldata(conn)
+        db.close_conn(conn, cur)
+    # elif readfrom == 'file':
+    #     print('\nWill read data from json files')
+    #     df_main, df_vuln, df_pol = read_data_files()
+    #     statusitem = dbc.NavItem(dbc.NavLink("Status: Data from Files", href='#', disabled=True))
+    
+    if isemtpy(df_main[pocserver]) or isempty(df_vuln[pocserver]) or isempty(df_pol[pocserver]):
+        print("No data obtained from DB")
+        sys.exit(2)
+    
+    # if readfrom == 'db':
+    #     print("Writing data to JSON files ...")
+    #     write_data_files(df_main, df_vuln, df_pol)
+    
+    df_proj[pocserver], df_comp[pocserver], df_projcompmap[pocserver], childdata[pocserver] = \
+        data.proc_comp_data(df_main[pocserver], expand_child_projects)
+    df_main[pocserver] = None
+    df_comp_viz[pocserver] = df_comp
+    # df_proj = data.proc_projdata(df_main)
+    df_proj_viz[pocserver] = df_proj
+    # print(df_proj)
+    df_vuln[pocserver], df_vulnmap[pocserver], df_vulnactivelist[pocserver] = \
+        data.proc_vuln_data(df_vuln[pocserver])
+    df_vuln_viz[pocserver] = df_vuln[pocserver]
+    df_lic[pocserver] = data.proc_licdata(df_comp[pocserver])
+    df_lic_viz[pocserver] = df_lic[pocserver]
+    df_proj[pocserver], df_comp[pocserver], df_pol[pocserver], df_polmap[pocserver] = \
+        data.proc_pol_data(df_proj[pocserver], df_comp[pocserver], df_pol[pocserver])
+    df_pol_viz[pocserver] = df_pol[pocserver]
+    # data.proc_projinproj(df_proj, df_comp)
+    df_projphasepolsec[pocserver], df_comppolsec[pocserver] = \
+        data.proc_overviewdata(df_proj[pocserver], df_comp[pocserver])
 
-# readfrom = 'file'  # DEBUG
-statusitem = ''
-if readfrom == 'db':
-    print('\nWill read data from DB connection')
-    conn, cur = db.connect(dbconfig)
-    print("Getting component data ...")
-    df_main = db.get_projdata(conn)
-    print("Getting vulnerability data ...")
-    df_vuln = db.get_vulndata(conn)
-    print("Getting policy data ...")
-    df_pol = db.get_poldata(conn)
-    db.close_conn(conn, cur)
-    statusitem = dbc.NavItem(dbc.NavLink("Status: Data from DB", href='#', disabled=True))
-elif readfrom == 'file':
-    print('\nWill read data from json files')
-    df_main, df_vuln, df_pol = read_data_files()
-    statusitem = dbc.NavItem(dbc.NavLink("Status: Data from Files", href='#', disabled=True))
-
-if df_main is None or len(df_main) == 0 or df_vuln is None or len(df_vuln) == 0 or df_pol is None:
-    print("No data obtained from DB or files")
-    sys.exit(2)
-
-if readfrom == 'db':
-    print("Writing data to JSON files ...")
-    write_data_files(df_main, df_vuln, df_pol)
-
-df_proj, df_comp, df_projcompmap, childdata = data.proc_comp_data(df_main, expand_child_projects)
-df_main = None
-df_comp_viz = df_comp
-# df_proj = data.proc_projdata(df_main)
-df_proj_viz = df_proj
-# print(df_proj)
-df_vuln, df_vulnmap, df_vulnactivelist = data.proc_vuln_data(df_vuln)
-df_vuln_viz = df_vuln
-df_lic = data.proc_licdata(df_comp)
-df_lic_viz = df_lic
-df_proj, df_comp, df_pol, df_polmap = data.proc_pol_data(df_proj, df_comp, df_pol)
-df_pol_viz = df_pol
-# data.proc_projinproj(df_proj, df_comp)
-df_projphasepolsec, df_comppolsec = data.proc_overviewdata(df_proj, df_comp)
-
-
-projlist = [
-        {'label': i, 'value': i} for i in
-        df_proj.sort_values(by=['projname'], ascending=True).projname.unique()
-    ]
-
-verlist = [
-        {'label': i, 'value': i} for i in
-        df_proj.sort_values(by=['projvername'], ascending=True).projvername.unique()
-    ]
-
-complist = [
-        {'label': i, 'value': i} for i in
-        df_comp.sort_values(by=['compname'], ascending=True).compname.unique()
-    ]
+    projlist[pocserver] = [
+            {'label': i, 'value': i} for i in
+            df_proj[pocserver].sort_values(by=['projname'], ascending=True).projname.unique()
+        ]
+    
+    verlist[pocserver] = [
+            {'label': i, 'value': i} for i in
+            df_proj[pocserver].sort_values(by=['projvername'], ascending=True).projvername.unique()
+        ]
+    
+    complist[pocserver] = [
+            {'label': i, 'value': i} for i in
+            df_comp[pocserver].sort_values(by=['compname'], ascending=True).compname.unique()
+        ]
 
 
 def create_alltabs(projdata, compdata, vulndata, licdata, poldata, projphasepoldata, comppolsecdata,
                    child_data,
-                   colorfield, sizefield, noprojs):
+                   colorfield, sizefield, noprojs, pocserver):
 
-    if noprojs:
-        return dbc.Tabs(
-            [
-                dbc.Tab(  # OVERVIEW TAB
-                    html.H1(children='No Projects Selected by Filters'),
-                    label="Overview",
-                    tab_id="tab_overview", id="tab_overview"
-                ),
-                dbc.Tab(  # SUMMARY TAB
-                    [
+    try:
+        if noprojs or isempty(pocserver) or isempty(projdata):
+            return dbc.Tabs(
+                [
+                    dbc.Tab(  # OVERVIEW TAB
                         html.H1(children='No Projects Selected by Filters'),
-                        dbc.RadioItems(
-                            options=[
-                                # {'label': 'Critical Vulns', 'value': 'seccritcount'},
-                                # {'label': 'High Vulns', 'value': 'sechighcount'},
-                                # {'label': 'High Licenses', 'value': 'lichighcount'},
-                            ],
-                            id='summtab_color_radio',
-                            value=colorfield,
-                            inline=True,
-                            # labelStyle={'display': 'inline-block'}
-                        ),
-                        dbc.RadioItems(
-                            options=[
-                                # {'label': 'Critical Vulns', 'value': 'seccritcount'},
-                                # {'label': 'High Vulns', 'value': 'sechighcount'},
-                                # {'label': 'High Licenses', 'value': 'lichighcount'},
-                            ],
-                            id='summtab_size_radio',
-                            value=sizefield,
-                            inline=True,
-                            # labelStyle={'display': 'inline-block'}
-                        ),
-                    ],
-                    label="Projects Summary",
-                    tab_id="tab_projsummary", id="tab_projsummary",
-                ),
-                dbc.Tab(  # PROJECTS TAB
-                    html.H1(children='No Projects Selected by Filters'),
-                    label="Projects (0) & Versions (0)",
-                    tab_id="tab_projects", id="tab_projects"
-                ),
-                dbc.Tab(  # COMPONENTS TAB
-                    html.H1(children='No Projects Selected by Filters'),
-                    label="Components (0)",
-                    tab_id="tab_components", id="tab_components"
-                ),
-                dbc.Tab(  # VULNS TAB
-                    html.H1(children='No Projects Selected by Filters'),
-                    label="Vulnerabilties (0)",
-                    tab_id="tab_vulns", id="tab_vulns"
-                ),
-                dbc.Tab(  # POLICY TAB
-                    html.Div(children='No Policies Selected by Filters'),
-                    label="Policies (0)",
-                    # label="Licenses",
-                    tab_id="tab_pols", id="tab_pols"
-                ),
-                dbc.Tab(  # LICENSE TAB
-                    html.Div(children='No Projects Selected by Filters'),
-                    label="Licenses (0)",
-                    # label="Licenses",
-                    tab_id="tab_lics", id="tab_lics"
-                )
-            ],
-            id="tabs",
-            active_tab='tab_overview',
-        )
+                        label="Overview",
+                        tab_id="tab_overview", id="tab_overview"
+                    ),
+                    dbc.Tab(  # SUMMARY TAB
+                        [
+                            html.H1(children='No Projects Selected by Filters'),
+                            dbc.RadioItems(
+                                options=[
+                                    # {'label': 'Critical Vulns', 'value': 'seccritcount'},
+                                    # {'label': 'High Vulns', 'value': 'sechighcount'},
+                                    # {'label': 'High Licenses', 'value': 'lichighcount'},
+                                ],
+                                id='summtab_color_radio',
+                                value=colorfield,
+                                inline=True,
+                                # labelStyle={'display': 'inline-block'}
+                            ),
+                            dbc.RadioItems(
+                                options=[
+                                    # {'label': 'Critical Vulns', 'value': 'seccritcount'},
+                                    # {'label': 'High Vulns', 'value': 'sechighcount'},
+                                    # {'label': 'High Licenses', 'value': 'lichighcount'},
+                                ],
+                                id='summtab_size_radio',
+                                value=sizefield,
+                                inline=True,
+                                # labelStyle={'display': 'inline-block'}
+                            ),
+                        ],
+                        label="Projects Summary",
+                        tab_id="tab_projsummary", id="tab_projsummary",
+                    ),
+                    dbc.Tab(  # PROJECTS TAB
+                        html.H1(children='No Projects Selected by Filters'),
+                        label="Projects (0) & Versions (0)",
+                        tab_id="tab_projects", id="tab_projects"
+                    ),
+                    dbc.Tab(  # COMPONENTS TAB
+                        html.H1(children='No Projects Selected by Filters'),
+                        label="Components (0)",
+                        tab_id="tab_components", id="tab_components"
+                    ),
+                    dbc.Tab(  # VULNS TAB
+                        html.H1(children='No Projects Selected by Filters'),
+                        label="Vulnerabilties (0)",
+                        tab_id="tab_vulns", id="tab_vulns"
+                    ),
+                    dbc.Tab(  # POLICY TAB
+                        html.Div(children='No Policies Selected by Filters'),
+                        label="Policies (0)",
+                        # label="Licenses",
+                        tab_id="tab_pols", id="tab_pols"
+                    ),
+                    dbc.Tab(  # LICENSE TAB
+                        html.Div(children='No Projects Selected by Filters'),
+                        label="Licenses (0)",
+                        # label="Licenses",
+                        tab_id="tab_lics", id="tab_lics"
+                    )
+                ],
+                id="tabs",
+                active_tab='tab_overview',
+            )
+    except Exception as exc:
+        print("exception")
+        print(exc)
 
-    if projdata is not None:
+    if isempty(projdata):
         projtext = "Projects (" + str(projdata.projid.nunique()) + ") & Versions (" + \
                    str(projdata.projverid.nunique()) + ")"
     else:
         projtext = "Projects (0)"
 
-    if compdata is not None:
+    if isempty(compdata):
         comptext = "Components (" + str(compdata.compverid.nunique()) + ")"
     else:
         comptext = "Components(0)"
 
-    if vulndata is not None:
+    if isempty(vulndata):
         vulntext = "Vulnerabilties (" + str(len(vulndata)) + ")"
     else:
         vulntext = "Vulnerabilities (0)"
 
-    if licdata is not None:
+    if isempty(licdata):
         lictext = "Licenses (" + str(licdata.licname.nunique()) + ")"
     else:
         lictext = "Licenses (0)"
 
-    if poldata is not None:
+    if isempty(poldata):
         poltext = "Policies (" + str(poldata.polid.nunique()) + ")"
     else:
         poltext = "Policies (0)"
@@ -335,17 +384,20 @@ app.layout = dbc.Container(
     [
         # 		dcc.Store(id='sec_values', storage_type='local'),
         # 		dcc.Store(id='lic_values', storage_type='local'),
+        dcc.Location(id='thispath', refresh=False),
+        dcc.Store(id='store_pocserver', storage_type='session'),
         dcc.Store(id='proj_color', storage_type='session'),
         dcc.Store(id='proj_size', storage_type='session'),
         dcc.Store(id='sankey_state', storage_type='session'),
         # dcc.Store(id='active_tab', storage_type='session'),
         dbc.NavbarSimple(
             children=[
-                statusitem,
+                dbc.NavItem(dbc.NavLink("Status: Data from Reporting DB", href='#', disabled=True)),
+                dbc.NavItem(dbc.NavLink("No POC Server", href='#', disabled=True, id='poc_server')),
                 dbc.NavItem(dbc.NavLink("Documentation", href="https://github.com/matthewb66/bddash")),
             ],
             brand="Black Duck Analysis Console",
-            brand_href=serverurl,
+            # brand_href=serverurl,
             color="primary",
             dark=True,
             fluid=True,
@@ -356,7 +408,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_projects",
-                        options=projlist, multi=True, placeholder='Select Projects ...'
+                        # options=projlist,
+                        multi=True,
+                        placeholder='Select Projects ...'
                     ), width=3,
                     align='center',
                 ),
@@ -364,7 +418,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_versions",
-                        options=verlist, multi=True, placeholder='Select Versions ...'
+                        # options=verlist,
+                        multi=True,
+                        placeholder='Select Versions ...'
                     ), width=3,
                     align='center',
                 ),
@@ -372,7 +428,7 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_comps",
-                        options=complist,
+                        # options=complist,
                         multi=True
                     ), width=3,
                     align='center',
@@ -451,9 +507,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_tiers",
-                        options=[
-                            {'label': i, 'value': i} for i in df_proj.projtier.unique()
-                        ],
+                        # options=[
+                        #     {'label': i, 'value': i} for i in df_proj.projtier.unique()
+                        # ],
                         multi=True
                     ), width=2,
                     align='center',
@@ -462,9 +518,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_dists",
-                        options=[
-                            {'label': i, 'value': i} for i in df_proj.projverdist.unique()
-                        ],
+                        # options=[
+                        #     {'label': i, 'value': i} for i in df_proj.projverdist.unique()
+                        # ],
                         multi=True
                     ), width=2,
                     align='center',
@@ -473,9 +529,9 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dcc.Dropdown(
                         id="sel_phases",
-                        options=[
-                            {'label': i, 'value': i} for i in df_proj.projverphase.unique()
-                        ],
+                        # options=[
+                        #     {'label': i, 'value': i} for i in df_proj.projverphase.unique()
+                        # ],
                         multi=True
                     ), width=2,
                     align='center',
@@ -486,27 +542,18 @@ app.layout = dbc.Container(
                     # width=2,
                     align='center',
                 ),
-                # dbc.Col(
-                #     dbc.Checklist(
-                #         options=[
-                #             {"label": "Ignore Unk Lics", "value": 1},
-                #         ],
-                #         value=[],
-                #         id="sel_ignore_unklic",
-                #         switch=True,
-                #         style={'font-size': '12px'},
-                #     ), width=1,
-                #     align='center',
-                # ),
             ]
         ),
         dbc.Row(html.Hr()),
         dbc.Row(
             dbc.Col(
                 dbc.Spinner(
-                    create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
-                                   childdata,
-                                   'lichighcountplus1', 'seccritcountplus1', False),
+                    # create_alltabs(df_proj, df_comp, df_vuln, df_lic, df_pol, df_projphasepolsec, df_comppolsec,
+                    #                childdata,
+                    #                'lichighcountplus1', 'seccritcountplus1', False, None),
+                    create_alltabs(None, None, None, None, None, None, None,
+                                   None,
+                                   'lichighcountplus1', 'seccritcountplus1', True, None),
                     id='spinner_main',
                 ), width=12,
             )
@@ -521,10 +568,10 @@ app.layout = dbc.Container(
         Input('sel_lic_button', 'n_clicks'),
         State('lictab_table_lics', 'derived_virtual_data'),
         State('lictab_table_lics', 'derived_virtual_selected_rows'),
+        State('store_pocserver', 'data'),
     ]
-
 )
-def callback_lictab_sellic_button(nclicks, cdata, rows):
+def callback_lictab_sellic_button(nclicks, cdata, rows, pocserver):
     global df_proj_viz, df_comp_viz, df_pol_viz, df_projcompmap
     print('callback_lictab_sellic_button')
 
@@ -536,7 +583,7 @@ def callback_lictab_sellic_button(nclicks, cdata, rows):
         # return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap, lic_compverid_dict,
         #                                      df_lic_viz[df_lic_viz['licname'] == cdata[rows[0]][
         #                                             'licname']])
-        return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap,
+        return lictab.create_lictab_card_lic(df_proj_viz[pocserver], df_comp_viz[pocserver], df_projcompmap[pocserver],
                                              cdata[rows[0]])
 
     return lictab.create_lictab_card_lic(None, None, None, None)
@@ -548,10 +595,10 @@ def callback_lictab_sellic_button(nclicks, cdata, rows):
         Input('sel_pol_button', 'n_clicks'),
         State('poltab_table_pols', 'derived_virtual_data'),
         State('poltab_table_pols', 'derived_virtual_selected_rows'),
+        State('store_pocserver', 'data'),
     ]
-
 )
-def callback_poltab_selpol_button(nclicks, cdata, rows):
+def callback_poltab_selpol_button(nclicks, cdata, rows, pocserver):
     global df_proj_viz, df_comp_viz, df_pol_viz
     print('callback_poltab_selpol_button')
 
@@ -562,7 +609,7 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
     if rows:
         # return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
         #                                      df_pol_viz.loc[cdata[rows[0]]])
-        return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
+        return poltab.create_poltab_card_pol(df_proj_viz[pocserver], df_comp_viz[pocserver], df_pol[pocserver],
                                              cdata[rows[0]])
 
     return poltab.create_poltab_card_pol(None, None, None, None)
@@ -577,10 +624,10 @@ def callback_poltab_selpol_button(nclicks, cdata, rows):
         Input('sel_comp_button', 'n_clicks'),
         State('comptab_table_compvers', 'derived_virtual_data'),
         State('comptab_table_compvers', 'derived_virtual_selected_rows'),
+        State('store_pocserver', 'data'),
     ]
-
 )
-def callback_comptab_selcomp_button(nclicks, cdata, rows):
+def callback_comptab_selcomp_button(nclicks, cdata, rows, pocserver):
     global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol
     print('callback_comptab_selcomp_button')
 
@@ -592,7 +639,8 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
         # return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
         #                                         df_comp_viz.loc[cdata[rows[0]]['projverid']]), \
         #        'tab_comp_subdetail'
-        return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_pol, df_polmap,
+        return comptab.create_comptab_card_comp(df_proj_viz[pocserver], df_projcompmap[pocserver], df_pol[pocserver],
+                                                df_polmap[pocserver],
                                                 cdata[rows[0]]), 'tab_comp_subdetail'
 
     return comptab.create_comptab_card_comp(None, None, None, None, None), 'tab_comp_subsummary'
@@ -604,9 +652,10 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows):
         Input('sel_vuln_button', 'n_clicks'),
         State('vulntab_table_vulns', 'derived_virtual_data'),
         State('vulntab_table_vulns', 'derived_virtual_selected_rows'),
+        State('store_pocserver', 'data'),
     ]
 )
-def callback_vulntab_selvuln_button(nclicks, cdata, rows):
+def callback_vulntab_selvuln_button(nclicks, cdata, rows, pocserver):
     global df_vuln_viz, df_proj_viz, df_comp_viz, df_vulnmap, df_vulnmap, serverurl
     print('callback_vulntab_selvuln_button')
 
@@ -618,8 +667,8 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows):
         # print(df_vuln[df_vuln['vulnid'] == cdata[rows[0]]['vulnid']].to_string())
         # return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
         #                                         df_vuln_viz.loc[cdata[rows[0]]['vulnid']])
-        return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
-                                                cdata[rows[0]], serverurl)
+        return vulntab.create_vulntab_card_vuln(df_proj_viz[pocserver], df_comp_viz[pocserver], df_vulnmap[pocserver],
+                                                cdata[rows[0]], serverurl[pocserver])
 
     return vulntab.create_vulntab_card_vuln(None, None, None, None, None)
 
@@ -692,7 +741,7 @@ def callback_filterproj_buttons(compprojclicks, vulnprojclicks, polprojclicks, p
         State('comptab_table_compvers', 'derived_virtual_selected_rows'),
     ]
 )
-def callback_filtercomp_buttons(vulnclicks, compclicks, vulncdata, vulncrows, compcdata, compcrows,):
+def callback_filtercomp_buttons(vulnclicks, compclicks, vulncdata, vulncrows, compcdata, compcrows):
     print('callback_filtercomp_buttons')
 
     val = ''
@@ -718,9 +767,10 @@ def callback_filtercomp_buttons(vulnclicks, compclicks, vulncdata, vulncrows, co
         Input('sel_proj_button', 'n_clicks'),
         State('projtab_table_projs', 'derived_virtual_data'),
         State('projtab_table_projs', 'derived_virtual_selected_rows'),
+        State('store_pocserver', 'data'),
     ]
 )
-def callback_projtab_selproj_button(nclicks, cdata, rows):
+def callback_projtab_selproj_button(nclicks, cdata, rows, pocserver):
     global df_proj_viz, df_comp_viz, df_projcompmap, df_polmap, df_pol, serverurl
     print('callback_projtab_selproj_button')
 
@@ -730,9 +780,10 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
 
     if rows:
         projid = cdata[rows[0]]['projverid']
-        mydata = df_proj_viz.loc[projid]
-        return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_pol, df_projcompmap, df_polmap,
-                                                mydata, serverurl), 'tab_proj_subdetail'
+        mydata = df_proj_viz[pocserver].loc[projid]
+        return projtab.create_projtab_card_proj(df_proj_viz[pocserver], df_comp_viz[pocserver], df_pol[pocserver],
+                                                df_projcompmap[pocserver], df_polmap[pocserver],
+                                                mydata, serverurl[pocserver]), 'tab_proj_subdetail'
 
     return projtab.create_projtab_card_proj(None, None, None, None, None, None, None), 'tab_proj_subsummary'
 
@@ -744,6 +795,14 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         Output('proj_color', 'data'),
         Output('proj_size', 'data'),
         Output('tabs', 'active_tab'),
+        Output('poc_server', 'children'),
+        Output('store_pocserver', 'data'),
+        Output('sel_projects', 'options'),
+        Output('sel_versions', 'options'),
+        Output('sel_comps', 'options'),
+        Output('sel_tiers', 'options'),
+        Output('sel_dists', 'options'),
+        Output('sel_phases', 'options'),
     ], [
         Input("sel-button", "n_clicks"),
         Input('summtab_color_radio', 'value'),
@@ -763,11 +822,13 @@ def callback_projtab_selproj_button(nclicks, cdata, rows):
         State('proj_color', 'data'),
         State('proj_size', 'data'),
         # State('active_tab', 'data'),
+        State('store_pocserver', 'data'),
+        State('thispath', 'pathname')
     ]
 )
 def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, vers, remstatus,
                   tiers, dists, phases,
-                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev):
+                  secrisk, licrisk, polsev, comps, proj_color_prev, proj_size_prev, pocserver, path):
     global df_proj, df_proj_viz
     global df_comp, df_projcompmap, df_comp_viz
     global df_vuln, df_vulnmap, df_vulnactivelist, df_vuln_viz
@@ -776,7 +837,19 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     global df_projdistpol, df_projphasepolsec
     global childdata
     global init
+    global serverlist
+    
     print('callback_main')
+
+    if pocserver is None or pocserver == '':
+        if path is not None and path != '':
+            pocserver = str(path).replace('/', '')
+        else:
+            print("NO ACTION")
+            raise dash.exceptions.PreventUpdate
+
+    if pocserver is not None and pocserver not in serverlist:
+        get_server_data(pocserver)
 
     # ctx = dash.callback_context
     #
@@ -787,44 +860,41 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     #     print('NO ACTION')
     #     raise dash.exceptions.PreventUpdate
 
-    temp_df_proj = df_proj
-    temp_df_comp = df_comp
-    temp_df_vuln = df_vuln
-    temp_df_lic = df_lic
-    temp_df_pol = df_pol
+    temp_df_proj = df_proj[pocserver]
+    temp_df_comp = df_comp[pocserver]
+    temp_df_vuln = df_vuln[pocserver]
+    temp_df_lic = df_lic[pocserver]
+    temp_df_pol = df_pol[pocserver]
     noprojs = False
 
-    def isnotempty(df):
-        return df is not None and len(df) > 0
-
     # Process existing select dropdowns
-    if isnotempty(projs):
+    if not isempty(projs):
         if isinstance(projs, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projname.isin(projs)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj['projname'] == projs]
 
-    if isnotempty(vers) and isnotempty(temp_df_proj):
+    if (not isempty(vers)) and (not isempty(temp_df_proj)):
         if isinstance(vers, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projvername.isin(vers)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj['projname'] == vers]
 
-    if isnotempty(dists) and isnotempty(temp_df_proj):
+    if (not isempty(dists)) and (not isempty(temp_df_proj)):
         # Filter projects based on distribution selection
         if isinstance(dists, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projverdist.isin(dists)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj.projverdist == dists]
 
-    if isnotempty(phases) and isnotempty(temp_df_proj):
+    if (not isempty(phases)) and (not isempty(temp_df_proj)):
         # Filter projects based on phase selection
         if isinstance(phases, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase.isin(phases)]
         else:
             temp_df_proj = temp_df_proj[temp_df_proj.projverphase == phases]
 
-    if isnotempty(tiers) and isnotempty(temp_df_proj):
+    if (not isempty(tiers)) and (not isempty(temp_df_proj)):
         # Filter projects based on phase selection
         if isinstance(tiers, list):
             temp_df_proj = temp_df_proj[temp_df_proj.projtier.isin(tiers)]
@@ -832,21 +902,22 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             temp_df_proj = temp_df_proj[temp_df_proj.projtier == tiers]
 
     # Process comps from reduced list of projs
-    if isnotempty(temp_df_proj) and len(temp_df_proj) < len(df_proj):
-        temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.unique())].compverid.values
+    if (not isempty(temp_df_proj)) and len(temp_df_proj) < len(df_proj[pocserver]):
+        projcompmap = df_projcompmap[pocserver]
+        temp = projcompmap[projcompmap.index.isin(temp_df_proj.index.unique())].compverid.values
         if len(temp) > 0:
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
         else:
             temp_df_comp = None
 
-    if isnotempty(comps) and isnotempty(temp_df_comp):
+    if (not isempty(comps)) and (not isempty(temp_df_comp)):
         # Filter projects based on phase selection
         if isinstance(comps, list):
             temp_df_comp = temp_df_comp[temp_df_comp.compname.isin(comps)]
         else:
             temp_df_comp = temp_df_comp[temp_df_comp['compname'] == comps]
 
-    if isnotempty(secrisk) and isnotempty(temp_df_comp) and isnotempty(temp_df_proj):
+    if (not isempty(secrisk)) and (not isempty(temp_df_comp)) and (not isempty(temp_df_proj)):
         # Filter projects based on security risk selection
         secvals = []
         temp_df_comp = temp_df_comp[temp_df_comp.seccritcount != '']
@@ -864,7 +935,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             secvals.append('LOW')
         temp_df_vuln = temp_df_vuln[temp_df_vuln.severity.isin(secvals)]
 
-    if isnotempty(licrisk) and isnotempty(temp_df_comp) and isnotempty(temp_df_proj):
+    if (not isempty(licrisk)) and (not isempty(temp_df_comp)) and (not isempty(temp_df_proj)):
         # Filter projects based on security risk selection
         temp_df_comp = temp_df_comp[temp_df_comp.lichighcount != '']
 
@@ -877,57 +948,64 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         if 'Low' in licrisk:
             temp_df_comp = temp_df_comp[temp_df_comp.liclowcount > 0]
 
-    if isnotempty(polsev) and isnotempty(temp_df_comp):
+    if (not isempty(polsev)) and (not isempty(temp_df_comp)):
         # Filter projects based on security risk selection
         for sev in ['BLOCKER', 'CRITICAL', 'MAJOR', 'MINOR', 'TRIVIAL', 'UNSPECIFIED']:
             if sev in polsev:
                 temp_df_pol = temp_df_pol[temp_df_pol.polseverity == sev]
-        comps = df_polmap[df_polmap.polid.isin(temp_df_pol.index.values)].compverid.unique()
+        polmap = df_polmap[pocserver]
+        comps = polmap[polmap.polid.isin(temp_df_pol.index.values)].compverid.unique()
         temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(comps)]
 
-    if isnotempty(temp_df_comp) and 0 < len(temp_df_comp) < len(df_comp):
-        temp = df_vulnmap[df_vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
-        if isnotempty(temp):
+    if (not isempty(temp_df_comp)) and 0 < len(temp_df_comp) < len(df_comp[pocserver]):
+        vulnmap = df_vulnmap[pocserver]
+        temp = vulnmap[vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
+        if (not isempty(temp)):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
 
-        temp = df_projcompmap[df_projcompmap.compverid.isin(temp_df_comp.index.values)].index.values
-        if isnotempty(temp_df_proj) and isnotempty(temp):
+        projcompmap = df_projcompmap[pocserver]
+        temp = projcompmap[projcompmap.compverid.isin(temp_df_comp.index.values)].index.values
+        if (not isempty(temp_df_proj)) and (not isempty(temp)):
             temp_df_proj = temp_df_proj[temp_df_proj.index.isin(temp)]
         else:
             temp_df_proj = None
 
-        temp = df_polmap[df_polmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
-        if isnotempty(temp_df_pol) and isnotempty(temp):
+        polmap = df_polmap[pocserver]
+        temp = polmap[polmap.compverid.isin(temp_df_comp.compverid.unique())].polid.unique()
+        if (not isempty(temp_df_pol)) and (not isempty(temp)):
             temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
         else:
             temp_df_pol = None
 
         # temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(compveridlist)]
 
-    elif isnotempty(temp_df_proj) and 0 < len(temp_df_proj) < len(df_proj):
-        temp = df_projcompmap[df_projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
-        if isnotempty(temp):
+    elif (not isempty(temp_df_proj)) and 0 < len(temp_df_proj) < len(df_proj[pocserver]):
+        projcompmap = df_projcompmap[pocserver]
+        temp = projcompmap[projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
+        if (not isempty(temp)):
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
         else:
             temp_df_comp = None
 
-        temp = df_vulnmap[df_vulnmap.projverid.isin(temp_df_proj.index.values)].index.values
-        if isnotempty(temp):
+        vulnmap = df_vulnmap[pocserver]
+        temp = vulnmap[vulnmap.projverid.isin(temp_df_proj.index.values)].index.values
+        if (not isempty(temp)):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
 
-        temp = df_polmap[df_polmap.projverid.isin(temp_df_proj.index.values)].polid.unique()
-        if isnotempty(temp_df_pol) and isnotempty(temp):
+        polmap = df_polmap[pocserver]
+        temp = polmap[polmap.projverid.isin(temp_df_proj.index.values)].polid.unique()
+        if (not isempty(temp_df_pol)) and (not isempty(temp)):
             temp_df_pol = temp_df_pol[temp_df_pol.polid.isin(temp)]
         else:
             temp_df_pol = None
 
         # temp_df_proj = temp_df_proj[temp_df_proj.projverid.isin(projveridlist)]
 
-    if isnotempty(temp_df_comp) and 0 < len(temp_df_comp) < len(df_comp):
+    if (not isempty(temp_df_comp)) and 0 < len(temp_df_comp) < len(df_comp[pocserver]):
         licnames = temp_df_comp.licname.unique()
         # for cid in temp_df_comp.compverid.unique():
         #     if cid in compverid_lic_dict.keys():
@@ -938,15 +1016,15 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
         licnames.sort()
         temp_df_lic = temp_df_lic[temp_df_lic.licname.isin(licnames)]
 
-    if isnotempty(remstatus) and isnotempty(temp_df_vuln):
+    if (not isempty(remstatus)) and (not isempty(temp_df_vuln)):
         # tempvulnidlist = []
         if {'UNREMEDIATED'}.intersection(set(remstatus)) == {'UNREMEDIATED'}:
-            temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist)]
+            temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(df_vulnactivelist[pocserver])]
         if {'REMEDIATED'}.intersection(set(remstatus)) == {'REMEDIATED'}:
-            temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist)]
+            temp_df_vuln = temp_df_vuln[~temp_df_vuln.index.isin(df_vulnactivelist[pocserver])]
         # vulnidlist = pd.merge(vulnidlist, tempvulnidlist, how='inner')
 
-    if (not isnotempty(temp_df_proj)) or (not isnotempty(temp_df_comp)):
+    if isempty(temp_df_proj) or isempty(temp_df_comp):
         noprojs = True
 
     # # Click on projtab_treemap
@@ -962,11 +1040,11 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     #                                 (temp_df_proj.projvername == click_proj['points'][0]['label'])]
     #
 
-    df_proj_viz = temp_df_proj
-    df_comp_viz = temp_df_comp
-    df_vuln_viz = temp_df_vuln
-    df_lic_viz = temp_df_lic
-    df_pol_viz = temp_df_pol
+    df_proj_viz[pocserver] = temp_df_proj
+    df_comp_viz[pocserver] = temp_df_comp
+    df_vuln_viz[pocserver] = temp_df_vuln
+    df_lic_viz[pocserver] = temp_df_lic
+    df_pol_viz[pocserver] = temp_df_pol
 
     # if not (proj_treemap_size == proj_size_prev and proj_treemap_color == proj_color_prev):
     #     activetab = 'tab_projsummary'
@@ -974,15 +1052,20 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     #     activetab = 'tab_overview'
     if init:
         activetab = 'tab_overview'
-        init = False
+        init[pocserver] = False
     else:
         activetab = tab
 
+    tiers_opts = [{'label': i, 'value': i} for i in df_proj[pocserver].projtier.unique()]
+    dists_opts = [{'label': i, 'value': i} for i in df_proj[pocserver].projverdist.unique()]
+    phases_opts = [{'label': i, 'value': i} for i in df_proj[pocserver].projverphase.unique()]
+
     return (
         create_alltabs(temp_df_proj, temp_df_comp, temp_df_vuln, temp_df_lic, temp_df_pol,
-                       df_projphasepolsec, df_comppolsec, childdata,
-                       proj_treemap_color, proj_treemap_size, noprojs),
-        proj_treemap_color, proj_treemap_size, activetab
+                       df_projphasepolsec[pocserver], df_comppolsec[pocserver], childdata[pocserver],
+                       proj_treemap_color, proj_treemap_size, noprojs, pocserver),
+        proj_treemap_color, proj_treemap_size, activetab, pocserver, pocserver, projlist, verlist, complist,
+        tiers_opts, dists_opts, phases_opts
     )
 
 
@@ -994,9 +1077,10 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     [
         Input('overviewtab_sankey', 'clickData'),
         State('sankey_state', 'data'),
+        State('store_pocserver', 'data'),
     ]
 )
-def callback_overviewtab_sankey(clickdata, state):
+def callback_overviewtab_sankey(clickdata, state, pocserver):
     global childdata, df_proj
 
     print('callback_summarytab_sankey')
@@ -1040,19 +1124,19 @@ def callback_overviewtab_sankey(clickdata, state):
         if thisproj in childdata['labels']:
             src = childdata['labels'].index(thisproj)
             if src not in childdata['sources']:
-                return overviewtab.create_fig_projmap(df_proj, childdata), False
+                return overviewtab.create_fig_projmap(df_proj[pocserver], childdata[pocserver]), False
 
-            newsources, newtargets = walktree(src, childdata['sources'], childdata['targets'])
+            newsources, newtargets = walktree(src, childdata[pocserver]['sources'], childdata[pocserver]['targets'])
 
         newchilddata = {
-            'labels': childdata['labels'],
+            'labels': childdata[pocserver]['labels'],
             'sources': newsources,
             'targets': newtargets,
-            'values': childdata['values'],
+            'values': childdata[pocserver]['values'],
         }
         newstate = True
 
-    return overviewtab.create_fig_projmap(df_proj, newchilddata), newstate
+    return overviewtab.create_fig_projmap(df_proj[pocserver], newchilddata), newstate
 
 
 @app.callback(
@@ -1067,16 +1151,12 @@ def callback_overviewtab_sankey(clickdata, state):
     ]
 )
 def callback_overviewtab_compbar(compclick, projclick):
-    global childdata, df_proj
-
     print('callback_summarytab_sankey')
 
     if compclick is None and projclick is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
-    print(compclick)
-    print(projclick)
     pol = ''
     sec = ''
     phase = ''
@@ -1106,8 +1186,38 @@ def callback_overviewtab_compbar(compclick, projclick):
     return sec, pol, phase
 
 
+# @app.callback(
+#     [
+#         Output('poc_server', 'children'),
+#         Output('store_pocserver', 'data'),
+#         Output('sel_projects', 'options'),
+#         Output('sel_versions', 'options'),
+#         Output('sel_comps', 'options'),
+#         Output('sel_tiers', 'options'),
+#         Output('sel_dists', 'options'),
+#         Output('sel_phases', 'options'),
+#     ],
+#     [
+#         Input('thispath', 'pathname')
+#     ]
+# )
+# def cb_url_pocserver(pathname):
+#     if pathname is None or len(pathname) < 1:
+#         print("NO ACTION")
+#         raise dash.exceptions.PreventUpdate
+#
+#     print("callback_pocserver")
+#     pname = str(pathname).replace('/', '').upper()
+#     print(pname)
+#     tiers = [{'label': i, 'value': i} for i in df_proj[pname].projtier.unique()]
+#     dists = [{'label': i, 'value': i} for i in df_proj[pname].projverdist.unique()]
+#     phases = [{'label': i, 'value': i} for i in df_proj[pname].projverphase.unique()]
+#
+#     return pname, pname, projlist[pname], verlist[pname], complist[pname], tiers, dists, phases
+
+
 # if __name__ == '__main__':
 #    app.run_server(debug=True)
 
 if __name__ == '__main__':
-    app.run_server(host='127.0.0.1', port=8888, debug=True)
+    app.run_server(host='127.0.0.1', port=8888, debug=False)

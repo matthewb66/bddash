@@ -4,6 +4,14 @@ import dash_table
 import pandas as pd
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_vulntab_table_vulns(thisdf):
     # "projname", "projvername", "compname", "compvername", "vulnid", "relatedvulnid",
     # "vulnsource", "severity", "remstatus"))
@@ -40,7 +48,7 @@ def create_vulntab_table_vulns(thisdf):
     # attackvector,
     # updateddate
 
-    if thisdf is None or len(thisdf) == 0:
+    if isempty(thisdf):
         thistable = dash_table.DataTable(id='vulntab_table_vulns',
                                          columns=vuln_cols,
                                          style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
@@ -151,7 +159,7 @@ def create_vulntab_card_vuln(projdf, compdf, df_vulnmap, vulndata, serverurl):
         dbc.Button("Filter on Component", color="primary", className="mr-1", id="filter_vulncard_comp_button",
                    size='sm'),
     )
-    if vulndata is not None:
+    if (not isempty(vulndata)):
         vulnid = vulndata['vulnid']
         vulnrelated = vulndata['relatedvulnid']
         if vulnrelated == '':

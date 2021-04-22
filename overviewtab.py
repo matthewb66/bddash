@@ -5,8 +5,18 @@ import plotly.graph_objects as go
 import dash_html_components as html
 
 
+
+
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_fig_projmap(projdf, childdata):
-    if projdf is None:
+    if isempty(projdf):
         return None
 
     fig = go.Figure(
@@ -37,7 +47,7 @@ def create_fig_projmap(projdf, childdata):
 
 
 def create_fig_projphasepol(projphasedf):
-    if projphasedf is None:
+    if isempty(projphasedf):
         return None
     projphasedf['All'] = 'All'
 
@@ -111,7 +121,7 @@ def create_fig_projphasepol(projphasedf):
 
 
 def create_fig_compsec(comppolsecdf):
-    if comppolsecdf is None:
+    if isempty(comppolsecdf):
         return None
     # comppolsecdf['All'] = 'All'
 

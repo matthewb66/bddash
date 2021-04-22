@@ -4,7 +4,18 @@ import dash_html_components as html
 import plotly.express as px
 
 
+def isempty(val):
+    if val is None:
+        return True
+    if len(val) == 0:
+        return True
+    return False
+
+
 def create_projsummtab_fig_proj(thisdf, color_column, size_column):
+    if isempty(thisdf):
+        return None
+
     if size_column == 'seccritcountplus1':
         sizetext = 'Critical Vulnerabilities'
     elif size_column == 'seccrithighcountplus1':
