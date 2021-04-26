@@ -190,7 +190,7 @@ def get_server_data(pocserver):
     #     df_main, df_vuln, df_pol = read_data_files()
     #     statusitem = dbc.NavItem(dbc.NavLink("Status: Data from Files", href='#', disabled=True))
     
-    if isemtpy(df_main[pocserver]) or isempty(df_vuln[pocserver]) or isempty(df_pol[pocserver]):
+    if isempty(df_main[pocserver]) or isempty(df_vuln[pocserver]) or isempty(df_pol[pocserver]):
         print("No data obtained from DB")
         sys.exit(2)
     
@@ -960,7 +960,7 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     if (not isempty(temp_df_comp)) and 0 < len(temp_df_comp) < len(df_comp[pocserver]):
         vulnmap = df_vulnmap[pocserver]
         temp = vulnmap[vulnmap.compverid.isin(temp_df_comp.compverid.unique())].index.values
-        if (not isempty(temp)):
+        if not isempty(temp):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
@@ -984,14 +984,14 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
     elif (not isempty(temp_df_proj)) and 0 < len(temp_df_proj) < len(df_proj[pocserver]):
         projcompmap = df_projcompmap[pocserver]
         temp = projcompmap[projcompmap.index.isin(temp_df_proj.index.values)].compverid.unique()
-        if (not isempty(temp)):
+        if not isempty(temp):
             temp_df_comp = temp_df_comp[temp_df_comp.compverid.isin(temp)]
         else:
             temp_df_comp = None
 
         vulnmap = df_vulnmap[pocserver]
         temp = vulnmap[vulnmap.projverid.isin(temp_df_proj.index.values)].index.values
-        if (not isempty(temp)):
+        if not isempty(temp):
             temp_df_vuln = temp_df_vuln[temp_df_vuln.index.isin(temp)]
         else:
             temp_df_vuln = None
