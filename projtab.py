@@ -33,6 +33,7 @@ def create_projtab_table_projs(thisdf):
         {"name": ['License Risk', 'Low'], "id": "liclowcount"},
         {"name": ['License Risk', 'None'], "id": "licokcount"},
         {"name": ['Top Policy', 'Violation'], "id": "polseverity"},
+        {"name": ['', 'id'], "id": "projverid"},
     ]
     df_temp = thisdf
     thistable = dash_table.DataTable(id='projtab_table_projs',
@@ -47,6 +48,8 @@ def create_projtab_table_projs(thisdf):
                                      filter_action='native',
                                      row_selectable="single",
                                      cell_selectable=False,
+                                     hidden_columns=["projverid"],
+                                     css=[{"selector": ".show-hide", "rule": "display: none"}],
                                      style_header={'backgroundColor': 'rgb(30, 30, 30)', 'color': 'white'},
                                      tooltip_data=[
                                          {
