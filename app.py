@@ -21,30 +21,30 @@ import projsumm
 import poltab
 import overviewtab
 
-df_main = {}
-df_vuln = {}
-df_vuln_viz = {}
-df_pol = {}
-df_pol_viz = {}
-df_polmap = {}
-df_proj = {}
-df_proj_viz = {}
-df_comp = {}
-df_comp_viz = {}
-df_lic = {}
-df_lic_viz = {}
-df_projcompmap = {}
-df_vulnmap = {}
-df_vulnactivelist = {}
-# lic_compverid_dict = None
-# compverid_lic_dict = None
-df_projphasepolsec = {}
-df_projdistpol = {}
-childdata = {}
-df_comppolsec = {}
-
-serverlist = []
-serverurl = {}
+# df_main = {}
+# df_vuln = {}
+# df_vuln_viz = {}
+# df_pol = {}
+# df_pol_viz = {}
+# df_polmap = {}
+# df_proj = {}
+# df_proj_viz = {}
+# df_comp = {}
+# df_comp_viz = {}
+# df_lic = {}
+# df_lic_viz = {}
+# df_projcompmap = {}
+# df_vulnmap = {}
+# df_vulnactivelist = {}
+# # lic_compverid_dict = None
+# # compverid_lic_dict = None
+# df_projphasepolsec = {}
+# df_projdistpol = {}
+# childdata = {}
+# df_comppolsec = {}
+#
+# serverlist = []
+# serverurl = {}
 
 # projlist = {}
 # verlist = {}
@@ -116,7 +116,7 @@ cache = Cache(app.server, config={
     # filesystems like Heroku.
     'CACHE_TYPE': 'filesystem',
     'CACHE_DIR': 'cache-directory',
-    'CACHE_DEFAULT_TIMEOUT': 60,
+    'CACHE_DEFAULT_TIMEOUT': 3600,
 
 
     # should be equal to maximum number of users on the app at a single time
@@ -140,7 +140,7 @@ cache = Cache(app.server, config={
 # )
 
 
-@cache.memoize(timeout=60)
+# @cache.memoize(timeout=3600)
 def proc_comp_data(thisdf, expand):
     # compdf will have 1 row per compver across all projvers
     # -  license risk will be the most severe across all projvers
@@ -349,7 +349,7 @@ def proc_comp_data(thisdf, expand):
     return projdf, compdf, projcompmapdf, childdata
 
 
-@cache.memoize(timeout=60)
+# @cache.memoize(timeout=3600)
 def proc_licdata(thisdf):
     # licnames = thisdf.licname.values
     # compids = thisdf.index.unique()
@@ -414,7 +414,7 @@ def proc_licdata(thisdf):
     return sums
 
 
-@cache.memoize(timeout=60)
+# @cache.memoize(timeout=3600)
 def proc_vuln_data(thisdf):
     # vulndf will have 1 row per vulnid
     # projvulnmapdf will have 1 row for each vuln within each projver
@@ -468,7 +468,7 @@ def proc_vuln_data(thisdf):
     return vulndf, vulnmapdf, vuln_active_list
 
 
-@cache.memoize(timeout=60)
+# @cache.memoize(timeout=3600)
 def proc_pol_data(projdf, compdf, poldf):
     def tm_sorter(column):
         """Sort function"""
@@ -524,7 +524,7 @@ def proc_pol_data(projdf, compdf, poldf):
     return projdf, compdf, poldf, polmapdf
 
 
-@cache.memoize(timeout=60)
+# @cache.memoize(timeout=3600)
 def proc_overviewdata(projdf, compdf):
     # Need counts of projects by:
     # - Phase
@@ -579,11 +579,11 @@ def proc_overviewdata(projdf, compdf):
     return proj_phasepolsecdf, comp_polsecdf
 
 
-@cache.memoize(timeout=60)
+@cache.memoize(timeout=3600)
 def get_server_data(pocserver):
     dbconfig = 'conf/database.' + pocserver
     
-    serverlist.append(pocserver)
+    # serverlist.append(pocserver)
     
     app.lastdbreadtime = 0
     if True:  # DEBUG - read from DB
@@ -649,7 +649,7 @@ def get_server_data(pocserver):
     #     ]
     
     return df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, \
-        df_lic, df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, \
+        df_lic, df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, \
         childdata, df_comppolsec
 
 
@@ -804,7 +804,7 @@ app.layout = dbc.Container(
     [
         # 		dcc.Store(id='sec_values', storage_type='local'),
         # 		dcc.Store(id='lic_values', storage_type='local'),
-        dcc.Location(id='thispath', refresh=False),
+        dcc.Location(id='thispath', refresh=True),
         dcc.Store(id='store_pocserver', storage_type='session'),
         dcc.Store(id='proj_color', storage_type='session'),
         dcc.Store(id='proj_size', storage_type='session'),
@@ -995,7 +995,7 @@ def callback_lictab_sellic_button(nclicks, cdata, rows, pocserver):
     print('callback_lictab_sellic_button')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if nclicks is None:
@@ -1025,7 +1025,7 @@ def callback_poltab_selpol_button(nclicks, cdata, rows, pocserver):
     print('callback_poltab_selpol_button')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if nclicks is None:
@@ -1057,7 +1057,7 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows, pocserver):
     print('callback_comptab_selcomp_button')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if nclicks is None:
@@ -1088,7 +1088,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows, pocserver):
     print('callback_vulntab_selvuln_button')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if nclicks is None:
@@ -1100,7 +1100,7 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows, pocserver):
         # return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
         #                                         df_vuln_viz.loc[cdata[rows[0]]['vulnid']])
         return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
-                                                cdata[rows[0]], serverurl)
+                                                cdata[rows[0]], "https://{}.blackduck.synopsys.com".format(pocserver))
 
     return vulntab.create_vulntab_card_vuln(None, None, None, None, None)
 
@@ -1205,7 +1205,7 @@ def callback_projtab_selproj_button(nclicks, cdata, rows, pocserver):
     print('callback_projtab_selproj_button')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if nclicks is None:
@@ -1217,7 +1217,8 @@ def callback_projtab_selproj_button(nclicks, cdata, rows, pocserver):
         mydata = df_proj_viz.loc[projid]
         return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_pol,
                                                 df_projcompmap, df_polmap,
-                                                mydata, serverurl), 'tab_proj_subdetail'
+                                                mydata, "https://{}.blackduck.synopsys.com".format(pocserver)), \
+               'tab_proj_subdetail'
 
     return projtab.create_projtab_card_proj(None, None, None, None, None, None, None), 'tab_proj_subsummary'
 
@@ -1273,8 +1274,9 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
             print("NO ACTION")
             raise dash.exceptions.PreventUpdate
 
+    print("POC Server is " + pocserver)
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     temp_df_proj = df_proj
@@ -1487,7 +1489,7 @@ def callback_overviewtab_sankey(clickdata, state, pocserver):
     print('callback_summarytab_sankey')
 
     df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, df_projdistpol, childdata, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
         df_comppolsec = get_server_data(pocserver)
 
     if clickdata is None:
