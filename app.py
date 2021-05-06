@@ -606,7 +606,7 @@ def get_server_data(pocserver):
         df_main, df_vuln, df_pol = read_data_files()
         # statusitem = dbc.NavItem(dbc.NavLink("Status: Data from Files", href='#', disabled=True))
     
-    if isempty(df_main) or isempty(df_vuln) or isempty(df_pol):
+    if isempty(df_main) or isempty(df_vuln):
         print("No data obtained from DB")
         sys.exit(2)
     
@@ -994,15 +994,15 @@ app.layout = dbc.Container(
 def callback_lictab_sellic_button(nclicks, cdata, rows, pocserver):
     print('callback_lictab_sellic_button')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if nclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, \
+        df_lic, df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
+
         # return lictab.create_lictab_card_lic(df_proj_viz, df_comp_viz, df_projcompmap, lic_compverid_dict,
         #                                      df_lic_viz[df_lic_viz['licname'] == cdata[rows[0]][
         #                                             'licname']])
@@ -1024,15 +1024,15 @@ def callback_lictab_sellic_button(nclicks, cdata, rows, pocserver):
 def callback_poltab_selpol_button(nclicks, cdata, rows, pocserver):
     print('callback_poltab_selpol_button')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if nclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
+
         # return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
         #                                      df_pol_viz.loc[cdata[rows[0]]])
         return poltab.create_poltab_card_pol(df_proj_viz, df_comp_viz, df_pol,
@@ -1056,15 +1056,15 @@ def callback_poltab_selpol_button(nclicks, cdata, rows, pocserver):
 def callback_comptab_selcomp_button(nclicks, cdata, rows, pocserver):
     print('callback_comptab_selcomp_button')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if nclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
+
         # return comptab.create_comptab_card_comp(df_proj_viz, df_projcompmap, df_polmap,
         #                                         df_comp_viz.loc[cdata[rows[0]]['projverid']]), \
         #        'tab_comp_subdetail'
@@ -1087,10 +1087,6 @@ def callback_comptab_selcomp_button(nclicks, cdata, rows, pocserver):
 def callback_vulntab_selvuln_button(nclicks, cdata, rows, pocserver):
     print('callback_vulntab_selvuln_button')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if nclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
@@ -1099,6 +1095,10 @@ def callback_vulntab_selvuln_button(nclicks, cdata, rows, pocserver):
         # print(df_vuln[df_vuln['vulnid'] == cdata[rows[0]]['vulnid']].to_string())
         # return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
         #                                         df_vuln_viz.loc[cdata[rows[0]]['vulnid']])
+        df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
+
         return vulntab.create_vulntab_card_vuln(df_proj_viz, df_comp_viz, df_vulnmap,
                                                 cdata[rows[0]], "https://{}.blackduck.synopsys.com".format(pocserver))
 
@@ -1204,15 +1204,15 @@ def callback_filtercomp_buttons(vulnclicks, compclicks, vulncdata, vulncrows, co
 def callback_projtab_selproj_button(nclicks, cdata, rows, pocserver):
     print('callback_projtab_selproj_button')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if nclicks is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
 
     if rows:
+        df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
+
         projid = cdata[rows[0]]['projverid']
         mydata = df_proj_viz.loc[projid]
         return projtab.create_projtab_card_proj(df_proj_viz, df_comp_viz, df_pol,
@@ -1488,13 +1488,13 @@ def callback_main(nclicks, proj_treemap_color, proj_treemap_size, tab, projs, ve
 def callback_overviewtab_sankey(clickdata, state, pocserver):
     print('callback_summarytab_sankey')
 
-    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
-        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
-        df_comppolsec = get_server_data(pocserver)
-
     if clickdata is None:
         print('NO ACTION')
         raise dash.exceptions.PreventUpdate
+
+    df_main, df_vuln, df_vuln_viz, df_pol, df_pol_viz, df_polmap, df_proj, df_proj_viz, df_comp, df_comp_viz, df_lic, \
+        df_lic_viz, df_projcompmap, df_vulnmap, df_vulnactivelist, df_projphasepolsec, childdata, \
+        df_comppolsec = get_server_data(pocserver)
 
     if state:
         newchilddata = childdata
